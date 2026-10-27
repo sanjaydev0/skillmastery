@@ -1,8 +1,8 @@
-# MasteryHarness
+# SkillMastery
 
-An offline-first learning command center for deliberate practice, mastery gates, and long-term retention. Two 24-week curricula are included: **Flutter, Dart & High-Craft UI/UX** and **Full-Stack Web, Product Design & Systems**. Every bit of progress lives in your browser.
+An offline-first command center for building any skill through deliberate practice, mastery gates, and long-term retention. Two 24-week curricula are included — **Flutter, Dart & High-Craft UI/UX** and **Full-Stack Web, Product Design & Systems** — and you can create a custom subject track for anything else. Every bit of progress lives in your browser.
 
-**Live app:** <https://sanjaydev0.github.io/masteryharness/>
+**Live app:** <https://sanjaydev0.github.io/skillmastery/>
 
 ## What it does
 
@@ -34,7 +34,7 @@ The seeded content is plain TypeScript under `src/data/`. The app has no backend
 ```bash
 npm install
 npm run dev          # http://127.0.0.1:5173
-npm test             # 48 engine, store, seed, export and UI smoke tests
+npm test             # engine, store, seed, storage, export and UI smoke tests
 npm run lint
 npm run build        # PWA production build in dist/
 npm run preview
@@ -48,6 +48,7 @@ The production build uses the relative base `./`, so the exact same `dist/` work
 - On boot the newest valid copy (by `updatedAt`) wins. Invalid data is quarantined in localStorage and a fresh seed opens with an explicit warning.
 - The header's **● Saved offline** indicator reflects actual write success, not a timer or network state.
 - JSON backups are schema-validated before import and can replace all data or merge by id.
+- Upgrading from the pre-rename build? The old IndexedDB/localStorage namespace is detected and migrated on first boot, so existing tracks, cards and settings carry over without a manual export.
 - Obsidian export writes Markdown frontmatter, phases, weeks, knowledge nodes, recall cards, canon progress, and vault resources.
 
 Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy.

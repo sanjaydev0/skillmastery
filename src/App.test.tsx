@@ -21,7 +21,7 @@ describe('application smoke tests', () => {
     expect(within(dialog).getByText(/Android Chrome/)).toBeInTheDocument()
 
     fireEvent.click(within(dialog).getByRole('button', { name: /Light/ }))
-    expect(localStorage.getItem('mh:theme')).toBe('light')
+    expect(localStorage.getItem('skillmastery:theme')).toBe('light')
     expect(within(dialog).getByRole('button', { name: /Light/ })).toHaveAttribute('aria-pressed', 'true')
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close panel' }))

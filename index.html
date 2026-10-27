@@ -11,15 +11,15 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="MasteryHarness" />
-    <meta name="application-name" content="MasteryHarness" />
+    <meta name="apple-mobile-web-app-title" content="SkillMastery" />
+    <meta name="application-name" content="SkillMastery" />
     <meta name="format-detection" content="telephone=no" />
-    <meta name="description" content="MasteryHarness — an offline-first personal learning command center and knowledge graph tracker." />
-    <title>MasteryHarness — Learning Command Center</title>
+    <meta name="description" content="SkillMastery — an offline-first command center for learning any skill, with a prerequisite knowledge graph and spaced repetition." />
+    <title>SkillMastery — Learning Command Center</title>
     <script>
       // Theme boot before paint. Mirrors the prefs kept in IndexedDB.
       try {
-        var t = localStorage.getItem('mh:theme');
+        var t = localStorage.getItem('skillmastery:theme') || localStorage.getItem('mh:theme');
         var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.classList.toggle('dark', dark);
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
@@ -52,7 +52,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <div id="boot"><div><div class="mark">M</div>Loading your harness…</div></div>
+    <div id="boot"><div><div class="mark">S</div>Loading your skill graph…</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

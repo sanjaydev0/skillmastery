@@ -12,7 +12,7 @@ import {
   startAutosave,
   useAppStore,
 } from './store/AppStore'
-import { LOCAL_THEME_KEY, loadPersisted, savePersisted } from './services/storage'
+import { loadPersisted, readThemePreference, savePersisted } from './services/storage'
 import type { LoadResult } from './services/storage'
 import { setSaveState } from './services/saveStatus'
 
@@ -33,7 +33,7 @@ function applyTheme(theme: Theme): void {
 
 function bootTheme(): void {
   try {
-    const stored = localStorage.getItem(LOCAL_THEME_KEY)
+    const stored = readThemePreference()
     if (stored === 'dark' || stored === 'light') {
       applyTheme(stored)
       return

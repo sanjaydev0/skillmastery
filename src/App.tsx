@@ -62,7 +62,7 @@ export default function App() {
           <span className="logo-mark mx-auto grid h-11 w-11 place-items-center">
             <Target size={22} strokeWidth={2.3} aria-hidden />
           </span>
-          <p className="mt-3 text-[15px] font-bold tracking-tight">MasteryHarness</p>
+          <p className="mt-3 text-[15px] font-bold tracking-tight">SkillMastery</p>
           <p className="muted mt-1 text-[12px]">Hydrating your local learning state…</p>
           <div className="mt-3 flex justify-center">
             <Spinner size={15} />

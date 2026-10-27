@@ -45,13 +45,13 @@ export function DeckPanel() {
   const exportCards = (format: 'tsv' | 'csv') => {
     if (filtered.length === 0) return
     const options = {
-      deck: `MasteryHarness::${subject.shortName}`,
+      deck: `SkillMastery::${subject.shortName}`,
       nodes: subject.nodes,
       weeks: subject.weeks,
     }
     const content = format === 'tsv' ? toAnkiTsv(filtered, options) : toAnkiCsv(filtered, options)
     downloadText(
-      `masteryharness-${slugify(subject.shortName) || 'deck'}-${fileStamp()}.${format}`,
+      `skillmastery-${slugify(subject.shortName) || 'deck'}-${fileStamp()}.${format}`,
       content,
       format === 'tsv' ? 'text/tab-separated-values' : 'text/csv',
     )

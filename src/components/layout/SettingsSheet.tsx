@@ -136,7 +136,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     const outcome = await promptInstall()
     setInstalling(false)
     if (outcome === 'accepted') {
-      toast('Install accepted. MasteryHarness will appear on your home screen.', 'success', 6000)
+      toast('Install accepted. SkillMastery will appear on your home screen.', 'success', 6000)
     } else if (outcome === 'dismissed') {
       toast('Install cancelled. You can use the browser menu to add it later.', 'info', 5000)
     } else {
@@ -265,7 +265,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[12px] font-semibold">MasteryHarness on this device</p>
+                  <p className="text-[12px] font-semibold">SkillMastery on this device</p>
                   <Badge tone={install.installed ? 'good' : install.canInstall ? 'accent' : 'neutral'}>
                     {install.installed ? 'Installed' : install.canInstall ? 'Ready' : 'Browser install'}
                   </Badge>

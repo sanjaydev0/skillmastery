@@ -150,11 +150,11 @@ export function toObsidianMarkdown(subject: Subject, books: Book[], now = new Da
   const lines: string[] = [
     '---',
     `title: "${subject.name}"`,
-    'source: MasteryHarness',
+    'source: SkillMastery',
     `exported: ${now.toISOString()}`,
     `weeks_mastered: ${weeksMastered}/${subject.weeks.length}`,
     `nodes_mastered: ${nodesMastered}/${subject.nodes.length}`,
-    'tags: [masteryharness, learning-log]',
+    'tags: [skillmastery, learning-log]',
     '---',
     '',
     `# ${subject.name}`,
@@ -235,7 +235,7 @@ export function toObsidianMarkdown(subject: Subject, books: Book[], now = new Da
 export function toBackupJson(data: AppData): string {
   return JSON.stringify(
     {
-      app: 'masteryharness',
+      app: 'skillmastery',
       schemaVersion: data.schemaVersion,
       exportedAt: new Date().toISOString(),
       data,

@@ -1,5 +1,5 @@
 {
-  "name": "masteryharness",
+  "name": "skillmastery",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -37,9 +37,9 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5"
   },
-  "description": "Offline-first learning command center for mastery gates, spaced repetition and a prerequisite knowledge graph.",
+  "description": "Offline-first command center for learning any skill, with mastery gates, spaced repetition and a prerequisite knowledge graph.",
   "engines": {
     "node": ">=22.12.0"
   },
-  "homepage": "https://sanjaydev0.github.io/masteryharness/"
+  "homepage": "https://sanjaydev0.github.io/skillmastery/"
 }

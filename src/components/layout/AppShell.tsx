@@ -116,7 +116,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
           </span>
           {!prefs.sidebarCollapsed ? (
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-bold tracking-tight">MasteryHarness</p>
+              <p className="truncate text-[13px] font-bold tracking-tight">SkillMastery</p>
               <p className="faint -mt-0.5 text-[9.5px] tracking-[0.14em] uppercase">Learning OS</p>
             </div>
           ) : null}
@@ -287,7 +287,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 <Target size={15} strokeWidth={2.4} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-bold tracking-tight">MasteryHarness</p>
+                <p className="truncate text-[13px] font-bold tracking-tight">SkillMastery</p>
                 <p className="faint -mt-0.5 text-[9px] tracking-[0.12em] uppercase">{viewLabel(route.view)}</p>
               </div>
               <IconButton label="Search everything" onClick={openPalette}>

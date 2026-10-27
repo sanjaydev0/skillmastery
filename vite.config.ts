@@ -19,9 +19,9 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
         manifest: {
-          name: 'MasteryHarness — Learning Command Center',
-          short_name: 'MasteryHarness',
-          description: 'Offline-first personal learning command center and knowledge graph tracker.',
+          name: 'SkillMastery — Learning Command Center',
+          short_name: 'SkillMastery',
+          description: 'Offline-first command center for learning any skill, with mastery gates, spaced repetition and a prerequisite knowledge graph.',
           theme_color: '#0b0f14',
           background_color: '#0b0f14',
           display: 'standalone',
