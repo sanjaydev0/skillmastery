@@ -1,14 +1,11 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   ArrowRight,
   BookOpen,
   BrainCircuit,
   CalendarDays,
   CheckCircle2,
-  Clock3,
   Layers,
-  TrendingUp,
 } from 'lucide-react'
 import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
@@ -112,13 +109,13 @@ export function TodayView() {
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow">{todayLabel}</p>
-          <h1 className="h1 mt-1">Today</h1>
-          <p className="muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+          <h1 className="h1 mt-1.5">Today</h1>
+          <p className="muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
             <span className="font-medium text-t1">
-              Week {week.weekNumber} · {week.title}
+              Week {week.weekNumber}, {week.title}
             </span>
             <WeekBadge status={status} />
-            {phase ? <span className="faint">· {phase.name.replace(/^Phase \d+ · /, '')}</span> : null}
+            {phase ? <span className="faint">{phase.name.replace(/^Phase \d+ · /, '')}</span> : null}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -130,115 +127,100 @@ export function TodayView() {
           >
             This week's plan
           </Button>
-          <Button variant="primary" size="sm" icon={<BrainCircuit size={14} />} onClick={() => navigate('#/practice')}>
+          <Button variant="outline" size="sm" icon={<BrainCircuit size={14} />} onClick={() => navigate('#/practice')}>
             Review {due > 0 ? `(${due})` : ''}
           </Button>
         </div>
       </header>
 
-      <section className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Today at a glance">
-        <MiniStat
-          label="Left today"
-          value={todayItems.length > 0 && todayItems.every((item) => item.done) ? 'Done' : formatTotal(todayLeft)}
-          meta={`${todayDone}/${todayItems.length} tasks done`}
-          icon={<Clock3 size={13} />}
-          tone={todayItems.length > 0 && todayItems.every((item) => item.done) ? 'good' : 'neutral'}
-        />
-        <MiniStat
-          label="This week"
-          value={formatTotal(summary.done)}
-          meta={`of ${formatTotal(summary.planned)} completed`}
-          icon={<CheckCircle2 size={13} />}
-        />
-        <MiniStat
-          label="Reviews due"
-          value={String(due)}
-          meta={due === 0 ? 'Nothing waiting' : 'Cards ready to recall'}
-          icon={<BrainCircuit size={13} />}
-          tone={due > 0 ? 'accent' : 'neutral'}
-        />
-        <MiniStat
-          label="Course"
-          value={`${percent(courseRatio)}%`}
-          meta={`${course.doneItems}/${course.items} tasks`}
-          icon={<TrendingUp size={13} />}
-        />
-      </section>
-
       {nextTask ? (
-        <section className="card mt-4 overflow-hidden" aria-label="Up next">
-          <div className="flex flex-col gap-3 border-b border-line bg-accent-soft/40 p-3.5 sm:flex-row sm:items-center sm:p-4">
-            <div className="min-w-0 flex-1">
-              <p className="eyebrow flex items-center gap-1.5">
-                <ArrowRight size={12} aria-hidden /> Up next
-              </p>
-              <p className="mt-1 text-[14.5px] leading-snug font-semibold">{nextTask.label}</p>
-              <p className="muted mt-1 flex flex-wrap items-center gap-x-1.5 text-[11.5px]">
-                <span>{nextIsToday ? 'Scheduled for today' : `${dayName(nextTask.day ?? today)} of this week`}</span>
-                <span className="faint">·</span>
-                <span>{modeLabel(nextTask.context)}</span>
-                <span className="faint">·</span>
-                <span className="num">{formatEstimate(estimateOf(nextTask))}</span>
-              </p>
-            </div>
+        <section className="mt-7 border-l-[3px] border-accent pl-4 sm:pl-5" aria-label="Up next">
+          <p className="eyebrow">Up next</p>
+          <p className="display mt-1.5 max-w-[46ch] text-[clamp(1.3rem,1.05rem+0.9vw,1.7rem)] leading-[1.15] font-medium">
+            {nextTask.label}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="muted flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
+              <span>{nextIsToday ? 'For today' : `${dayName(nextTask.day ?? today)} this week`}</span>
+              <span>{modeLabel(nextTask.context)}</span>
+              <span className="num">{formatEstimate(estimateOf(nextTask))}</span>
+            </p>
             <Button
               variant="primary"
-              size="sm"
-              icon={<CheckCircle2 size={14} />}
+              icon={<CheckCircle2 size={15} />}
               onClick={() => completeTask(nextTask.id)}
-              className="flex-none"
+              className="ml-auto flex-none"
             >
               Mark done
             </Button>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 text-[11px] sm:px-4">
-            <span className="faint">
-              {nextIsToday
-                ? 'Finishing this credits its estimate to today and the course total.'
-                : 'Nothing left today — this is the next unfinished task in the week.'}
-            </span>
+          <p className="faint mt-2.5 text-[11.5px]">
+            {nextIsToday
+              ? 'Finishing this credits its estimate to today and the course total.'
+              : 'Nothing left today. This is the next unfinished task in the week.'}{' '}
             <a className="link" href={`#/plan/${week.id}`}>
-              See all seven days →
+              See all seven days
             </a>
-          </div>
+          </p>
         </section>
       ) : (
-        <section className="card mt-4 p-4">
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 grid h-8 w-8 flex-none place-items-center rounded-lg bg-good-soft text-good">
-              <CheckCircle2 size={17} aria-hidden />
-            </span>
-            <div>
-              <p className="text-[13.5px] font-semibold">Every task in Week {week.weekNumber} is checked</p>
-              <p className="muted mt-1 text-[12.5px]">
-                The week's estimate is fully credited. Clear the checkpoint when you can rebuild the work without
-                notes, then the next week unlocks.
-              </p>
-              <Button
-                variant="soft"
-                size="sm"
-                className="mt-2.5"
-                icon={<ArrowRight size={13} />}
-                onClick={() => navigate(`#/plan/${week.id}`)}
-              >
-                Open the checkpoint
-              </Button>
-            </div>
-          </div>
+        <section className="mt-7 border-l-[3px] border-good pl-4 sm:pl-5">
+          <p className="eyebrow">Week {week.weekNumber}</p>
+          <p className="display mt-1.5 text-[1.35rem] leading-snug font-medium">
+            Every task in this week is checked
+          </p>
+          <p className="muted mt-2 max-w-[62ch] text-[12.5px]">
+            The week's estimate is fully credited. Clear the checkpoint when you can rebuild the work without notes,
+            then the next week unlocks.
+          </p>
+          <Button
+            variant="soft"
+            size="sm"
+            className="mt-3"
+            icon={<ArrowRight size={13} />}
+            onClick={() => navigate(`#/plan/${week.id}`)}
+          >
+            Open the checkpoint
+          </Button>
         </section>
       )}
+
+      <section className="ledger mt-6" aria-label="Today at a glance">
+        <LedgerFact
+          label="Left today"
+          value={todayItems.length > 0 && todayItems.every((item) => item.done) ? 'Done' : formatTotal(todayLeft)}
+          meta={`${todayDone} of ${todayItems.length} tasks checked`}
+          tone={todayItems.length > 0 && todayItems.every((item) => item.done) ? 'good' : undefined}
+        />
+        <LedgerFact
+          label="This week"
+          value={formatTotal(summary.done)}
+          meta={`of ${formatTotal(summary.planned)} completed`}
+        />
+        <LedgerFact
+          label="Reviews due"
+          value={String(due)}
+          meta={due === 0 ? 'Nothing waiting' : 'Cards ready to recall'}
+          tone={due > 0 ? 'accent' : undefined}
+        />
+        <LedgerFact
+          label="Course"
+          value={`${percent(courseRatio)}%`}
+          meta={`${course.doneItems} of ${course.items} tasks`}
+        />
+      </section>
 
       <div className="mt-4 grid items-start gap-3 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <section className="card p-3.5 sm:p-4" aria-labelledby="today-plan-heading">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <p className="eyebrow">Day {dayNumber(today)} · {dayName(today)}</p>
+              <p className="eyebrow">{dayName(today)}, day {dayNumber(today)}</p>
               <h2 id="today-plan-heading" className="h2 mt-0.5">
                 Today's plan
               </h2>
             </div>
-            <span className="faint num text-[10.5px]">
-              {formatTotal(todayLeft)} left · active + passive
+            <span className="faint num text-[11.5px]">
+              {formatTotal(todayLeft)} left, active and passive
             </span>
           </div>
 
@@ -250,7 +232,7 @@ export function TodayView() {
               Passive {todaySummary.passiveMinutes}/{todaySummary.capacity.passive} min
             </Badge>
             {overBy > 0 ? (
-              <span className="text-[10.5px] text-warn">
+              <span className="text-[11.5px] text-warn">
                 Over today's budget by {overBy} min — spread a task to another day.
               </span>
             ) : null}
@@ -274,7 +256,7 @@ export function TodayView() {
                   checked={item.done}
                   onToggle={() => completeTask(item.id)}
                   label={item.label}
-                  meta={`${modeLabel(item.context)} · ${formatEstimate(estimateOf(item))}`}
+                  meta={`${modeLabel(item.context)}, ${formatEstimate(estimateOf(item))}`}
                 />
               ))}
             </div>
@@ -283,11 +265,11 @@ export function TodayView() {
           <div className="mt-3 border-t border-line pt-2.5">
             <div className="flex items-center gap-2">
               <ProgressBar value={weekRatio} className="flex-1 !h-1.5" label={`Week ${week.weekNumber} estimate done`} />
-              <span className="faint num text-[10px]">
+              <span className="faint num text-[11px]">
                 {formatTotal(summary.done)} / {formatTotal(summary.planned)}
               </span>
             </div>
-            <p className="faint mt-1.5 text-[10.5px]">
+            <p className="faint mt-1.5 text-[11.5px]">
               Completing a task credits its full estimate range to the week and course totals.
             </p>
           </div>
@@ -306,7 +288,7 @@ export function TodayView() {
                 Open
               </a>
             </div>
-            <div className="mt-2.5 grid grid-cols-7 gap-1">
+            <div className="mt-3 grid grid-cols-7 gap-px overflow-hidden rounded-[6px] border border-line bg-line">
               {MONDAY_FIRST.map((day) => {
                 const daySummary = summary.days.find((entry) => entry.day === day)!
                 const done = daySummary.items.filter((item) => item.done).length
@@ -321,21 +303,17 @@ export function TodayView() {
                     aria-label={`Day ${dayNumber(day)} ${dayName(day)}, ${done} of ${total} done`}
                     aria-current={isToday ? 'date' : undefined}
                     className={cn(
-                      'min-w-0 rounded-lg border p-1.5 text-center transition',
-                      isToday
-                        ? 'border-accent/50 bg-accent-soft text-accent-strong'
-                        : 'border-line bg-s1 text-t2 hover:border-line-strong hover:bg-s2',
+                      'min-w-0 px-1 pt-1.5 pb-2 text-center transition',
+                      isToday ? 'bg-accent-soft' : 'bg-s1 hover:bg-s2',
                     )}
                   >
-                    <span className="block truncate text-[9px] font-semibold tracking-wide uppercase">
+                    <span className={cn('block truncate text-[11.5px]', isToday ? 'text-accent-strong' : 'text-t3')}>
                       {shortDayName(day)}
                     </span>
-                    <span className="num mt-0.5 block text-[11px] font-semibold">
-                      {done}/{total}
-                    </span>
-                    <span className="mt-1 block h-1 overflow-hidden rounded-full bg-s3">
+                    <span className="num mt-0.5 block text-[12px] font-semibold">{done}/{total}</span>
+                    <span className="mt-1.5 block h-[3px] overflow-hidden bg-s3">
                       <span
-                        className="block h-full rounded-full"
+                        className="block h-full"
                         style={{ width: `${percent(ratio)}%`, background: isToday ? 'var(--accent)' : 'var(--good)' }}
                       />
                     </span>
@@ -344,12 +322,12 @@ export function TodayView() {
               })}
             </div>
             <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="faint text-[10px]">
+              <span className="faint text-[11px]">
                 {summary.overloadedDays.length > 0
                   ? `${summary.overloadedDays.length} day${summary.overloadedDays.length === 1 ? '' : 's'} over capacity`
                   : 'Every day fits your capacity'}
               </span>
-              <span className="faint num text-[10px]">
+              <span className="faint num text-[11px]">
                 {summary.unassigned.length > 0 ? `${summary.unassigned.length} unscheduled` : ''}
               </span>
             </div>
@@ -365,7 +343,7 @@ export function TodayView() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[12px] font-medium">Practice</span>
-                <span className="faint block text-[10.5px]">
+                <span className="faint block text-[11.5px]">
                   {due > 0 ? `${due} card${due === 1 ? '' : 's'} due now` : 'No cards due'}
                 </span>
               </span>
@@ -377,7 +355,7 @@ export function TodayView() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[12px] font-medium">Library</span>
-                <span className="faint block text-[10.5px]">Docs, books and saved links</span>
+                <span className="faint block text-[11.5px]">Docs, books and saved links</span>
               </span>
               <ArrowRight size={13} className="flex-none text-t3" aria-hidden />
             </a>
@@ -387,7 +365,7 @@ export function TodayView() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[12px] font-medium">Progress</span>
-                <span className="faint block text-[10.5px]">Course totals and checkpoints</span>
+                <span className="faint block text-[11.5px]">Course totals and checkpoints</span>
               </span>
               <ArrowRight size={13} className="flex-none text-t3" aria-hidden />
             </a>
@@ -398,35 +376,29 @@ export function TodayView() {
   )
 }
 
-function MiniStat({
+function LedgerFact({
   label,
   value,
   meta,
-  icon,
-  tone = 'neutral',
+  tone,
 }: {
   label: string
   value: string
   meta: string
-  icon: ReactNode
-  tone?: 'neutral' | 'good' | 'accent'
+  tone?: 'good' | 'accent'
 }) {
   return (
-    <div className="card px-3 py-2.5">
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="faint truncate text-[9.5px] font-semibold tracking-[0.1em] uppercase">{label}</span>
-        <span
-          className={cn(
-            'flex-none',
-            tone === 'good' ? 'text-good' : tone === 'accent' ? 'text-accent' : 'text-t3',
-          )}
-          aria-hidden
-        >
-          {icon}
-        </span>
-      </div>
-      <p className="num mt-1.5 text-[15px] leading-none font-semibold">{value}</p>
-      <p className="faint mt-1 truncate text-[10px]">{meta}</p>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p
+        className={cn(
+          'num mt-1 text-[19px] leading-none font-semibold',
+          tone === 'good' ? 'text-good' : tone === 'accent' ? 'text-accent' : 'text-t1',
+        )}
+      >
+        {value}
+      </p>
+      <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
   )
 }

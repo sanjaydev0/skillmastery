@@ -175,7 +175,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-1.5">
             {node.tags.map((tag) => (
-              <span key={tag} className="pill !py-0.5 !text-[10px]">
+              <span key={tag} className="pill !py-0.5 !text-[11px]">
                 {tag}
               </span>
             ))}
@@ -188,19 +188,19 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
               <div>
                 <p className="eyebrow">Strength</p>
                 <p className="num mt-0.5 text-[16px] font-semibold">{node.srs.strength.toFixed(1)}/5</p>
-                <p className="faint text-[10px]">{strengthLabel(node.srs.strength)}</p>
+                <p className="faint text-[11px]">{strengthLabel(node.srs.strength)}</p>
               </div>
               <div>
                 <p className="eyebrow">Next review</p>
                 <p className="mt-0.5 text-[12px] font-semibold">{relativeDays(node.srs.dueAt)}</p>
-                <p className="faint text-[10px]">
+                <p className="faint text-[11px]">
                   {node.srs.intervalDays ? `${node.srs.intervalDays}d interval` : 'not scheduled'}
                 </p>
               </div>
               <div>
                 <p className="eyebrow">FIRe credit</p>
                 <p className="num mt-0.5 text-[16px] font-semibold">{node.srs.implicitReviews}</p>
-                <p className="faint text-[10px]">implicit reviews</p>
+                <p className="faint text-[11px]">implicit reviews</p>
               </div>
             </div>
             <div className="mt-2.5 flex items-center gap-2">
@@ -210,7 +210,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
                 className="flex-1"
                 label={`${node.title} strength`}
               />
-              <span className="faint num text-[9.5px]">explicit +0.5–1.0</span>
+              <span className="faint num text-[11px]">explicit +0.5–1.0</span>
             </div>
           </div>
 
@@ -312,7 +312,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
                           <p className="text-[11.5px] font-medium">
                             From {source ? `“${source.title}”` : 'a downstream node'}
                           </p>
-                          <p className="faint text-[10.5px]">
+                          <p className="faint text-[11.5px]">
                             {sourceKp ? sourceKp.primitive : 'Knowledge point'} · flagged {formatDateTime(flag.at)}
                           </p>
                           <Button
@@ -380,7 +380,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
                     <KpRow letter="F" label="Failure mode" text={point.failureMode} />
                   </div>
                   {point.lastFailedAt ? (
-                    <p className="faint mt-2 text-[10px]">Last failure {formatDateTime(point.lastFailedAt)}</p>
+                    <p className="faint mt-2 text-[11px]">Last failure {formatDateTime(point.lastFailedAt)}</p>
                   ) : null}
                   {point.fails < 2 ? (
                     <div className="mt-2 flex justify-end">
@@ -461,7 +461,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
                     <Sparkles size={13} className="mt-0.5 flex-none text-accent" aria-hidden />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[11.5px] font-medium">{entry.title}</span>
-                      <span className="faint text-[10px]">
+                      <span className="faint text-[11px]">
                         strength {entry.srs.strength.toFixed(1)} · {entry.srs.implicitReviews} implicit reviews
                       </span>
                     </span>
@@ -496,7 +496,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
           </section>
 
           <div className="flex items-center justify-between border-t border-line pt-3">
-            <p className="faint text-[10px]">
+            <p className="faint text-[11px]">
               {week ? `Week ${week.weekNumber} · ` : ''}
               created {node.createdAt ? formatDateTime(node.createdAt) : 'earlier'}
             </p>
@@ -526,7 +526,7 @@ function KpRow({ letter, label, text }: { letter: string; label: string; text: s
     <div className="kp-pill">
       <span className="kp-index">{letter}</span>
       <div className="min-w-0">
-        <p className="faint text-[9px] tracking-[0.1em] uppercase">{label}</p>
+        <p className="faint text-[11px] tracking-[0.1em]">{label}</p>
         <p className={cn('text-[12px] leading-snug', !text && 'italic text-t3')}>{text || 'Not written yet.'}</p>
       </div>
     </div>

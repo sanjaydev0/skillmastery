@@ -1,14 +1,10 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   ArrowRight,
-  CheckCircle2,
   Filter,
   Lock,
-  Network,
   Plus,
   Search,
-  Sparkles,
   Target,
   Wrench,
 } from 'lucide-react'
@@ -109,35 +105,31 @@ export function NodesView() {
         </Button>
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <section className="ledger mt-4" aria-label="Graph totals">
         <MiniStat
-          icon={<Network size={14} />}
           label="Total nodes"
           value={rows.length}
           meta={`${subject.nodes.reduce((sum, node) => sum + node.knowledgePoints.length, 0)} knowledge points`}
         />
         <MiniStat
-          icon={<CheckCircle2 size={14} />}
           label="Mastered"
           value={counts.mastered}
           meta={`${percent(overallMastery(subject.nodes))}% graph mastery`}
           tone="good"
         />
         <MiniStat
-          icon={<Wrench size={14} />}
           label="Repair queue"
           value={repairCount}
-          meta="Prerequisite flags + failed nodes"
+          meta="Prerequisite flags and failed nodes"
           tone={repairCount ? 'bad' : 'neutral'}
         />
         <MiniStat
-          icon={<Sparkles size={14} />}
           label="FIRe credits"
           value={subject.nodes.reduce((sum, node) => sum + node.srs.implicitReviews, 0)}
           meta="Implicit reviews across the graph"
           tone="accent"
         />
-      </div>
+      </section>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative min-w-0 flex-1">
@@ -189,7 +181,7 @@ export function NodesView() {
               )}
             >
               {entry.label}
-              <span className={cn('num text-[10px]', selected ? 'text-accent-strong' : 'text-t3')}>
+              <span className={cn('num text-[11px]', selected ? 'text-accent-strong' : 'text-t3')}>
                 {counts[entry.id]}
               </span>
             </button>
@@ -267,30 +259,23 @@ export function NodesView() {
 }
 
 function MiniStat({
-  icon,
   label,
   value,
   meta,
   tone = 'neutral',
 }: {
-  icon: ReactNode
   label: string
   value: number
   meta: string
   tone?: 'neutral' | 'good' | 'bad' | 'accent'
 }) {
   const colour =
-    tone === 'good' ? 'text-good' : tone === 'bad' ? 'text-bad' : tone === 'accent' ? 'text-accent' : 'text-t2'
+    tone === 'good' ? 'text-good' : tone === 'bad' ? 'text-bad' : tone === 'accent' ? 'text-accent' : 'text-t1'
   return (
-    <div className="card flex items-start gap-2.5 px-3 py-2.5">
-      <span className={cn('mt-0.5 flex-none', colour)} aria-hidden>
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="faint truncate text-[10px] tracking-wide uppercase">{label}</p>
-        <p className="num text-[15px] font-semibold leading-tight">{value}</p>
-        <p className="faint truncate text-[9.5px]">{meta}</p>
-      </div>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className={cn('num mt-1 text-[19px] leading-none font-semibold', colour)}>{value}</p>
+      <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
   )
 }
@@ -323,7 +308,7 @@ function NodeCard({
             </Badge>
           ) : null}
         </div>
-        <span className="num faint flex-none rounded-md bg-s2 px-1.5 py-0.5 text-[9.5px]">
+        <span className="num faint flex-none rounded-md bg-s2 px-1.5 py-0.5 text-[11px]">
           W{weekNumber ?? '?'}
         </span>
       </div>
@@ -333,12 +318,12 @@ function NodeCard({
 
       <div className="mt-2 flex flex-wrap gap-1">
         {node.tags.slice(0, 3).map((tag) => (
-          <span key={tag} className="pill !px-1.5 !py-0 !text-[9.5px]">
+          <span key={tag} className="pill !px-1.5 !py-0 !text-[11px]">
             {tag}
           </span>
         ))}
         {node.tags.length > 3 ? (
-          <span className="faint text-[9.5px]">+{node.tags.length - 3}</span>
+          <span className="faint text-[11px]">+{node.tags.length - 3}</span>
         ) : null}
       </div>
 
@@ -350,10 +335,10 @@ function NodeCard({
             className="!h-1.5 flex-1"
             label={`${node.title} strength`}
           />
-          <span className="faint num text-[9px]">{node.srs.strength.toFixed(1)}/5</span>
+          <span className="faint num text-[11px]">{node.srs.strength.toFixed(1)}/5</span>
         </div>
         <div className="mt-1.5 flex items-center justify-between gap-2">
-          <span className="faint truncate text-[9.5px]">
+          <span className="faint truncate text-[11px]">
             {node.knowledgePoints.length} KP · {node.srs.implicitReviews} FIRe · {totalFails} fails
           </span>
           <ArrowRight size={12} className="flex-none text-t3 transition group-hover:translate-x-0.5 group-hover:text-accent" aria-hidden />

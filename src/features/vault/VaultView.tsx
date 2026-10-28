@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   BookOpen,
   Check,
@@ -13,7 +12,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Bookmark,
 } from 'lucide-react'
 import type { Book, Resource, ResourceKind } from '../../types/schema'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
@@ -103,35 +101,22 @@ export function VaultView() {
         </div>
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <section className="ledger mt-4" aria-label="Library totals">
         <VaultStat
-          icon={<FileText size={14} />}
           label="Docs read"
-          value={`${docsDone}/${docs.length}`}
+          value={`${docsDone} of ${docs.length}`}
           meta="Official documentation"
           tone="accent"
         />
+        <VaultStat label="Curricula" value={String(curricula)} meta="Community tracks" tone="info" />
         <VaultStat
-          icon={<GraduationCap size={14} />}
-          label="Curricula"
-          value={String(curricula)}
-          meta="Community tracks"
-          tone="info"
-        />
-        <VaultStat
-          icon={<Bookmark size={14} />}
           label="Canon progress"
           value={`${percent(canonProgress)}%`}
-          meta={`${readChapters}/${totalChapters} chapters`}
+          meta={`${readChapters} of ${totalChapters} chapters`}
           tone="good"
         />
-        <VaultStat
-          icon={<Library size={14} />}
-          label="Resources"
-          value={String(resources.length)}
-          meta="In this offline vault"
-        />
-      </div>
+        <VaultStat label="Resources" value={String(resources.length)} meta="Saved on this device" />
+      </section>
 
       <section className="mt-5">
         <SectionHead
@@ -180,13 +165,13 @@ export function VaultView() {
             <EmptyState compact title="No resources match" description="Clear the filter or search a different term." />
           </div>
         ) : (
-          <div className="mt-2 space-y-1.5">
+          <div className="card mt-2 divide-y divide-line overflow-hidden">
             {filtered.map((resource) => {
               const Icon = KIND_ICON[resource.kind]
               const weekNumber = resource.weekId ? weekNumbers.get(resource.weekId) : undefined
               return (
-                <div key={resource.id} className="card flex items-start gap-2.5 p-3">
-                  <span className="mt-0.5 grid h-8 w-8 flex-none place-items-center rounded-lg bg-s2 text-t2" aria-hidden>
+                <div key={resource.id} className="flex items-start gap-2.5 px-3 py-2.5 transition hover:bg-s2">
+                  <span className="mt-0.5 grid h-8 w-8 flex-none place-items-center text-t3" aria-hidden>
                     <Icon size={14} />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -199,15 +184,15 @@ export function VaultView() {
                       >
                         {resource.title}
                       </a>
-                      <span className="faint text-[9.5px]">· {KIND_LABEL[resource.kind]}</span>
-                      {weekNumber ? <span className="pill !py-0 !text-[9px]">W{weekNumber}</span> : null}
+                      <span className="faint text-[11px]">{KIND_LABEL[resource.kind]}</span>
+                      {weekNumber ? <span className="pill !py-0 !text-[11px]">W{weekNumber}</span> : null}
                     </div>
                     {resource.description ? (
                       <p className="muted mt-0.5 line-clamp-1 text-[11px]">{resource.description}</p>
                     ) : null}
                     <div className="mt-1 flex flex-wrap items-center gap-1">
                       {resource.tags.slice(0, 4).map((tag) => (
-                        <span key={tag} className="pill !px-1.5 !py-0 !text-[9px]">
+                        <span key={tag} className="pill !px-1.5 !py-0 !text-[11px]">
                           {tag}
                         </span>
                       ))}
@@ -262,7 +247,7 @@ export function VaultView() {
         />
         <div className="mb-2 flex items-center gap-2 rounded-xl border border-line bg-s2 px-3 py-2">
           <BookOpen size={13} className="flex-none text-t2" aria-hidden />
-          <p className="faint text-[10.5px]">
+          <p className="faint text-[11.5px]">
             Passive input belongs to the person, not the track. A 30-minute daily block, one chapter at a time.
           </p>
           <span className="num ml-auto text-[11px] font-semibold">{percent(canonProgress)}%</span>
@@ -296,7 +281,7 @@ export function VaultView() {
                     }}
                     aria-hidden
                   >
-                    <span className="text-[8px] font-semibold tracking-[0.12em] text-t3 uppercase">Canon</span>
+                    <span className="text-[8px] font-semibold text-t3">Canon</span>
                     <span className="text-[17px] font-bold leading-none text-accent-strong">
                       {book.title
                         .split(/\s+/)
@@ -311,7 +296,7 @@ export function VaultView() {
                     <div className="flex items-start justify-between gap-1">
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-[12px] leading-snug font-semibold">{book.title}</p>
-                        <p className="faint truncate text-[10px]">{book.pillar}</p>
+                        <p className="faint truncate text-[11px]">{book.pillar}</p>
                       </div>
                       <button
                         type="button"
@@ -324,7 +309,7 @@ export function VaultView() {
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5">
                       <ResourceBadge status={displayedStatus} />
-                      <span className="faint text-[9px]">W{book.weekFrom}–{book.weekTo}</span>
+                      <span className="faint text-[11px]">W{book.weekFrom}–{book.weekTo}</span>
                       {book.url ? (
                         <a
                           href={book.url}
@@ -344,7 +329,7 @@ export function VaultView() {
                         className="!h-1.5 flex-1"
                         label={`${book.title} reading progress`}
                       />
-                      <span className="faint num text-[9px]">
+                      <span className="faint num text-[11px]">
                         {book.currentChapter}/{book.totalChapters}
                       </span>
                     </div>
@@ -368,9 +353,9 @@ export function VaultView() {
                         >
                           <Check size={10} />
                         </button>
-                        <span className="faint ml-1 text-[9px]">chapter</span>
+                        <span className="faint ml-1 text-[11px]">chapter</span>
                       </div>
-                      <span className="faint text-[9px]">{book.status === 'done' ? 'Finished' : '30 min/day'}</span>
+                      <span className="faint text-[11px]">{book.status === 'done' ? 'Finished' : '30 min/day'}</span>
                     </div>
                   </div>
                 </div>
@@ -383,7 +368,7 @@ export function VaultView() {
       <div className="mt-6 rounded-xl border border-line bg-s2 p-3">
         <div className="flex items-start gap-2">
           <Badge tone="neutral">Offline first</Badge>
-          <p className="faint text-[10.5px] leading-relaxed">
+          <p className="faint text-[11.5px] leading-relaxed">
             Resource metadata, reading status and canon progress are stored in your local backup. External URLs
             are never fetched until you open them.
           </p>
@@ -407,36 +392,23 @@ export function VaultView() {
 }
 
 function VaultStat({
-  icon,
   label,
   value,
   meta,
   tone = 'neutral',
 }: {
-  icon: ReactNode
   label: string
   value: string
   meta: string
   tone?: 'neutral' | 'accent' | 'info' | 'good'
 }) {
   const colour =
-    tone === 'accent'
-      ? 'bg-accent-soft text-accent'
-      : tone === 'info'
-        ? 'bg-info-soft text-info'
-        : tone === 'good'
-          ? 'bg-good-soft text-good'
-          : 'bg-s2 text-t2'
+    tone === 'accent' ? 'text-accent' : tone === 'info' ? 'text-info' : tone === 'good' ? 'text-good' : 'text-t1'
   return (
-    <div className="card flex items-start gap-2.5 px-3 py-2.5">
-      <span className={cn('mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-lg', colour)} aria-hidden>
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="faint truncate text-[10px] tracking-wide uppercase">{label}</p>
-        <p className="num text-[14px] font-semibold leading-tight">{value}</p>
-        <p className="faint truncate text-[9.5px]">{meta}</p>
-      </div>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className={cn('num mt-1 text-[19px] leading-none font-semibold', colour)}>{value}</p>
+      <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
   )
 }

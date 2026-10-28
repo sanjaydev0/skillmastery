@@ -353,7 +353,7 @@ export function CommandPalette() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[12.5px] font-medium">{entry.label}</span>
                         {entry.subtitle ? (
-                          <span className="faint block truncate text-[10.5px]">{entry.subtitle}</span>
+                          <span className="faint block truncate text-[11.5px]">{entry.subtitle}</span>
                         ) : null}
                       </span>
                       {selected ? <ArrowRight size={13} className="flex-none text-accent" aria-hidden /> : null}
@@ -366,14 +366,14 @@ export function CommandPalette() {
         </div>
 
         <div className="flex items-center gap-3 border-t border-line bg-s2/60 px-3.5 py-2">
-          <span className="faint flex items-center gap-1 text-[10px]">
+          <span className="faint flex items-center gap-1 text-[11px]">
             <Kbd>↑</Kbd>
             <Kbd>↓</Kbd> navigate
           </span>
-          <span className="faint flex items-center gap-1 text-[10px]">
+          <span className="faint flex items-center gap-1 text-[11px]">
             <Kbd>↵</Kbd> open
           </span>
-          <span className="ml-auto flex items-center gap-1 text-[10px] text-t3">
+          <span className="ml-auto flex items-center gap-1 text-[11px] text-t3">
             <Command size={10} aria-hidden /> K anytime
           </span>
         </div>

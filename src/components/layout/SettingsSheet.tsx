@@ -183,7 +183,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       footer={
         <>
-          <span className="faint mr-auto hidden items-center gap-1.5 text-[10.5px] sm:flex">
+          <span className="faint mr-auto hidden items-center gap-1.5 text-[11.5px] sm:flex">
             {online ? <Wifi size={11} /> : <WifiOff size={11} />}
             {online ? 'Network available' : 'Offline'} · app data stays on this device
           </span>
@@ -214,12 +214,12 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 >
                   <Icon size={15} className={active ? 'text-accent' : 'text-t3'} aria-hidden />
                   <p className="mt-1.5 text-[12px] font-semibold">{theme.label}</p>
-                  <p className="faint text-[9.5px]">{theme.detail}</p>
+                  <p className="faint text-[11px]">{theme.detail}</p>
                 </button>
               )
             })}
           </div>
-          <p className="faint mt-1.5 text-[10.5px]">
+          <p className="faint mt-1.5 text-[11.5px]">
             The accent colour follows the active track. Reduced motion is respected automatically.
           </p>
         </section>
@@ -245,13 +245,13 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                     <p className="text-[12.5px] font-semibold">{mode.label}</p>
                     {active ? <Badge tone="accent">Current</Badge> : null}
                   </div>
-                  <p className="faint mt-0.5 text-[10.5px]">{mode.detail}</p>
-                  <p className="muted mt-1 text-[10.5px] leading-relaxed">{mode.examples}</p>
+                  <p className="faint mt-0.5 text-[11.5px]">{mode.detail}</p>
+                  <p className="muted mt-1 text-[11.5px] leading-relaxed">{mode.examples}</p>
                 </button>
               )
             })}
           </div>
-          <p className="faint mt-1.5 text-[10.5px]">
+          <p className="faint mt-1.5 text-[11.5px]">
             Mode filters the daily rhythm and the week checklist. It does not change stored mastery.
           </p>
         </section>
@@ -289,12 +289,12 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 ) : null}
                 {!install.installed && !install.canInstall ? (
                   <div className="mt-2 rounded-lg border border-line bg-s1 px-2.5 py-2">
-                    <p className="faint text-[10.5px] leading-relaxed">
+                    <p className="faint text-[11.5px] leading-relaxed">
                       <strong className="text-t2">Android Chrome:</strong> ⋮ menu → <strong>Add to Home screen</strong> (or{' '}
                       <strong>Install app</strong>). <strong className="text-t2">iPhone Safari:</strong> Share → Add to Home
                       Screen.
                     </p>
-                    <p className="faint mt-1 text-[10px] leading-relaxed">
+                    <p className="faint mt-1 text-[11px] leading-relaxed">
                       Chrome offers its install prompt once the app has been opened over HTTPS or localhost and the offline
                       service worker is active.
                     </p>
@@ -324,7 +324,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                           <span className="faint font-normal"> of ~{formatBytes(estimate.quota)} quota</span>
                         ) : null}
                       </p>
-                      <p className="faint text-[10.5px]">
+                      <p className="faint text-[11.5px]">
                         IndexedDB primary · localStorage mirror · versioned JSON
                       </p>
                     </div>
@@ -352,7 +352,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                   >
                     {estimate?.persisted ? 'Storage protected' : 'Request persistent storage'}
                   </Button>
-                  <span className="faint self-center text-[10px]">
+                  <span className="faint self-center text-[11px]">
                     Protection asks the browser to keep this origin from automatic eviction.
                   </span>
                 </div>
@@ -442,7 +442,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             {pending ? (
               <div className="mt-2 rounded-lg border border-accent/25 bg-accent-soft p-2.5">
                 <p className="text-[11.5px] font-semibold">Backup validated</p>
-                <p className="muted mt-0.5 text-[10.5px] leading-relaxed">
+                <p className="muted mt-0.5 text-[11.5px] leading-relaxed">
                   {pending.data.subjects.length} track
                   {pending.data.subjects.length === 1 ? '' : 's'} ·{' '}
                   {pending.data.subjects.reduce((sum, entry) => sum + entry.nodes.length, 0)} nodes ·{' '}
@@ -506,7 +506,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </section>
 
         <div className="border-t border-line pt-3">
-          <p className="faint text-[10.5px] leading-relaxed">
+          <p className="faint text-[11.5px] leading-relaxed">
             {subject.shortName} · schema v{schemaVersion} · seed v{seedVersion}. No account, no analytics, no
             network requests for app data. Exports are generated in your browser.
           </p>

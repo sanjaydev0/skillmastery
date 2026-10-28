@@ -134,7 +134,7 @@ export function ImportCardsSheet({ onClose }: { onClose: () => void }) {
         {error ? <InlineError>{error}</InlineError> : null}
         <div className="rounded-xl border border-line bg-s2 p-3">
           <p className="eyebrow mb-1.5">Contract</p>
-          <pre className="overflow-x-auto font-mono text-[10.5px] leading-relaxed text-t2">{`{
+          <pre className="overflow-x-auto font-mono text-[11.5px] leading-relaxed text-t2">{`{
   "cards": [{
     "front": "question",         // required
     "back": "answer",            // required

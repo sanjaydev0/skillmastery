@@ -1,18 +1,15 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   AlertTriangle,
   ArrowLeft,
   BookOpen,
   CheckCircle2,
   ChevronRight,
-  Clock3,
   ExternalLink,
   GitBranch,
   Hammer,
   RotateCcw,
   Sparkles,
-  Target,
 } from 'lucide-react'
 import type { Week, Weekday } from '../../types/schema'
 import { useActiveSubject, useAppStore, useActiveWeek } from '../../store/AppStore'
@@ -79,7 +76,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
       <header className="mt-2 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div className="min-w-0">
           <p className="eyebrow">
-            Week {week.weekNumber} · {phase?.name.replace(/^Phase \d+ · /, '') ?? 'Phase'}
+            Week {week.weekNumber}, {phase?.name.replace(/^Phase \d+ · /, '') ?? 'Phase'}
           </p>
           <h1 className="h1 mt-1">{week.title}</h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -126,10 +123,10 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
         </div>
       ) : null}
 
-      <section className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Week totals">
-        <WeekStat label="Planned" value={formatTotal(summary.planned)} meta={`${week.checklist.length} tasks`} icon={<Clock3 size={13} />} />
-        <WeekStat label="Done" value={formatTotal(summary.done)} meta={`${doneTasks} checked`} icon={<CheckCircle2 size={13} />} />
-        <WeekStat label="Left" value={formatTotal(left)} meta="Across seven days" icon={<Target size={13} />} />
+      <section className="ledger mt-3" aria-label="Week totals">
+        <WeekStat label="Planned" value={formatTotal(summary.planned)} meta={`${week.checklist.length} tasks`} />
+        <WeekStat label="Done" value={formatTotal(summary.done)} meta={`${doneTasks} checked`} />
+        <WeekStat label="Left" value={formatTotal(left)} meta="Across seven days" />
         <WeekStat
           label="Checkpoint"
           value={week.gate.passedAt ? 'Cleared' : 'Open'}
@@ -140,13 +137,12 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
                 ? `${week.gate.attempts.length} attempt${week.gate.attempts.length === 1 ? '' : 's'}`
                 : 'No attempt yet'
           }
-          icon={<Sparkles size={13} />}
         />
       </section>
 
       <div className="mt-3 flex items-center gap-2">
         <ProgressBar value={ratio} tone={week.gate.passedAt ? 'good' : 'accent'} className="flex-1 !h-2" label={`Week ${week.weekNumber} estimate`} />
-        <span className="faint num text-[10.5px]">{percent(ratio)}% of planned estimate</span>
+        <span className="faint num text-[11.5px]">{percent(ratio)}% of planned estimate</span>
       </div>
 
       {week.outcomes.length > 0 ? (
@@ -174,7 +170,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
               Seven-day plan
             </h2>
           </div>
-          <span className="faint text-[10.5px]">
+          <span className="faint text-[11.5px]">
             {summary.overloadedDays.length > 0
               ? `${summary.overloadedDays.length} day${summary.overloadedDays.length === 1 ? '' : 's'} over your capacity`
               : 'All days fit your capacity'}
@@ -216,7 +212,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
                   <li key={attempt.at} className="flex items-center justify-between gap-2 rounded-lg bg-s2 px-2.5 py-1.5 text-[11.5px]">
                     <span className="num">{formatShortDate(attempt.at)}</span>
                     <span className={attempt.passed ? 'text-good' : 'text-warn'}>
-                      {attempt.average.toFixed(1)} avg · {attempt.passed ? 'cleared' : 'not yet'}
+                      {attempt.average.toFixed(1)} avg, {attempt.passed ? 'cleared' : 'not yet'}
                     </span>
                   </li>
                 ))}
@@ -241,7 +237,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
                     </div>
                     <p className="faint mt-1 text-[11px]">
                       {node.knowledgePoints.length} recall point{node.knowledgePoints.length === 1 ? '' : 's'}
-                      {node.tags.length > 0 ? ` · ${node.tags.slice(0, 3).join(', ')}` : ''}
+                      {node.tags.length > 0 ? `, ${node.tags.slice(0, 3).join(', ')}` : ''}
                     </p>
                   </div>
                 ))}
@@ -315,16 +311,16 @@ function DayCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="eyebrow flex items-center gap-1.5">
-            Day {dayNumber(day)} · {dayName(day)}
+            {dayName(day)}, day {dayNumber(day)}
             {isToday ? <Badge tone="accent">Today</Badge> : null}
           </p>
-          <p className="faint mt-0.5 text-[10.5px]">
-            {total === 0 ? 'Buffer day' : `${done}/${total} done`} · {formatTotal(summary.planned)}
+          <p className="faint mt-0.5 text-[11.5px]">
+            {total === 0 ? 'Buffer day' : `${done} of ${total} done`}, {formatTotal(summary.planned)}
           </p>
         </div>
         <span className="flex-none text-right">
           <span className="num block text-[12px] font-semibold">{formatTotal(summary.done)}</span>
-          <span className="faint block text-[9.5px]">credited</span>
+          <span className="faint block text-[11px]">credited</span>
         </span>
       </div>
 
@@ -336,7 +332,7 @@ function DayCard({
           Passive {summary.passiveMinutes}/{summary.capacity.passive} min
         </Badge>
         {overActive + overPassive > 0 ? (
-          <span className="flex items-center gap-1 text-[10px] text-warn">
+          <span className="flex items-center gap-1 text-[11px] text-warn">
             <AlertTriangle size={10} aria-hidden />
             Over by {overActive + overPassive} min
           </span>
@@ -355,15 +351,15 @@ function DayCard({
               checked={item.done}
               onToggle={() => onToggle(item.id)}
               label={item.label}
-              meta={`${modeLabel(item.context)} · ${formatEstimate(estimateOf(item))}`}
+              meta={`${modeLabel(item.context)}, ${formatEstimate(estimateOf(item))}`}
             />
           ))}
         </div>
       )}
 
       {summary.items.length > 0 ? (
-        <p className="faint mt-2 border-t border-line pt-2 text-[10px]">
-          Week {week.weekNumber} day {dayNumber(day)} · estimated range, no timer
+        <p className="faint mt-2 border-t border-line pt-2 text-[11px]">
+          Week {week.weekNumber}, day {dayNumber(day)}. Estimated range, no timer
         </p>
       ) : null}
     </section>
@@ -385,7 +381,7 @@ function ResetWeekButton({ weekId }: { weekId: string }) {
 
   return (
     <span className="flex flex-wrap items-center gap-1.5 rounded-lg border border-bad/30 bg-bad-soft px-2 py-1.5">
-      <span className="text-[10.5px] text-bad">Clear checks and checkpoint attempts?</span>
+      <span className="text-[11.5px] text-bad">Clear checks and checkpoint attempts?</span>
       <Button
         variant="danger"
         size="sm"
@@ -404,17 +400,12 @@ function ResetWeekButton({ weekId }: { weekId: string }) {
   )
 }
 
-function WeekStat({ label, value, meta, icon }: { label: string; value: string; meta: string; icon: ReactNode }) {
+function WeekStat({ label, value, meta }: { label: string; value: string; meta: string }) {
   return (
-    <div className="card px-3 py-2.5">
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="faint truncate text-[9.5px] font-semibold tracking-[0.1em] uppercase">{label}</span>
-        <span className="flex-none text-t3" aria-hidden>
-          {icon}
-        </span>
-      </div>
-      <p className="num mt-1.5 text-[15px] leading-none font-semibold">{value}</p>
-      <p className="faint mt-1 truncate text-[10px]">{meta}</p>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className="num mt-1 text-[19px] leading-none font-semibold">{value}</p>
+      <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
   )
 }

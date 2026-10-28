@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { BrainCircuit, Clock3, Layers, TrendingDown } from 'lucide-react'
 import { useActiveSubject } from '../../store/AppStore'
 import { dueCards } from '../../engine/srs'
+import { cn } from '../../lib/utils'
 import { Tabs } from '../../components/ui/primitives'
 import { SrsPanel } from './SrsPanel'
 import { DeckPanel } from './DeckPanel'
@@ -37,12 +37,12 @@ export function RecallView() {
         />
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <RecallStat icon={<Clock3 size={14} />} label="Due today" value={due} tone={due ? 'accent' : 'neutral'} />
-        <RecallStat icon={<Layers size={14} />} label="New cards" value={fresh} tone={fresh ? 'info' : 'neutral'} />
-        <RecallStat icon={<BrainCircuit size={14} />} label="Deck size" value={subject.cards.length} />
-        <RecallStat icon={<TrendingDown size={14} />} label="Total lapses" value={lapses} tone={lapses ? 'bad' : 'neutral'} />
-      </div>
+      <section className="ledger mt-4" aria-label="Practice totals">
+        <RecallStat label="Due today" value={due} tone={due ? 'accent' : 'neutral'} />
+        <RecallStat label="New cards" value={fresh} tone={fresh ? 'info' : 'neutral'} />
+        <RecallStat label="Deck size" value={subject.cards.length} />
+        <RecallStat label="Total lapses" value={lapses} tone={lapses ? 'bad' : 'neutral'} />
+      </section>
 
       <div className="mt-4">
         {tab === 'study' ? <SrsPanel /> : null}
@@ -54,33 +54,20 @@ export function RecallView() {
 }
 
 function RecallStat({
-  icon,
   label,
   value,
   tone = 'neutral',
 }: {
-  icon: React.ReactNode
   label: string
   value: number
   tone?: 'neutral' | 'accent' | 'info' | 'bad'
 }) {
   const colour =
-    tone === 'accent'
-      ? 'bg-accent-soft text-accent'
-      : tone === 'info'
-        ? 'bg-info-soft text-info'
-        : tone === 'bad'
-          ? 'bg-bad-soft text-bad'
-          : 'bg-s2 text-t2'
+    tone === 'accent' ? 'text-accent' : tone === 'info' ? 'text-info' : tone === 'bad' ? 'text-bad' : 'text-t1'
   return (
-    <div className="card flex items-center gap-2.5 px-3 py-2.5">
-      <span className={`grid h-7 w-7 flex-none place-items-center rounded-lg ${colour}`} aria-hidden>
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="faint truncate text-[10px] tracking-wide uppercase">{label}</p>
-        <p className="num text-[15px] font-semibold leading-tight">{value}</p>
-      </div>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className={cn('num mt-1 text-[19px] leading-none font-semibold', colour)}>{value}</p>
     </div>
   )
 }

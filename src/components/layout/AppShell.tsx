@@ -150,8 +150,8 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
           </span>
           {!prefs.sidebarCollapsed ? (
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-bold tracking-tight">SkillMastery</p>
-              <p className="faint -mt-0.5 text-[9.5px] tracking-[0.14em] uppercase">Learning OS</p>
+              <p className="truncate text-[13.5px] font-semibold tracking-tight">SkillMastery</p>
+              <p className="faint -mt-0.5 text-[11px]">Six-month craft course</p>
             </div>
           ) : null}
         </div>
@@ -174,7 +174,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                     className={cn(
                       'group relative flex h-10 items-center gap-2.5 rounded-[10px] px-2.5 text-[12.5px] font-medium transition',
                       active
-                        ? 'bg-accent-soft text-accent-strong'
+                        ? 'text-t1 before:absolute before:inset-y-1.5 before:left-0 before:w-[2px] before:rounded-full before:bg-accent'
                         : 'text-t2 hover:bg-s2 hover:text-t1',
                       prefs.sidebarCollapsed && 'justify-center px-0',
                     )}
@@ -186,9 +186,6 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                       aria-hidden
                     />
                     {!prefs.sidebarCollapsed ? <span>{entry.label}</span> : null}
-                    {active && !prefs.sidebarCollapsed ? (
-                      <span className="absolute right-2 h-1 w-1 rounded-full bg-accent" aria-hidden />
-                    ) : null}
                   </a>
                 </li>
               )
@@ -206,7 +203,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="eyebrow">This week</span>
-                  <span className="num faint text-[10.5px]">
+                  <span className="num faint text-[11.5px]">
                     W{week.weekNumber}/{subject.weeks.length}
                   </span>
                 </div>
@@ -215,10 +212,10 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                   <div className="rail !h-1.5 flex-1">
                     <span style={{ width: `${Math.round(weekProgress(week) * 100)}%` }} />
                   </div>
-                  <span className="faint num text-[10px]">{Math.round(weekProgress(week) * 100)}%</span>
+                  <span className="faint num text-[11px]">{Math.round(weekProgress(week) * 100)}%</span>
                 </div>
                 {week.gate.attempts.length > 0 ? (
-                  <p className="faint mt-1.5 text-[10px]">
+                  <p className="faint mt-1.5 text-[11px]">
                     Last checkpoint {formatShortDate(week.gate.attempts[week.gate.attempts.length - 1]!.at)}
                   </p>
                 ) : null}
@@ -229,7 +226,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 onClick={() => navigate('#/plan')}
                 className="w-full rounded-xl border border-dashed border-line-strong p-3 text-left text-[11.5px] text-t2 hover:bg-s2"
               >
-                Add this track's first week →
+                Add this track's first week
               </button>
             )}
           </div>
@@ -249,7 +246,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
             <>
               <div className="min-w-0 flex-1 px-1">
                 <p className="truncate text-[11px] font-medium">{subject.shortName}</p>
-                <p className="faint text-[9.5px]">IndexedDB · offline</p>
+                <p className="faint text-[11px]">Saved on this device</p>
               </div>
               <IconButton label="Open settings" onClick={openSettings}>
                 <Settings size={16} />
@@ -274,7 +271,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="eyebrow truncate">{subject.shortName}</span>
-                <span className="faint text-[10px]">/</span>
+                <span className="faint text-[11px]">/</span>
                 <span className="faint text-[11px]">{viewLabel(route.view)}</span>
               </div>
               <p className="mt-0.5 hidden text-[12.5px] font-semibold lg:block">
@@ -289,7 +286,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
             >
               <Search size={14} className="flex-none" aria-hidden />
               <span className="flex-1 truncate">Search weeks, concepts, cards…</span>
-              <span className="flex items-center gap-0.5 rounded border border-line bg-s2 px-1 py-0.5 font-mono text-[9.5px]">
+              <span className="flex items-center gap-0.5 rounded border border-line bg-s2 px-1 py-0.5 text-[11px]">
                 <Command size={9} /> K
               </span>
             </button>
@@ -337,8 +334,8 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 <Target size={15} strokeWidth={2.4} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-bold tracking-tight">SkillMastery</p>
-                <p className="faint -mt-0.5 text-[9px] tracking-[0.12em] uppercase">{viewLabel(route.view)}</p>
+                <p className="truncate text-[13.5px] font-semibold tracking-tight">SkillMastery</p>
+                <p className="faint -mt-0.5 text-[11px]">{viewLabel(route.view)}</p>
               </div>
               <IconButton label="Search everything" onClick={openPalette}>
                 <Search size={18} />
@@ -377,7 +374,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 href={entry.hash}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium transition',
+                  'flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium transition',
                   active ? 'text-accent' : 'text-t3',
                 )}
               >
@@ -399,7 +396,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
             aria-expanded={moreOpen}
             aria-current={moreActive ? 'page' : undefined}
             className={cn(
-              'flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium transition',
+              'flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium transition',
               moreActive || moreOpen ? 'text-accent' : 'text-t3',
             )}
           >

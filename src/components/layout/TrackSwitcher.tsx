@@ -67,7 +67,7 @@ export function TrackSwitcher({ compact = false, dense = false }: { compact?: bo
         <span
           className={cn(
             'grid flex-none place-items-center rounded-lg font-bold',
-            dense ? 'h-6 w-6 text-[9.5px]' : 'h-8 w-8 text-[12px]',
+            dense ? 'h-6 w-6 text-[11px]' : 'h-8 w-8 text-[12px]',
           )}
           style={{ background: 'var(--accent-soft)', color: 'var(--accent-strong)' }}
           aria-hidden
@@ -79,7 +79,7 @@ export function TrackSwitcher({ compact = false, dense = false }: { compact?: bo
             {active.shortName}
           </span>
           {!dense ? (
-            <span className="faint block text-[10.5px]">{active.weeks.length} weeks · switch track</span>
+            <span className="faint block text-[11.5px]">{active.weeks.length} weeks · switch track</span>
           ) : null}
         </span>
         <ChevronDown size={14} className="flex-none text-t3" aria-hidden />

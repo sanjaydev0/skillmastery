@@ -1,14 +1,8 @@
 import { useMemo } from 'react'
-import type { ReactNode } from 'react'
 import {
   AlertTriangle,
-  ArrowRight,
   CalendarDays,
-  CheckCircle2,
   ChevronRight,
-  Clock3,
-  Layers,
-  TrendingUp,
 } from 'lucide-react'
 import type { Phase, PlannerSettings, Week } from '../../types/schema'
 import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
@@ -70,31 +64,15 @@ export function PlanView() {
         </div>
       </header>
 
-      <section className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Plan totals">
-        <PlanStat
-          label="Weeks"
-          value={String(orderedWeeks.length)}
-          meta={`${cleared} checkpoints cleared`}
-          icon={<Layers size={13} />}
-        />
-        <PlanStat
-          label="Planned"
-          value={formatTotal(course.planned)}
-          meta={`${course.items} tasks in total`}
-          icon={<Clock3 size={13} />}
-        />
+      <section className="ledger mt-4" aria-label="Plan totals">
+        <PlanStat label="Weeks" value={String(orderedWeeks.length)} meta={`${cleared} checkpoints cleared`} />
+        <PlanStat label="Planned" value={formatTotal(course.planned)} meta={`${course.items} tasks in total`} />
         <PlanStat
           label="Completed"
           value={formatTotal(course.done)}
-          meta={`${course.doneItems}/${course.items} tasks checked`}
-          icon={<CheckCircle2 size={13} />}
+          meta={`${course.doneItems} of ${course.items} tasks checked`}
         />
-        <PlanStat
-          label="Remaining"
-          value={formatTotal(course.remaining)}
-          meta="Estimate range, not a countdown"
-          icon={<TrendingUp size={13} />}
-        />
+        <PlanStat label="Remaining" value={formatTotal(course.remaining)} meta="Estimate range, not a countdown" />
       </section>
 
       <CapacityEditor />
@@ -144,7 +122,7 @@ function PhaseHeading({ phase, weeks }: { phase: Phase; weeks: Week[] }) {
         <p className="faint mt-0.5 text-[11px]">{phase.subtitle}</p>
       </div>
       <div className="flex items-center gap-2">
-        <span className="faint num text-[10.5px]">
+        <span className="faint num text-[11.5px]">
           {cleared}/{weeks.length} checkpoints
         </span>
         <ProgressBar
@@ -187,43 +165,33 @@ function WeekPlanCard({
         <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: 'var(--accent)' }} aria-hidden />
       ) : null}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-baseline gap-2.5">
           <span
             className={cn(
-              'num grid h-9 w-9 flex-none place-items-center rounded-lg border text-[12px] font-bold',
-              status === 'mastered'
-                ? 'border-good/30 bg-good-soft text-good'
-                : status === 'locked'
-                  ? 'border-line bg-s2 text-t3'
-                  : 'border-accent/25 bg-accent-soft text-accent-strong',
+              'display flex-none text-[17px] leading-none font-medium',
+              status === 'mastered' ? 'text-good' : status === 'locked' ? 'text-t3' : 'text-accent-strong',
             )}
             aria-hidden
           >
             {String(week.weekNumber).padStart(2, '0')}
           </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1">
-              <WeekBadge status={status} />
-              {active ? <Badge tone="accent">Current</Badge> : null}
-              {week.capstone ? <Badge tone="warn">Capstone</Badge> : null}
-            </div>
-            <p className="faint mt-0.5 text-[10px]">
-              {doneTasks}/{week.checklist.length} tasks · {week.checklist.length === 7 ? 'one per day' : 'day plan'}
-            </p>
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            <WeekBadge status={status} />
+            {active ? <Badge tone="accent">Current</Badge> : null}
+            {week.capstone ? <Badge tone="warn">Capstone</Badge> : null}
+            <span className="faint text-[11px]">
+              {doneTasks} of {week.checklist.length} tasks
+            </span>
           </div>
         </div>
-        <ArrowRight
-          size={15}
-          className="mt-1 flex-none text-t3 transition group-hover:translate-x-0.5 group-hover:text-accent"
-          aria-hidden
-        />
       </div>
 
-      <h3 className="mt-2 line-clamp-2 text-[13.5px] leading-snug font-semibold">{week.title}</h3>
+      <h3 className="mt-1.5 line-clamp-2 text-[13.5px] leading-snug font-semibold">{week.title}</h3>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-1">
-        <span className="pill !py-0.5 !text-[9.5px]">Plan {formatTotal(summary.planned)}</span>
-        <span className="pill !py-0.5 !text-[9.5px]">Done {formatTotal(summary.done)}</span>
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="faint num text-[11px]">
+          {formatTotal(summary.planned)} planned, {formatTotal(summary.done)} done
+        </span>
         {overloaded > 0 ? (
           <Badge tone="warn" icon={<AlertTriangle size={10} />}>
             {overloaded} day{overloaded === 1 ? '' : 's'} over
@@ -238,16 +206,15 @@ function WeekPlanCard({
           className="flex-1 !h-1.5"
           label={`Week ${week.weekNumber} estimate done`}
         />
-        <span className="faint num text-[9.5px]">{percent(ratio)}%</span>
+        <span className="faint num text-[11px]">{percent(ratio)}%</span>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-line pt-2">
-        <span className="faint truncate text-[10px]">
+      <div className="mt-2 border-t border-line pt-2">
+        <span className="faint block truncate text-[11px]">
           {status === 'mastered'
-            ? `Checkpoint cleared · ${formatTotal(summary.done)} credited`
+            ? `Checkpoint cleared, ${formatTotal(summary.done)} credited`
             : (blueprint?.project ?? week.bookFocus)}
         </span>
-        <ChevronRight size={12} className="flex-none text-t3" aria-hidden />
       </div>
     </a>
   )
@@ -288,8 +255,8 @@ function CapacityEditor() {
             Minutes per day, not a target. Plan overload warnings use these numbers.
           </p>
         </div>
-        <p className="faint num text-[10.5px]">
-          Weekday {minutesLabel(weekdayTotal)} · Weekend {minutesLabel(weekendTotal)}
+        <p className="faint num text-[11.5px]">
+          Weekday {minutesLabel(weekdayTotal)}, weekend {minutesLabel(weekendTotal)}
         </p>
       </div>
 
@@ -309,40 +276,25 @@ function CapacityEditor() {
                 onChange={(event) => setValue(field.key, event.target.value)}
                 aria-label={`${field.label} minutes per day`}
               />
-              <span className="faint text-[10.5px]">min</span>
+              <span className="faint text-[11.5px]">min</span>
             </span>
-            <span className="faint mt-1 block text-[9.5px] leading-snug">{field.hint}</span>
+            <span className="faint mt-1 block text-[11px] leading-snug">{field.hint}</span>
           </label>
         ))}
       </div>
-      <p className="faint mt-2 border-t border-line pt-2 text-[10px]">
+      <p className="faint mt-2 border-t border-line pt-2 text-[11px]">
         Sunday is the buffer day. Capacity is stored on this device and is not overwritten by an imported backup.
       </p>
     </section>
   )
 }
 
-function PlanStat({
-  label,
-  value,
-  meta,
-  icon,
-}: {
-  label: string
-  value: string
-  meta: string
-  icon: ReactNode
-}) {
+function PlanStat({ label, value, meta }: { label: string; value: string; meta: string }) {
   return (
-    <div className="card px-3 py-2.5">
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="faint truncate text-[9.5px] font-semibold tracking-[0.1em] uppercase">{label}</span>
-        <span className="flex-none text-t3" aria-hidden>
-          {icon}
-        </span>
-      </div>
-      <p className="num mt-1.5 text-[15px] leading-none font-semibold">{value}</p>
-      <p className="faint mt-1 truncate text-[10px]">{meta}</p>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className="num mt-1 text-[19px] leading-none font-semibold">{value}</p>
+      <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
   )
 }

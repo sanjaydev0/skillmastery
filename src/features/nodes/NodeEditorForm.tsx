@@ -179,7 +179,7 @@ export function NodeEditorForm({
           {points.map((point, index) => (
             <div key={point.id} className="rounded-xl border border-line bg-s2 p-2.5">
               <div className="mb-2 flex items-center justify-between">
-                <span className="pill !py-0.5 !text-[10px]">Primitive · Concept · Failure mode</span>
+                <span className="pill !py-0.5 !text-[11px]">Primitive · Concept · Failure mode</span>
                 {points.length > 1 ? (
                   <button
                     type="button"
@@ -309,7 +309,7 @@ function NodePicker({
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-2">
         <div>
           <p className="text-[11.5px] font-semibold">{label}</p>
-          <p className="faint text-[10px]">{hint}</p>
+          <p className="faint text-[11px]">{hint}</p>
         </div>
         <span className="badge badge-neutral num">{selected.length}</span>
       </div>
@@ -347,7 +347,7 @@ function NodePicker({
                   />
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{entry.title}</span>
-                    <span className="faint text-[9.5px]">
+                    <span className="faint text-[11px]">
                       W{weekNumbers.get(entry.weekId) ?? '?'} · {entry.status}
                     </span>
                   </span>

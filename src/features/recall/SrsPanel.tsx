@@ -117,10 +117,10 @@ export function SrsPanel() {
             <p className="muted mt-1 text-[13px]">
               {total} card{total === 1 ? '' : 's'} reviewed. The schedule now owns them; trust it until tomorrow.
             </p>
-            <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            <div className="mini-ledger mt-4 rounded-[6px] text-left">
               {GRADE_ORDER.map((grade) => (
-                <div key={grade} className="rounded-xl border border-line bg-s2 px-2 py-2">
-                  <p className="faint text-[9.5px] capitalize">{grade}</p>
+                <div key={grade}>
+                  <p className="faint text-[11px] capitalize">{grade}</p>
                   <p className="num text-[17px] font-semibold">{session.grades[grade]}</p>
                 </div>
               ))}
@@ -142,7 +142,7 @@ export function SrsPanel() {
                 </Button>
               ) : null}
             </div>
-            <p className="faint mt-3 text-[10.5px]">
+            <p className="faint mt-3 text-[11.5px]">
               Every card now has a next review date. No streak is awarded for cramming.
             </p>
           </div>
@@ -186,9 +186,9 @@ export function SrsPanel() {
             <Badge tone={currentCard.source === 'mistake' ? 'bad' : 'neutral'}>
               {currentCard.source === 'mistake' ? 'Mistake log' : 'Core concept'}
             </Badge>
-            {week ? <span className="pill !py-0.5 !text-[10px]">Week {week.weekNumber}</span> : null}
-            {node ? <span className="faint truncate text-[10.5px]">· {node.title}</span> : null}
-            <span className="faint ml-auto text-[10px]">{relativeDays(currentCard.dueAt)}</span>
+            {week ? <span className="pill !py-0.5 !text-[11px]">Week {week.weekNumber}</span> : null}
+            {node ? <span className="faint truncate text-[11.5px]">· {node.title}</span> : null}
+            <span className="faint ml-auto text-[11px]">{relativeDays(currentCard.dueAt)}</span>
           </div>
 
           <div className="flex flex-1 items-center justify-center px-1 py-8">
@@ -204,7 +204,7 @@ export function SrsPanel() {
               {currentCard.tags.length > 0 ? (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {currentCard.tags.map((tag) => (
-                    <span key={tag} className="pill !py-0 !text-[9.5px]">
+                    <span key={tag} className="pill !py-0 !text-[11px]">
                       {tag}
                     </span>
                   ))}
@@ -216,7 +216,7 @@ export function SrsPanel() {
               <Button variant="primary" size="lg" onClick={() => setRevealed(true)} className="px-8">
                 Show answer
               </Button>
-              <p className="faint mt-1.5 text-[10px]">Space / Enter</p>
+              <p className="faint mt-1.5 text-[11px]">Space / Enter</p>
             </div>
           )}
 
@@ -241,13 +241,13 @@ export function SrsPanel() {
                   >
                     <span className="text-[12px] font-semibold">
                       {grade[0]!.toUpperCase() + grade.slice(1)}
-                      <span className="faint ml-1 font-mono text-[9px]">{index + 1}</span>
+                      <span className="faint ml-1 font-mono text-[11px]">{index + 1}</span>
                     </span>
-                    <span className="text-[10px] opacity-80">{nextInterval(currentCard, grade)}</span>
+                    <span className="text-[11px] opacity-80">{nextInterval(currentCard, grade)}</span>
                   </button>
                 ))}
               </div>
-              <p className="faint mt-2 text-center text-[10px]">
+              <p className="faint mt-2 text-center text-[11px]">
                 Grade only what you retrieved. “Good” is not a reward for recognising the answer.
               </p>
             </div>
@@ -262,17 +262,17 @@ export function SrsPanel() {
 
   return (
     <div>
-      <div className="grid gap-2 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid items-start gap-2 lg:grid-cols-[1.35fr_1fr]">
         <section className="card card-pad">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="eyebrow">Today · {new Date().toLocaleDateString(undefined, { weekday: 'long' })}</p>
-              <h2 className="h1 mt-1 text-[1.35rem]">
-                {queue > 0 ? 'Retrieve before you consume.' : 'Queue clear.'}
+              <p className="eyebrow">Today, {new Date().toLocaleDateString(undefined, { weekday: 'long' })}</p>
+              <h2 className="display mt-1 text-[1.4rem] leading-tight font-medium">
+                {queue > 0 ? 'Answer from memory.' : 'Queue clear.'}
               </h2>
-              <p className="muted mt-1 max-w-md text-[12.5px]">
+              <p className="muted mt-1.5 max-w-md text-[12.5px]">
                 {queue > 0
-                  ? 'A card is only learned when it can be answered cold. Mixed sessions clear due reviews first, then introduce new material.'
+                  ? 'A card counts as learned when you can answer it without looking. Due reviews come first, then new cards.'
                   : 'No scheduled reviews are due and no new cards are waiting. Add cards or enjoy the empty queue.'}
               </p>
             </div>
@@ -281,7 +281,7 @@ export function SrsPanel() {
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <div className="mini-ledger mt-4 rounded-[6px]">
             <QueueStat label="Due" value={due.length} tone={due.length ? 'accent' : 'neutral'} />
             <QueueStat label="New" value={fresh.length} tone={fresh.length ? 'info' : 'neutral'} />
             <QueueStat label="Scheduled" value={scheduled.length} />
@@ -319,20 +319,21 @@ export function SrsPanel() {
 
         <section className="card card-pad">
           <SectionHead title="The schedule" eyebrow="Fixed ladder" />
-          <div className="flex items-center gap-1.5">
+          <div className="grid grid-cols-5 border-y border-line">
             {[1, 3, 6, 10, 7].map((days, index) => (
-              <div key={`${days}-${index}`} className="flex flex-1 flex-col items-center gap-1">
+              <div
+                key={`${days}-${index}`}
+                className={cn('py-2 text-center', index > 0 && 'border-l border-line')}
+              >
                 <span
                   className={cn(
-                    'grid h-9 w-full place-items-center rounded-lg border text-[12px] font-semibold',
-                    index === 4
-                      ? 'border-good/25 bg-good-soft text-good'
-                      : 'border-line bg-s2 text-t2',
+                    'display block text-[18px] leading-none font-medium',
+                    index === 4 ? 'text-good' : 'text-t1',
                   )}
                 >
                   {index === 4 ? '∞' : `${days}d`}
                 </span>
-                <span className="faint text-[9px]">step {index + 1}</span>
+                <span className="faint mt-1 block text-[11px]">step {index + 1}</span>
               </div>
             ))}
           </div>
@@ -340,16 +341,16 @@ export function SrsPanel() {
             Again resets to tomorrow. Hard keeps the current interval. Good advances one step; Easy skips a step.
             The ladder caps at weekly forever.
           </p>
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center justify-between rounded-lg border border-line bg-s2 px-2.5 py-2">
+          <div className="mt-3 border-t border-line">
+            <div className="flex items-center justify-between gap-3 border-b border-line py-2">
               <span className="faint text-[11px]">Total lapses</span>
               <span className="num text-[12px] font-semibold">{lapses}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-line bg-s2 px-2.5 py-2">
+            <div className="flex items-center justify-between gap-3 border-b border-line py-2">
               <span className="faint text-[11px]">Cards due today</span>
               <span className="num text-[12px] font-semibold">{subject.cards.filter((card) => isCardDue(card)).length}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-line bg-s2 px-2.5 py-2">
+            <div className="flex items-center justify-between gap-3 border-b border-line py-2">
               <span className="faint text-[11px]">Next scheduled card</span>
               <span className="text-[11.5px] font-medium">
                 {scheduled.length
@@ -364,7 +365,7 @@ export function SrsPanel() {
       <section className="card card-pad mt-2">
         <SectionHead
           title="Today’s queue"
-          eyebrow="Due first · new second"
+          eyebrow="Due first, new second"
           action={
             due.length > 0 ? (
               <Button size="sm" variant="soft" onClick={() => start('due')}>
@@ -392,10 +393,10 @@ export function SrsPanel() {
                     )}
                     aria-hidden
                   />
-                  <span className="faint text-[9.5px] uppercase tracking-wide">
+                  <span className="faint text-[11px] tracking-wide">
                     {card.dueAt === 0 ? 'New' : 'Due'}
                   </span>
-                  <span className="faint ml-auto text-[9.5px]">{relativeDays(card.dueAt)}</span>
+                  <span className="faint ml-auto text-[11px]">{relativeDays(card.dueAt)}</span>
                 </div>
                 <p className="mt-1 line-clamp-2 text-[11.5px] font-medium">{card.front}</p>
               </div>
@@ -419,9 +420,9 @@ function QueueStat({
   const colour =
     tone === 'accent' ? 'text-accent' : tone === 'info' ? 'text-info' : tone === 'good' ? 'text-good' : 'text-t1'
   return (
-    <div className="rounded-xl border border-line bg-s2 px-2.5 py-2">
-      <p className="faint text-[9.5px] uppercase tracking-wide">{label}</p>
-      <p className={cn('num text-[18px] font-semibold leading-tight', colour)}>{value}</p>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className={cn('num mt-1 text-[18px] leading-none font-semibold', colour)}>{value}</p>
     </div>
   )
 }

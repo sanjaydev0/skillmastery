@@ -137,7 +137,7 @@ export function SubjectCreateSheet({ onClose }: { onClose: () => void }) {
                   <p className="text-[11.5px] font-semibold">
                     {phase} · {label}
                   </p>
-                  <p className="faint text-[10.5px]">{detail}</p>
+                  <p className="faint text-[11.5px]">{detail}</p>
                 </div>
               </li>
             ))}
@@ -148,7 +148,7 @@ export function SubjectCreateSheet({ onClose }: { onClose: () => void }) {
           <p className="eyebrow mb-1.5">Preview</p>
           <div className="flex items-center gap-2.5">
             <span
-              className="grid h-8 w-8 flex-none place-items-center rounded-lg text-[10px] font-bold text-white"
+              className="grid h-8 w-8 flex-none place-items-center rounded-lg text-[11px] font-bold text-white"
               style={{ background: ACCENTS.find((option) => option.id === accent)?.colour }}
               aria-hidden
             >

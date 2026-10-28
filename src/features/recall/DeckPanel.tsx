@@ -182,19 +182,19 @@ export function DeckPanel() {
                       <Badge tone={card.source === 'mistake' ? 'bad' : 'neutral'}>
                         {card.source === 'mistake' ? 'Mistake' : 'Core'}
                       </Badge>
-                      {weekNumber ? <span className="pill !py-0 !text-[9.5px]">W{weekNumber}</span> : null}
-                      {node ? <span className="faint truncate text-[10px]">· {node.title}</span> : null}
-                      <span className="faint text-[10px]">· due {relativeDays(card.dueAt)}</span>
+                      {weekNumber ? <span className="pill !py-0 !text-[11px]">W{weekNumber}</span> : null}
+                      {node ? <span className="faint truncate text-[11px]">· {node.title}</span> : null}
+                      <span className="faint text-[11px]">· due {relativeDays(card.dueAt)}</span>
                     </div>
                     <p className="mt-1.5 text-[12.5px] font-semibold">{card.front}</p>
                     <p className="muted mt-0.5 line-clamp-2 text-[11.5px] leading-relaxed">{card.back}</p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1">
                       {card.tags.slice(0, 5).map((tag) => (
-                        <span key={tag} className="pill !px-1.5 !py-0 !text-[9.5px]">
+                        <span key={tag} className="pill !px-1.5 !py-0 !text-[11px]">
                           {tag}
                         </span>
                       ))}
-                      <span className="faint ml-auto num text-[9.5px]">
+                      <span className="faint ml-auto num text-[11px]">
                         {card.reviews} reviews · {card.lapses} lapses · edited {formatTimestamp(card.updatedAt)}
                       </span>
                     </div>
@@ -232,7 +232,7 @@ export function DeckPanel() {
         </div>
       )}
 
-      <p className="faint mt-3 text-center text-[10.5px]">
+      <p className="faint mt-3 text-center text-[11.5px]">
         Export uses the current filter. Imported cards are new until their first review.
       </p>
 

@@ -177,7 +177,7 @@ export function OverviewView() {
                 <div className="rounded-xl border border-line bg-s2/70 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="eyebrow">{mode} block · next up</p>
-                    <span className="faint num text-[10.5px]">
+                    <span className="faint num text-[11.5px]">
                       {modeDone}/{modeTotal} done
                     </span>
                   </div>
@@ -224,7 +224,7 @@ export function OverviewView() {
                     <div className="mt-2.5 grid grid-cols-4 gap-1">
                       {(['concept', 'implementation', 'craft', 'debugging'] as const).map((key) => (
                         <div key={key} className="rounded-md bg-s2 px-1.5 py-1 text-center">
-                          <p className="faint text-[8.5px] uppercase tracking-wide">{key.slice(0, 4)}</p>
+                          <p className="faint text-[8.5px] tracking-wide">{key.slice(0, 4)}</p>
                           <p className="num text-[12px] font-semibold">{week.gate.scores?.[key] ?? '—'}</p>
                         </div>
                       ))}
@@ -280,7 +280,7 @@ export function OverviewView() {
             {dots.map((dot) => (
               <div key={dot.key} className="flex flex-1 flex-col items-center gap-1">
                 <div
-                  className="grid h-7 w-full place-items-center rounded-md border text-[9px] font-semibold"
+                  className="grid h-7 w-full place-items-center rounded-md border text-[11px] font-semibold"
                   style={{
                     background: dot.core > 0 ? 'var(--accent-soft)' : 'var(--surface-2)',
                     borderColor: dot.core > 0 ? 'color-mix(in srgb, var(--accent) 24%, transparent)' : 'var(--border)',
@@ -290,14 +290,14 @@ export function OverviewView() {
                 >
                   {dot.core > 0 ? dot.core : '·'}
                 </div>
-                <span className="faint text-[9px]">{dot.weekday}</span>
+                <span className="faint text-[11px]">{dot.weekday}</span>
               </div>
             ))}
           </div>
 
           <div className="mt-3 flex items-center gap-2">
             <ProgressBar value={rhythmItems.length ? rhythmDone / rhythmItems.length : 0} className="flex-1" />
-            <span className="num faint text-[10.5px]">
+            <span className="num faint text-[11.5px]">
               {rhythmDone}/{rhythmItems.length}
             </span>
           </div>
@@ -413,7 +413,7 @@ export function OverviewView() {
                 ))}
               </div>
               <div className="mt-3 rounded-lg border border-line bg-s2 px-2.5 py-2">
-                <p className="faint text-[10.5px]">
+                <p className="faint text-[11.5px]">
                   {stats.badgeCounts.mastered === subject.nodes.length
                     ? 'Every node proven. This graph is closed — defend it blind.'
                     : `${subject.nodes.length - stats.badgeCounts.mastered} nodes remain unproven. Only a blind gate clears a week.`}
@@ -443,11 +443,11 @@ export function OverviewView() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-semibold">{book.title}</p>
-                    <p className="faint truncate text-[10.5px]">{book.pillar}</p>
+                    <p className="faint truncate text-[11.5px]">{book.pillar}</p>
                   </div>
                   <button
                     type="button"
-                    className="num flex-none rounded-md border border-line bg-s2 px-1.5 py-0.5 text-[10px] font-semibold hover:border-line-strong"
+                    className="num flex-none rounded-md border border-line bg-s2 px-1.5 py-0.5 text-[11px] font-semibold hover:border-line-strong"
                     onClick={() =>
                       updateBook(book.id, {
                         currentChapter: Math.min(book.totalChapters, book.currentChapter + 1),
@@ -466,7 +466,7 @@ export function OverviewView() {
                     tone={book.status === 'done' ? 'good' : 'accent'}
                     className="!h-1.5 flex-1"
                   />
-                  <span className="faint num text-[9.5px]">
+                  <span className="faint num text-[11px]">
                     {book.currentChapter}/{book.totalChapters}
                   </span>
                 </div>
@@ -495,7 +495,7 @@ export function OverviewView() {
               <p className="muted mt-1 text-[12px] leading-relaxed">{prompt.description}</p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {prompt.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="pill !py-0.5 !text-[10px]">
+                  <span key={tag} className="pill !py-0.5 !text-[11px]">
                     {tag}
                   </span>
                 ))}
@@ -550,7 +550,7 @@ export function OverviewView() {
                       <Wrench size={13} className="text-bad" aria-hidden />
                     </div>
                     <p className="mt-1 line-clamp-2 text-[12px] font-semibold">{node.title}</p>
-                    <p className="faint mt-1 text-[10.5px]">
+                    <p className="faint mt-1 text-[11.5px]">
                       {node.status === 'needs-repair' ? 'Second failure on this node' : `${flags.length} repair flag${flags.length === 1 ? '' : 's'} active`}
                     </p>
                   </button>
@@ -574,9 +574,9 @@ export function OverviewView() {
                 ['4', 'Gate', 'Closed book, no AI'],
               ].map(([n, title, detail]) => (
                 <div key={n} className="rounded-lg border border-line bg-s2 p-2">
-                  <span className="num text-[10px] font-bold text-accent">{n}</span>
+                  <span className="num text-[11px] font-bold text-accent">{n}</span>
                   <p className="mt-0.5 text-[11.5px] font-semibold">{title}</p>
-                  <p className="faint text-[10px]">{detail}</p>
+                  <p className="faint text-[11px]">{detail}</p>
                 </div>
               ))}
             </div>
@@ -602,7 +602,7 @@ export function OverviewView() {
             </p>
           )}
           <div className="mt-3 rounded-lg border border-line border-dashed px-2.5 py-2">
-            <p className="faint text-[10.5px] leading-relaxed">
+            <p className="faint text-[11.5px] leading-relaxed">
               Rule: if it is not in the current week's gate, it is a parked idea — not a side quest.
             </p>
           </div>

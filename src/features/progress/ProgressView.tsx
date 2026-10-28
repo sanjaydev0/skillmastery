@@ -1,13 +1,7 @@
 import { useMemo } from 'react'
-import type { ReactNode } from 'react'
 import {
-  ArrowRight,
   BrainCircuit,
-  CheckCircle2,
   ChevronRight,
-  Clock3,
-  Percent,
-  Sparkles,
   Target,
 } from 'lucide-react'
 import type { Week } from '../../types/schema'
@@ -70,7 +64,7 @@ export function ProgressView() {
                 {course.doneItems} of {course.items} tasks checked
               </h2>
               <p className="muted mt-0.5 text-[11.5px]">
-                {course.weeks} weeks · {subject.phases.length} phases · {subject.shortName}
+                {course.weeks} weeks across {subject.phases.length} phases in {subject.shortName}
               </p>
             </div>
           </div>
@@ -82,10 +76,10 @@ export function ProgressView() {
                 <span className="num">{formatTotal(course.planned)}</span>
                 <span className="faint"> estimate completed</span>
               </p>
-              <span className="faint num text-[10.5px]">{percent(estimateRatio)}%</span>
+              <span className="faint num text-[11.5px]">{percent(estimateRatio)}%</span>
             </div>
             <ProgressBar value={estimateRatio} className="mt-2 !h-2" label="Course estimate completed" />
-            <p className="faint mt-2 text-[10.5px]">
+            <p className="faint mt-2 text-[11.5px]">
               {formatTotal(course.remaining)} of estimated work remains. Ranges come from each task, so they stay
               honest even when a task runs long.
             </p>
@@ -93,20 +87,14 @@ export function ProgressView() {
         </div>
       </section>
 
-      <section className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Progress totals">
-        <ProgressStat label="Completed" value={formatTotal(course.done)} meta="Credited estimate" icon={<CheckCircle2 size={13} />} />
-        <ProgressStat label="Remaining" value={formatTotal(course.remaining)} meta="Planned minus done" icon={<Clock3 size={13} />} />
-        <ProgressStat
-          label="Checkpoints"
-          value={`${cleared}/${orderedWeeks.length}`}
-          meta="Cleared without notes"
-          icon={<Sparkles size={13} />}
-        />
+      <section className="ledger mt-3" aria-label="Progress totals">
+        <ProgressStat label="Completed" value={formatTotal(course.done)} meta="Credited estimate" />
+        <ProgressStat label="Remaining" value={formatTotal(course.remaining)} meta="Planned minus done" />
+        <ProgressStat label="Checkpoints" value={`${cleared} of ${orderedWeeks.length}`} meta="Cleared without notes" />
         <ProgressStat
           label="Concepts"
-          value={`${mastered}/${subject.nodes.length}`}
+          value={`${mastered} of ${subject.nodes.length}`}
           meta={`${percent(overallMastery(subject.nodes))}% mastered`}
-          icon={<Percent size={13} />}
         />
       </section>
 
@@ -118,7 +106,7 @@ export function ProgressView() {
               Phase and week progress
             </h2>
           </div>
-          <span className="faint text-[10.5px]">{due} card{due === 1 ? '' : 's'} due now</span>
+          <span className="faint text-[11.5px]">{due} card{due === 1 ? '' : 's'} due now</span>
         </div>
 
         <div className="mt-2.5 space-y-4">
@@ -133,10 +121,10 @@ export function ProgressView() {
                 <div className="flex flex-wrap items-center justify-between gap-2 px-1">
                   <div>
                     <p className="text-[12px] font-semibold">{phase.name.replace(/^Phase \d+ · /, '')}</p>
-                    <p className="faint text-[10px]">{phase.subtitle}</p>
+                    <p className="faint text-[11px]">{phase.subtitle}</p>
                   </div>
-                  <span className="faint num text-[10px]">
-                    {phaseDone}/{phaseTotal} tasks · {phaseCleared}/{weeks.length} checkpoints
+                  <span className="faint num text-[11px]">
+                    {phaseDone} of {phaseTotal} tasks, {phaseCleared} of {weeks.length} checkpoints
                   </span>
                 </div>
                 <div className="card mt-1.5 divide-y divide-line overflow-hidden">
@@ -157,7 +145,7 @@ export function ProgressView() {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5">
-                            <span className="truncate text-[12px] font-medium">{week.title}</span>
+                            <span className="truncate text-[13px] font-medium">{week.title}</span>
                             {status === 'locked' ? <Badge tone="neutral">Locked</Badge> : null}
                           </span>
                           <span className="mt-1 flex items-center gap-2">
@@ -167,8 +155,8 @@ export function ProgressView() {
                               className="max-w-[260px] flex-1 !h-1"
                               label={`Week ${week.weekNumber} estimate`}
                             />
-                            <span className="faint num text-[9.5px]">
-                              {tasksDone}/{week.checklist.length} · {formatTotal(summary.done)} of{' '}
+                            <span className="faint num text-[11px]">
+                              {tasksDone} of {week.checklist.length}, {formatTotal(summary.done)} of{' '}
                               {formatTotal(summary.planned)}
                             </span>
                           </span>
@@ -196,7 +184,7 @@ export function ProgressView() {
           Totals are local to this device. Export a JSON backup in Settings before clearing browser data.
         </p>
         <a href="#/help" className="link inline-flex items-center gap-1 text-[11px]">
-          How totals work <ArrowRight size={11} aria-hidden />
+          How totals work
         </a>
       </div>
     </div>
@@ -207,17 +195,12 @@ function doneCount(week: Week): number {
   return week.checklist.filter((item) => item.done).length
 }
 
-function ProgressStat({ label, value, meta, icon }: { label: string; value: string; meta: string; icon: ReactNode }) {
+function ProgressStat({ label, value, meta }: { label: string; value: string; meta: string }) {
   return (
-    <div className="card px-3 py-2.5">
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="faint truncate text-[9.5px] font-semibold tracking-[0.1em] uppercase">{label}</span>
-        <span className="flex-none text-t3" aria-hidden>
-          {icon}
-        </span>
-      </div>
-      <p className="num mt-1.5 text-[15px] leading-none font-semibold">{value}</p>
-      <p className="faint mt-1 truncate text-[10px]">{meta}</p>
+    <div>
+      <p className="eyebrow truncate">{label}</p>
+      <p className="num mt-1 text-[19px] leading-none font-semibold">{value}</p>
+      <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
   )
 }

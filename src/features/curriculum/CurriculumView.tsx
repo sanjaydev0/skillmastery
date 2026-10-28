@@ -90,7 +90,7 @@ export function CurriculumView() {
               {icon}
             </span>
             <div className="min-w-0">
-              <p className="faint truncate text-[10px] tracking-wide uppercase">{label}</p>
+              <p className="faint truncate text-[11px] tracking-wide">{label}</p>
               <p className="num text-[14px] font-semibold">{value}</p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export function CurriculumView() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="eyebrow">Phase {index + 1}</span>
-                  <span className="faint num text-[10px]">
+                  <span className="faint num text-[11px]">
                     {phaseCleared}/{phaseWeeks.length}
                   </span>
                 </div>
@@ -137,7 +137,7 @@ export function CurriculumView() {
                   tone={phaseCleared === phaseWeeks.length && phaseWeeks.length > 0 ? 'good' : 'accent'}
                   label={`${phase.name} gates`}
                 />
-                <p className="faint mt-1 line-clamp-1 text-[10px]">{phase.subtitle}</p>
+                <p className="faint mt-1 line-clamp-1 text-[11px]">{phase.subtitle}</p>
               </button>
             )
           })}
@@ -184,7 +184,7 @@ export function CurriculumView() {
                 <div className="flex flex-wrap items-end justify-between gap-2 border-b border-line pb-2">
                   <PhaseHeading phase={phase} index={subject.phases.indexOf(phase) + 1} />
                   <div className="flex items-center gap-2">
-                    <span className="faint num text-[10.5px]">
+                    <span className="faint num text-[11.5px]">
                       {phaseCleared}/{weeks.length} gates
                     </span>
                     <ProgressBar
@@ -272,7 +272,7 @@ function WeekCard({ week, active }: { week: Week; active: boolean }) {
               {week.capstone ? <Badge tone="warn">Capstone</Badge> : null}
               {overridden ? <Badge tone="warn">Override</Badge> : null}
             </div>
-            <p className="faint mt-0.5 text-[10px]">Week {week.weekNumber}</p>
+            <p className="faint mt-0.5 text-[11px]">Week {week.weekNumber}</p>
           </div>
         </div>
         <ArrowRight
@@ -286,9 +286,9 @@ function WeekCard({ week, active }: { week: Week; active: boolean }) {
       <p className="muted mt-1 line-clamp-2 text-[11.5px] leading-relaxed">{week.anchor}</p>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-1">
-        <span className="pill !py-0.5 !text-[9.5px]">{nodes.length} nodes</span>
-        <span className="pill !py-0.5 !text-[9.5px]">{week.checklist.length} checks</span>
-        <span className="pill !py-0.5 !text-[9.5px]">{mastered} mastered</span>
+        <span className="pill !py-0.5 !text-[11px]">{nodes.length} nodes</span>
+        <span className="pill !py-0.5 !text-[11px]">{week.checklist.length} checks</span>
+        <span className="pill !py-0.5 !text-[11px]">{mastered} mastered</span>
       </div>
 
       <div className="mt-2.5 flex items-center gap-2">
@@ -298,11 +298,11 @@ function WeekCard({ week, active }: { week: Week; active: boolean }) {
           className="flex-1 !h-1.5"
           label={`Week ${week.weekNumber} checks`}
         />
-        <span className="faint num text-[9.5px]">{percent(weekProgress(week))}%</span>
+        <span className="faint num text-[11px]">{percent(weekProgress(week))}%</span>
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2 border-t border-line pt-2">
-        <span className="faint truncate text-[10px]">
+        <span className="faint truncate text-[11px]">
           {status === 'locked' && missing.length > 0
             ? `Needs Week ${missing.map((entry) => entry.weekNumber).join(', ')}`
             : week.gate.passedAt

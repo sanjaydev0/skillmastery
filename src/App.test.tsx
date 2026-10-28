@@ -56,8 +56,8 @@ describe('application smoke tests', () => {
     fireEvent(window, new HashChangeEvent('hashchange'))
     expect(await screen.findByRole('heading', { name: /money, types and null/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Seven-day plan' })).toBeInTheDocument()
-    expect(screen.getAllByText(/Day 1 · Monday/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/estimated range, no timer/).length).toBe(7)
+    expect(screen.getAllByText(/Monday, day 1/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Estimated range, no timer/i).length).toBe(7)
   })
 
   it('credits a completed task to week totals and undoes it from the keyboard', async () => {

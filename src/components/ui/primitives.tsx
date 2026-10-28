@@ -253,7 +253,7 @@ export function ProgressRing({
       </svg>
       <span className="absolute text-center leading-none">
         <span className="num block text-[13px] font-semibold">{label ?? `${percent(ratio)}%`}</span>
-        {sublabel ? <span className="faint mt-0.5 block text-[9px] uppercase tracking-wide">{sublabel}</span> : null}
+        {sublabel ? <span className="faint mt-0.5 block text-[11px] tracking-wide">{sublabel}</span> : null}
       </span>
     </div>
   )
@@ -372,7 +372,7 @@ export function Tabs({
         >
           {item.label}
           {typeof item.count === 'number' ? (
-            <span className="num ml-0.5 rounded-full bg-s3 px-1.5 text-[10.5px] text-t2">{item.count}</span>
+            <span className="num ml-0.5 rounded-full bg-s3 px-1.5 text-[11.5px] text-t2">{item.count}</span>
           ) : null}
         </button>
       ))}
@@ -443,7 +443,7 @@ export function Field({
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded border border-line bg-s2 px-1.5 py-0.5 font-mono text-[10px] text-t2">{children}</kbd>
+    <kbd className="rounded border border-line bg-s2 px-1.5 py-0.5 font-mono text-[11px] text-t2">{children}</kbd>
   )
 }
 

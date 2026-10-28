@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import {
-  ArrowRight,
   CalendarDays,
   Database,
   Gauge,
@@ -224,13 +223,13 @@ export function HelpView() {
           <Shortcut keys={['Ctrl', 'Shift', 'Z']} label="Redo" />
           <Shortcut keys={['Esc']} label="Close a panel or the palette" />
         </dl>
-        <p className="faint mt-2 text-[10.5px]">On macOS, use ⌘ instead of Ctrl.</p>
+        <p className="faint mt-2 text-[11.5px]">On macOS, use ⌘ instead of Ctrl.</p>
       </section>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-s1 px-3.5 py-2.5">
         <p className="faint text-[11px]">Still unsure? Start with Today, then open the week's checkpoint.</p>
         <button type="button" className="link inline-flex items-center gap-1 text-[11px]" onClick={() => navigate('#/progress')}>
-          See course progress <ArrowRight size={11} aria-hidden />
+          See course progress
         </button>
       </div>
     </div>
@@ -244,7 +243,7 @@ function Step({ n, title, body, href }: { n: number; title: string; body: string
         {n}
       </span>
       <p className="mt-2 text-[12.5px] font-semibold">{title}</p>
-      <p className="faint mt-0.5 text-[10.5px] leading-snug">{body}</p>
+      <p className="faint mt-0.5 text-[11.5px] leading-snug">{body}</p>
     </a>
   )
 }
@@ -291,6 +290,6 @@ function Shortcut({ keys, label }: { keys: string[]; label: string }) {
 
 function Code({ children }: { children: ReactNode }) {
   return (
-    <code className="rounded bg-s2 px-1 py-0.5 font-mono text-[10.5px] break-words text-t1">{children}</code>
+    <code className="rounded bg-s2 px-1 py-0.5 font-mono text-[11.5px] break-words text-t1">{children}</code>
   )
 }

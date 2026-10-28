@@ -87,7 +87,7 @@ export function PromptHub() {
           <Sparkles size={15} className="mt-0.5 flex-none text-accent" aria-hidden />
           <div>
             <p className="text-[12.5px] font-semibold">{SKILL_FORMULA.line1}</p>
-            <p className="num muted mt-1 text-[10.5px] leading-relaxed">{SKILL_FORMULA.line2}</p>
+            <p className="num muted mt-1 text-[11.5px] leading-relaxed">{SKILL_FORMULA.line2}</p>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export function PromptHub() {
                 onClick={() => setCategory(entry)}
                 aria-pressed={category === entry}
                 className={cn(
-                  'h-6 rounded-full border px-2 text-[10px] font-medium capitalize transition',
+                  'h-6 rounded-full border px-2 text-[11px] font-medium capitalize transition',
                   category === entry
                     ? 'border-accent/30 bg-accent-soft text-accent-strong'
                     : 'border-line bg-s1 text-t3 hover:border-line-strong hover:text-t2',
@@ -131,10 +131,10 @@ export function PromptHub() {
                   <p className="text-[12px] leading-snug font-semibold">{prompt.title}</p>
                   {selected.id === prompt.id ? <Check size={13} className="mt-0.5 flex-none text-accent" aria-hidden /> : null}
                 </div>
-                <p className="muted mt-0.5 line-clamp-2 text-[10.5px] leading-relaxed">{prompt.description}</p>
+                <p className="muted mt-0.5 line-clamp-2 text-[11.5px] leading-relaxed">{prompt.description}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {prompt.tags.slice(0, 2).map((tag) => (
-                    <span key={tag} className="pill !px-1.5 !py-0 !text-[9px]">
+                    <span key={tag} className="pill !px-1.5 !py-0 !text-[11px]">
                       {tag}
                     </span>
                   ))}
@@ -150,7 +150,7 @@ export function PromptHub() {
               <div className="flex flex-wrap items-center gap-1.5">
                 <Badge tone="info">{selected.category}</Badge>
                 {selected.tags.slice(0, 2).map((tag) => (
-                  <span key={tag} className="pill !py-0 !text-[9.5px]">{tag}</span>
+                  <span key={tag} className="pill !py-0 !text-[11px]">{tag}</span>
                 ))}
               </div>
               <h2 className="h1 mt-1.5 text-[1.15rem]">{selected.title}</h2>
@@ -179,7 +179,7 @@ export function PromptHub() {
                   ))}
               </select>
             </label>
-            <span className="faint flex-none text-[10px]">
+            <span className="faint flex-none text-[11px]">
               {variables.kps.split('\n').length} KP lines · {variables.mistakes.split('\n').length} mistake lines
             </span>
           </div>
@@ -187,7 +187,7 @@ export function PromptHub() {
           <div className="mt-3 rounded-xl border border-line bg-s2 p-3">
             <div className="mb-2 flex items-center justify-between">
               <p className="eyebrow">Rendered prompt</p>
-              <span className="faint text-[9.5px]">{rendered.length.toLocaleString()} chars · variables injected</span>
+              <span className="faint text-[11px]">{rendered.length.toLocaleString()} chars · variables injected</span>
             </div>
             <pre className="scroll-thin max-h-[48vh] overflow-y-auto font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-t2">
               {rendered}
@@ -206,7 +206,7 @@ export function PromptHub() {
             >
               Copy for card generation
             </Button>
-            <p className="faint text-[10.5px]">
+            <p className="faint text-[11.5px]">
               Never paste secrets into a prompt. This app makes no network request.
             </p>
           </div>

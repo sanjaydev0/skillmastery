@@ -61,7 +61,7 @@ export function MobileMoreSheet() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13px] font-semibold">{entry.label}</span>
-                    <span className="faint block text-[10.5px]">{entry.description}</span>
+                    <span className="faint block text-[11.5px]">{entry.description}</span>
                   </span>
                   <ArrowRight size={14} className="flex-none text-t3" aria-hidden />
                 </a>
@@ -93,7 +93,7 @@ export function MobileMoreSheet() {
             Redo{redoDepth > 0 ? ` (${redoDepth})` : ''}
           </Button>
         </div>
-        <p className="faint mt-1.5 text-[10.5px]">History clears when the page reloads.</p>
+        <p className="faint mt-1.5 text-[11.5px]">History clears when the page reloads.</p>
       </div>
 
       <div className="mt-4 border-t border-line pt-3">
@@ -110,7 +110,7 @@ export function MobileMoreSheet() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[13px] font-semibold">Settings</span>
-            <span className="faint block text-[10.5px]">Theme, backup, restore, reset</span>
+            <span className="faint block text-[11.5px]">Theme, backup, restore, reset</span>
           </span>
           <ArrowRight size={14} className="flex-none text-t3" aria-hidden />
         </button>

@@ -149,7 +149,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
           </p>
           <div className="mt-3 flex items-center gap-2">
             <ProgressBar value={progress} className="flex-1" />
-            <span className="num faint text-[10.5px]">{percent(progress)}%</span>
+            <span className="num faint text-[11.5px]">{percent(progress)}%</span>
           </div>
         </div>
 
@@ -255,7 +255,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                           <div className="rail !h-1.5 flex-1">
                             <span style={{ width: `${(node.srs.strength / 5) * 100}%` }} />
                           </div>
-                          <span className="faint num text-[9.5px]">
+                          <span className="faint num text-[11px]">
                             W{weekOf?.weekNumber ?? '?'} · {node.srs.strength.toFixed(1)}/5 · {node.srs.implicitReviews} FIRe
                           </span>
                         </div>
@@ -284,7 +284,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
               />
               <div className="flex items-center gap-2">
                 <ProgressBar value={filteredChecks.length ? done / filteredChecks.length : 0} className="flex-1" />
-                <span className="num faint text-[10.5px]">
+                <span className="num faint text-[11.5px]">
                   {done}/{filteredChecks.length}
                 </span>
               </div>
@@ -356,7 +356,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                         <FileText size={13} className="mt-0.5 flex-none text-t2" aria-hidden />
                         <span className="min-w-0 flex-1">
                           <span className="block text-[11.5px] font-medium">{resource.title}</span>
-                          <span className="faint block text-[10px] capitalize">{resource.kind} · {resource.status}</span>
+                          <span className="faint block text-[11px] capitalize">{resource.kind} · {resource.status}</span>
                         </span>
                         <ExternalLink size={11} className="mt-0.5 flex-none text-t3" aria-hidden />
                       </a>
@@ -385,7 +385,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                           <Sparkles size={12} className="mt-0.5 flex-none text-accent" aria-hidden />
                           <span className="min-w-0 flex-1">
                             <span className="block text-[11.5px] font-medium">{node.title}</span>
-                            <span className="faint block text-[10px]">
+                            <span className="faint block text-[11px]">
                               Week {weekOf?.weekNumber ?? '?'} · strength {node.srs.strength.toFixed(1)}
                             </span>
                           </span>
@@ -441,7 +441,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-[12.5px] font-semibold">{category.label}</p>
-                      <p className="faint text-[10.5px]">{category.hint}</p>
+                      <p className="faint text-[11.5px]">{category.hint}</p>
                     </div>
                     <span className="num text-[15px] font-semibold">{scores[category.key]}</span>
                   </div>
@@ -506,7 +506,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                         <p className="text-[11.5px] font-medium">
                           {formatShortDate(attempt.at)} · average {attempt.average.toFixed(1)}
                         </p>
-                        <p className="faint num text-[10px]">
+                        <p className="faint num text-[11px]">
                           C{attempt.scores.concept} · I{attempt.scores.implementation} · X{attempt.scores.craft} · D
                           {attempt.scores.debugging}
                         </p>
