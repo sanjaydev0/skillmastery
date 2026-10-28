@@ -22,8 +22,9 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 ### Planning rules, not timers
 
 - Every task carries an estimate range. Checking it credits the whole range to the day, week and course; unchecking removes it. No timer runs in the background.
-- Days are derived from checklist `day` fields, so there is one source of truth.
-- A day over capacity is flagged instead of silently stretched. Capacity is device-local and is not overwritten by an imported backup.
+- The checklist is the evidence layer: its `day` fields place every task. A stored day card supplies the explanation, the steps and the design note. Only a checked task earns credit.
+- A day over capacity is flagged instead of silently stretched. Capacity is two weekly totals split across your study days, stored on the device and never overwritten by an imported backup.
+- The course has a real clock: Day 1 is the date you press Start. Pausing freezes the day count until you resume, so a missed week never makes the course jump ahead.
 - The week has a shape: Days 1–2 orient, 3–4 build and debug, 5 test, 6 apply, 7 buffer and checkpoint.
 - Every passive block is paired with an active output; the active share rises from roughly 45/55 to 70/30 over six months.
 - A week opens only after the previous week's blind checkpoint passes, or an audited override is recorded.
@@ -33,6 +34,7 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 
 - [`DESIGN.md`](DESIGN.md) — the visual and copy contract: board-and-paper palette, typography, components, data-display rules and review checklist.
 - [`AGENTS.md`](AGENTS.md) — engineering contract for contributors and AI agents: architecture, data invariants, migrations, testing, deployment and the AI proxy contract.
+- [`docs/CONTENT-STYLE.md`](docs/CONTENT-STYLE.md) — the day-card standard: plain instructional English, low working-memory load, fixed field budgets and the executable checks.
 
 ## Stack
 
@@ -55,8 +57,8 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 
 ## Content layout
 
-- `src/data/tracks/flutterWeeks1to6.ts` — Weeks 1–2 are fully authored day plans for a 13-year-old; Weeks 3–6 keep the technical authoring.
-- `src/data/curriculum/blueprint.ts` — the 24-week route: plain theme, project, git habit, checkpoint and seven day focuses. Weeks 1–2 are backed by real checklists; later weeks use the blueprint as the locked brief for AI generation.
+- `src/data/tracks/flutterWeeks1to6.ts` — Week 1 is fully authored: 15 tasks and seven day cards for a 13-year-old. Week 2 keeps its authored task list; Weeks 3–6 keep the technical authoring.
+- `src/data/curriculum/blueprint.ts` — the 24-week route: three threads (Dart, Flutter, design), knowledge points, project, git habit, checkpoint and seven day focuses. Week 1 is backed by real checklists and day cards; later weeks use the blueprint as the locked brief for AI generation.
 - `src/data/tracks/` — the remaining Flutter and full-stack weeks, nodes, cards and resources.
 - Git is part of the course, not an afterthought: Week 1 ends with a first push, Week 2 with a branch and pull request, every later week with a commit and push, and Week 24 with a signed release tag.
 

@@ -51,6 +51,7 @@ It should feel like a well-kept workbook, not a SaaS dashboard.
 - Explain the rule once: “Checking a task credits its whole estimate range.”
 - Use “you” and “your”; the app speaks to one learner.
 - Prefer a full stop to an exclamation mark. The product is encouraging, not manic.
+- Learner-facing teaching copy follows [`docs/CONTENT-STYLE.md`](docs/CONTENT-STYLE.md): one idea per day card, 20-word steps, a five-minute start, one concrete example, and a check you can see.
 
 ### Avoid
 
@@ -60,7 +61,7 @@ It should feel like a well-kept workbook, not a SaaS dashboard.
 - Cute empty states (“Nothing to see here!”). Say what is missing and what to do.
 - “Journey”, “unlock your potential”, “supercharge”, “10x”, “seamless”.
 - Fake urgency: “Don't fall behind!”, “Day 4 of 7!”, countdowns, streak guilt.
-- Time tracking language. The app never says “start”, “pause”, “session running” or “time left”.
+- Task timers. Never show a countdown, “session running” or “time left”. The course clock is the one exception: Start and Pause the six-month course are allowed, and no task is ever timed.
 
 ### Numbers and dates
 
@@ -267,7 +268,7 @@ One line, 13px, neutral sheet, semantic icon. Use for confirmations and non-bloc
 
 These are product rules as much as visual ones.
 
-- **No timers.** No clock, stopwatch, elapsed time, “time remaining”, or session countdown. Estimates are ranges, stated up front.
+- **No task timers.** The course clock is a date, not a stopwatch: it shows `Day 12 of 168`, never time remaining. No elapsed time, session countdown or per-task clock. Estimates are ranges, stated up front.
 - **Checking a task credits the full range.** The UI may say “credits its estimate range”; never imply real elapsed time was measured.
 - **Ranges stay ranges.** Use `formatEstimate` for a task, `formatTotal` for any sum. A `0 min` total is allowed; do not render `0–0 min`.
 - **A day over capacity is a warning, not a failure.** Use `--warn`, not `--bad`. Say “over today's budget by 20 min”, never “failed”.
@@ -275,6 +276,9 @@ These are product rules as much as visual ones.
 - **The checkpoint is a blind rebuild.** Copy should say “without notes”, not “exam” or “quiz”.
 - **Passive work always has an active output.** When showing a day, pair the read with the build. Do not let a day become all consumption.
 - **The course total is an estimate range.** Label it “Estimate range, not a countdown”.
+- **Consistency is a ratio, not a streak.** Show `18 of 24 days` or a progress bar. A missed day lowers the ratio; nothing resets to zero, and there is no flame or broken chain.
+- **A pause is neutral.** Say “Paused since 3 November”, never “You lost 6 days”.
+- **One next action.** A day card shows its first unchecked step above the fold; everything else is secondary.
 
 ---
 
@@ -316,11 +320,13 @@ These are product rules as much as visual ones.
 
 ### Today
 
+- The page opens on the course day from the clock. A paused course says so in one line and offers Resume.
 - `Up next` is the page's one loud statement: Fraunces, max ~46ch, accent rule in the left margin.
 - Header actions are outline; `Mark done` is the only filled accent button.
 - The ledger below carries left-today, week, reviews and course.
 - Today's plan shows only today's tasks, the active/passive budget, and one sentence about estimate crediting.
 - The seven-day strip is a ruled row of cells, not seven cards. Today's cell is accent-soft.
+- Consistency sits in the ledger as a ratio, never a streak.
 
 ### Plan and week pages
 

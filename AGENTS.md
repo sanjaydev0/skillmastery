@@ -19,11 +19,13 @@ SkillMastery is an offline-first React PWA that acts as a control centre for a s
 
 It is **not** a course player, code editor, terminal, or cloud account. It stores progress locally, shows the next real task, keeps estimates honest, and points at external docs, GitHub and AnkiDroid.
 
-Two 24-week tracks are bundled (Flutter and Full-Stack Web). The Flutter track is the active teaching track. Weeks 1–2 are fully authored day plans written for a 13-year-old; Weeks 3–24 use the blueprint as a locked brief for later AI generation.
+Two 24-week tracks are bundled (Flutter and Full-Stack Web). The Flutter track is the active teaching track. Week 1 is fully authored as seven day cards written for a 13-year-old. Week 2 keeps its authored task list. Weeks 2–24 draw their weekly brief from the blueprint; only Week 1 has authored day cards.
+
+The current guided-course work adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v4.
 
 **Current state (October 2026):**
 
-- Phases 1–5 are shipped: local-first foundation, schema v3 + estimates, the seven-view shell, the reviewed Weeks 1–2 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
+- Phases 1–5 are shipped: local-first foundation, estimates, the seven-view shell, the reviewed Week 1 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
 - The board-and-paper design pass is shipped (`53e8cab`).
 - Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy, exact AnkiDroid TSV guidance and the last sub-11px fixes.
 - The native Android/AnkiDroid companion is later. There is no Android project in this repo yet.
@@ -35,8 +37,8 @@ Two 24-week tracks are bundled (Flutter and Full-Stack Web). The Flutter track i
 - **Vercel only.** No GitHub Pages workflow, no `gh-pages` branch, no second host. The live alias is `skillmastery-jay.vercel.app`.
 - **Local-first.** No account, analytics, telemetry, cloud sync or runtime curriculum fetch. Progress lives in IndexedDB with a localStorage mirror.
 - **No time tracking.** No timers, stopwatches, elapsed time, session countdowns or “time remaining”. Estimates are ranges; checking a task credits the whole range.
-- **Days are derived.** A week's seven day plans come from each checklist item's `day` field. Never add a stored `dayPlan` array.
-- **Weeks 1–2 are hand-authored.** Do not replace them with generated copy. Later weeks may be generated only through the blueprint brief and must be reviewed before they are treated as canonical.
+- **Two layers, one truth.** `checklist` items carry `day` and are the evidence layer. `dayPlans[weekId]` carries the editorial card: title, summary, tasks, direction and design note. Checking a task is the only thing that earns credit; a day card never claims progress.
+- **Week 1 is hand-authored.** Do not replace it with generated copy. Weeks 2–24 may be generated only through the blueprint brief, must pass `checkDayPlans`, and must be reviewed before they are canonical.
 - **Zed + Flutter CLI + physical phone.** Do not reintroduce Android Studio, an emulator, or an IDE-specific workflow into the course or Help.
 - **The learner is 13.** Plain language in the learner-facing path; technical depth belongs behind “Go deeper”.
 - **Never commit secrets.** The Velona API key is device-local. It must never appear in `AppData`, an export, a fixture, a screenshot, a log, or `vercel.json`.
@@ -51,7 +53,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 98 tests across 16 files
+npm test           # Vitest, currently 141 tests across 19 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -78,6 +80,7 @@ src/
   components/
     layout/              AppShell, command palette, settings, track switcher, mobile More
     ui/                  Primitives, Sheet, Toaster
+  content/               The day-card style standard and its executable checker
   data/
     tracks/              Authored subjects: weeks, nodes, cards, resources
     curriculum/          blueprint.ts: the static 24-week Flutter route
@@ -104,7 +107,7 @@ docs/source/             Long-form course source (not shipped)
 
 ## 5. Data model and invariants
 
-Schema: `SCHEMA_VERSION = 3`, `SEED_VERSION = 3` in `src/types/schema.ts`.
+Schema: `SCHEMA_VERSION = 4`, `SEED_VERSION = 4` in `src/types/schema.ts`.
 
 `AppData` contains:
 
@@ -112,6 +115,9 @@ Schema: `SCHEMA_VERSION = 3`, `SEED_VERSION = 3` in `src/types/schema.ts`.
 - `books[]` — the shared 30-minute canon.
 - `dailyLog`, `overrides`, `prefs`, `planner`.
 - `promptOverrides` — edited prompt skills keyed by authored prompt id. Included in backups.
+- `journey` — the course clock: `startedAt`, `startWeekday`, `pauses[]`, `gameLayer`, `onboardedAt`.
+- `dayPlans` — editorial cards keyed by week id, seven per week. Absent weeks are generation-ready.
+- `trash` — the last 20 deletions, restorable. A purged week also drops its day cards.
 - `activeSubjectId`, `schemaVersion`, `seedVersion`, timestamps.
 
 Rules:
@@ -119,13 +125,14 @@ Rules:
 1. **Estimates** live on `ChecklistItem.estimate` (`{ min, max }`). A legacy `minutes` field is a fallback only. `estimateOf()` handles the fallback; `formatEstimate()` renders a task range; `formatTotal()` renders any aggregate.
 2. **Completion credit.** Checking a task adds its full estimate range to the completed total for the day, week and course. The planned total stays fixed; unchecking removes the credit. Do not add a separate “actual time” field.
 3. **Weekdays.** `Weekday` is `0 = Sunday … 6 = Saturday`, matching `Date.getDay()`. Use `schemaWeekday()` when writing checklist/planner data. Display strips are Monday-first; use `weekdayOf()` / the ordered helpers. Do not flip these by hand.
-4. **Capacity** lives in `planner` and is device-local. Importing a backup must not replace it. `resetToSeed` keeps the current planner and theme.
+4. **Capacity** lives in `planner` and is device-local. It is two weekly totals (`weeklyActiveMinutes`, `weeklyPassiveMinutes`) split across `studyDays`; `dailyCapacity()` is the only divisor. Importing a backup must not replace it. `resetToSeed` keeps the current planner and theme. The default is 720 active / 420 passive over seven days: 103 / 60 per day.
 5. **Gating.** A week opens when the previous week's gate passed, or when an audited override exists. A gate passes at average ≥ 4.0 with no category below 3. Never add a silent bypass.
 6. **Mastery** is earned through the gate or a node review, not by checking a box. `markNodeMastered` must keep validating the gate.
 7. **Cards** use the fixed ladder `1 / 3 / 6 / 10 / 7 days` (`SRS_INTERVALS`). `scheduleStep` indexes it; `dueAt` is epoch ms. Review grades map through `gradeCard`.
 8. **Resources** are `docs | curriculum | article`; books are separate. Do not merge them into one entity.
 9. **Prompt skills** are authored in `src/data/prompts.ts`; learner edits live in `AppData.promptOverrides` and win a backup merge. The Velona key is not AppData: it lives only under `skillmastery:ai-key` in localStorage and never enters a backup or export.
-10. **Day plans are read-only derivations.** `summariseWeek`/`summariseSubject` are the only places that compute day rollups.
+10. **Day cards are stored, rollups are derived.** `dayPlans[weekId]` holds the editorial layer; `summariseWeek`/`summariseSubject` are the only places that compute capacity, totals and overload. Never store a computed total.
+11. **The clock is derived, the start date is stored.** `courseDay()`, `courseWeek()` and `consistency()` in `src/lib/courseClock.ts` read `journey`. A pause starts the next calendar day, so pausing never moves the course day backwards. Consistency is a ratio, never a streak.
 
 ### Persistence
 
@@ -135,12 +142,14 @@ Rules:
 - Autosave debounces 500ms, flushes on `pagehide` and visibility change, and mirrors immediately.
 - Export is schema-validated on import. Replace and merge are different operations; merge keeps the higher book chapter, unions daily log items, and lets this device's prompt-skill edits win while incoming files only fill gaps.
 - Undo history is **session-only**, 50 entries, and excludes preferences and navigation. It includes prompt-skill edits. Persisted reset checkpoints are a future feature; do not claim they exist.
+- Undo also covers the course clock, day cards, track deletion and restore. Deleting a week records its nodes, cards and pruned graph edges in `trash`, so a restore reconnects the prerequisite graph.
 - Seed upgrades are non-destructive: `refreshSeedContent()` refreshes authored weeks, preserves checks, gate attempts, notes, overrides and user-added weeks/items, and appends new seed resources without touching reading status or user-added links. Authored seed ids ending in `-cN` are replaced by matching day + active/passive task. Removed seed resources are never deleted.
 
 ### Migrations
 
 - Schema change → bump `SCHEMA_VERSION`, add a `migrateAppData` step, keep a raw pre-migration backup, add tests, and verify an old export still imports.
 - Schema v2 predates `promptOverrides`; migration adds `{}` without touching the rest of the payload. A v1 backup still gets estimates and planner defaults in the same pass.
+- Schema v4 folds the four per-day capacity fields into two weekly totals, and adds `journey`, `dayPlans` and `trash`. A v3 payload keeps its real capacity; a payload with no planner gets today's defaults, not a conversion of old defaults. Seven study days force `bufferDay: null`.
 - Authored content change → bump `SEED_VERSION` and update `refreshSeedContent` + `seedUpgrade.test.ts`. Do not wipe checks to refresh copy. New resources are additive; do not replace the resource array.
 - Never reuse an old seed id for a different task or resource.
 
@@ -148,11 +157,12 @@ Rules:
 
 ## 6. Content authoring
 
-- Flutter Weeks 1–2: 15 tasks each, spread across all seven days, written for a 13-year-old. Each day pairs passive input with active output.
+- Flutter Week 1: 15 tasks spread across all seven days, with seven authored day cards, written for a 13-year-old. Each day pairs passive input with active output.
+- Every day card follows `docs/CONTENT-STYLE.md`: one idea, a five-minute start, one concrete example, a named failure and an observable check. `checkDayPlans()` in `src/content/style.ts` enforces the mechanical rules in tests.
 - Week shape: Days 1–2 orient, 3–4 build/debug, 5 test, 6 apply, 7 buffer + checkpoint.
 - Every week names an artefact (“You build”), a git habit, a one-sentence anchor, outcomes, rabbit holes, and a blind checkpoint.
 - Git is threaded through the whole course: Week 1 first push, Week 2 branch + PR, every later week commit + push, Week 24 signed release tag.
-- Estimates must fit the default capacity: weekday 90 active / 45 passive, weekend 120 / 60. A week that cannot fit is a content bug, not a UI warning.
+- Estimates must fit the default capacity: 720 active / 420 passive per week across seven days, which is 103 / 60 per day. A week that cannot fit is a content bug, not a UI warning.
 - Technical terms are defined on first use. “Go deeper” carries the compiler/runtime detail.
 - `docs/source/flutter-24-week-plan.txt` is reference material. `src/data/curriculum/blueprint.ts` is the executable 24-week summary; keep them aligned when changing the route.
 - The Full-Stack track follows the same schema and UI, but its copy may be more technical. Do not silently rewrite it while editing Flutter content.
@@ -179,7 +189,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **98 tests / 16 files**.
+- Baseline: **141 tests / 19 files** (October 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
@@ -253,7 +263,8 @@ When adding a view, update the router, the shell navigation, the command palette
 | 4 | Authored Weeks 1–2, 24-week blueprint, Vercel-only hosting | Shipped |
 | — | Board-and-paper design pass | Shipped (`53e8cab`) |
 | 5 | Help expansion, resource library, AI proxy + prompt runner, legibility | Shipped |
-| 6 | Android/AnkiDroid companion and exact device setup | Later |
+| 6 | Guided course: start clock, pause, day cards, generation | In progress |
+| 7 | Android/AnkiDroid companion and exact device setup | Later |
 | — | Release signing and store delivery | Course content, Week 17; not app infrastructure |
 
 Phase 5 must not add a backend account, cloud sync, or background daemon. The only server-side surface is the stateless AI proxy.
@@ -265,6 +276,7 @@ Phase 5 must not add a backend account, cloud sync, or background daemon. The on
 A change is done when:
 
 - [ ] It follows `DESIGN.md` and the copy rules.
+- [ ] New learner-facing content passes `checkDayPlans()` and `docs/CONTENT-STYLE.md`.
 - [ ] `npx tsc -b`, `npm test`, `npm run lint` and `npm run build` pass.
 - [ ] New engine or migration behaviour has a test.
 - [ ] Existing backups, checks/notes and planner settings survive.
