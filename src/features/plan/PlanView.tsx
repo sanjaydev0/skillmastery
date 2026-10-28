@@ -94,6 +94,7 @@ export function PlanView() {
                   {weeks.map((week) => (
                     <WeekPlanCard
                       key={week.id}
+                      subjectId={subject.id}
                       week={week}
                       active={active?.id === week.id}
                       status={weekStatus(week, subject.weeks, overrides)}
@@ -136,11 +137,13 @@ function PhaseHeading({ phase, weeks }: { phase: Phase; weeks: Week[] }) {
 }
 
 function WeekPlanCard({
+  subjectId,
   week,
   active,
   status,
   summary,
 }: {
+  subjectId: string
   week: Week
   active: boolean
   status: ReturnType<typeof weekStatus>
@@ -149,7 +152,7 @@ function WeekPlanCard({
   const ratio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const overloaded = summary.overloadedDays.length
   const doneTasks = week.checklist.filter((item) => item.done).length
-  const blueprint = blueprintFor(week.weekNumber)
+  const blueprint = blueprintFor(subjectId, week.weekNumber)
 
   return (
     <a

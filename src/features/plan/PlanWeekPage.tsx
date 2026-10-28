@@ -61,7 +61,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
   const doneTasks = week.checklist.filter((item) => item.done).length
   const ratio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const left = summary.remaining
-  const blueprint = blueprintFor(week.weekNumber)
+  const blueprint = blueprintFor(subject.id, week.weekNumber)
 
   return (
     <div>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_PLANNER } from '../types/schema'
 import { summariseWeek } from '../engine/estimates'
 import { createSeedData } from './seedData'
-import { FLUTTER_BLUEPRINT, blueprintFor } from './curriculum/blueprint'
+import { BLUEPRINTS, FLUTTER_BLUEPRINT, blueprintFor, blueprintLength } from './curriculum/blueprint'
 
 const seed = createSeedData()
 const flutter = seed.subjects.find((subject) => subject.id === 'flutter')!
@@ -23,12 +23,68 @@ describe('24-week blueprint', () => {
     }
   })
 
+  it('carries all three threads in every week', () => {
+    for (const entry of FLUTTER_BLUEPRINT) {
+      for (const thread of ['dart', 'flutter', 'design'] as const) {
+        expect(entry[thread].trim().length, `week ${entry.weekNumber} ${thread}`).toBeGreaterThan(12)
+      }
+    }
+  })
+
+  it('gives every week between three and four knowledge points with a failure mode', () => {
+    for (const entry of FLUTTER_BLUEPRINT) {
+      expect(entry.knowledgePoints.length, `week ${entry.weekNumber}`).toBeGreaterThanOrEqual(3)
+      expect(entry.knowledgePoints.length).toBeLessThanOrEqual(4)
+      for (const point of entry.knowledgePoints) {
+        expect(point.primitive.trim().length).toBeGreaterThan(3)
+        expect(point.concept.trim().length).toBeGreaterThan(20)
+        expect(point.failureMode.trim().length).toBeGreaterThan(20)
+      }
+    }
+  })
+
+  it('introduces terms before it uses them elsewhere', () => {
+    const seen = new Map<string, number>()
+    for (const entry of FLUTTER_BLUEPRINT) {
+      for (const term of entry.termsIntroduced) {
+        const first = seen.get(term)
+        // A term may be revisited, but it should be introduced (not first
+        // mentioned) no more than three weeks after its first appearance.
+        if (first !== undefined) {
+          expect(
+            entry.weekNumber - first,
+            `"${term}" reappears in week ${entry.weekNumber} after week ${first}`,
+          ).toBeLessThanOrEqual(6)
+        } else {
+          seen.set(term, entry.weekNumber)
+        }
+      }
+    }
+    expect(seen.size).toBeGreaterThan(80)
+  })
+
+  it('only depends on weeks that come before it', () => {
+    for (const entry of FLUTTER_BLUEPRINT) {
+      for (const prerequisite of entry.prerequisites) {
+        expect(prerequisite, `week ${entry.weekNumber}`).toBeLessThan(entry.weekNumber)
+        expect(prerequisite).toBeGreaterThanOrEqual(1)
+      }
+    }
+  })
+
   it('matches the seeded phase for every week', () => {
     for (const week of flutter.weeks) {
-      const entry = blueprintFor(week.weekNumber)
+      const entry = blueprintFor('flutter', week.weekNumber)
       expect(entry, `week ${week.weekNumber}`).toBeDefined()
       expect(entry!.phaseId).toBe(week.phaseId)
     }
+  })
+
+  it('does not lend the Flutter blueprint to a track that has none', () => {
+    expect(blueprintFor('fullstack', 5)).toBeUndefined()
+    expect(blueprintLength('fullstack')).toBe(0)
+    expect(blueprintLength('flutter')).toBe(24)
+    expect(Object.keys(BLUEPRINTS)).toEqual(['flutter'])
   })
 })
 
