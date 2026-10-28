@@ -6,14 +6,19 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Command,
+  HelpCircle,
   LayoutDashboard,
   Library,
   Moon,
+  MoreHorizontal,
   Network,
+  Redo2,
   Search,
   Settings,
   Sun,
   Target,
+  TrendingUp,
+  Undo2,
 } from 'lucide-react'
 import type { ViewName } from '../../lib/router'
 import { VIEWS, navigate, useHashRoute } from '../../lib/router'
@@ -23,30 +28,40 @@ import { cn } from '../../lib/utils'
 import { formatShortDate } from '../../lib/dates'
 import { weekProgress } from '../../engine/gating'
 import { persistTheme } from '../../services/storage'
+import { listHistory } from '../../services/history'
+import { useRedoDepth, useUndoDepth } from '../../hooks/useHistoryDepth'
 import { TrackSwitcher } from './TrackSwitcher'
 import { SavedIndicator } from './SavedIndicator'
 import { ModePill } from './ModePill'
 import { SubjectCreateSheet } from './SubjectCreateSheet'
+import { MobileMoreSheet } from './MobileMoreSheet'
 import { IconButton } from '../ui/primitives'
 
 const NAV_ICONS: Record<ViewName, typeof LayoutDashboard> = {
-  overview: LayoutDashboard,
-  curriculum: CalendarRange,
-  nodes: Network,
-  recall: BrainCircuit,
-  vault: Library,
+  today: LayoutDashboard,
+  plan: CalendarRange,
+  map: Network,
+  practice: BrainCircuit,
+  library: Library,
+  progress: TrendingUp,
+  help: HelpCircle,
 }
 
 const MOBILE_LABELS: Record<ViewName, string> = {
-  overview: 'Overview',
-  curriculum: 'Plan',
-  nodes: 'Nodes',
-  recall: 'Recall',
-  vault: 'Vault',
+  today: 'Today',
+  plan: 'Plan',
+  map: 'Map',
+  practice: 'Practice',
+  library: 'Library',
+  progress: 'Progress',
+  help: 'Help',
 }
 
+const MOBILE_TABS: ViewName[] = ['today', 'plan', 'practice', 'progress']
+const MORE_VIEWS: ViewName[] = ['map', 'library', 'help']
+
 function viewLabel(view: ViewName): string {
-  return VIEWS.find((entry) => entry.id === view)?.label ?? 'Overview'
+  return VIEWS.find((entry) => entry.id === view)?.label ?? 'Today'
 }
 
 export function AppShell({ children, route }: { children: ReactNode; route: ReturnType<typeof useHashRoute> }) {
@@ -54,11 +69,18 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
   const prefs = useAppStore((state) => state.prefs)
   const setTheme = useAppStore((state) => state.setTheme)
   const toggleSidebar = useAppStore((state) => state.toggleSidebar)
+  const undo = useAppStore((state) => state.undo)
+  const redo = useAppStore((state) => state.redo)
   const openPalette = useUiStore((state) => state.openPalette)
   const openSettings = useUiStore((state) => state.openSettings)
   const togglePalette = useUiStore((state) => state.togglePalette)
+  const openMore = useUiStore((state) => state.openMore)
   const subjectSheetOpen = useUiStore((state) => state.subjectSheetOpen)
   const closeSubjectSheet = useUiStore((state) => state.closeSubjectSheet)
+  const moreOpen = useUiStore((state) => state.moreOpen)
+  const toast = useUiStore((state) => state.toast)
+  const undoDepth = useUndoDepth()
+  const redoDepth = useRedoDepth()
   const week = useActiveWeek()
 
   useEffect(() => {
@@ -92,9 +114,21 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
-  }, [route.view])
+  }, [route.view, route.detail?.id])
 
   const nextTheme = prefs.theme === 'dark' ? 'light' : 'dark'
+  const moreActive = MORE_VIEWS.includes(route.view)
+
+  const handleUndo = () => {
+    const entry = listHistory()[0]
+    const ok = undo()
+    toast(ok ? `Undid: ${entry?.label ?? 'last change'}` : 'Nothing to undo.', 'info', 3000)
+  }
+
+  const handleRedo = () => {
+    const ok = redo()
+    toast(ok ? 'Redid the last change.' : 'Nothing to redo.', 'info', 3000)
+  }
 
   return (
     <div className="app-bg min-h-dvh">
@@ -167,7 +201,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
             {week ? (
               <button
                 type="button"
-                onClick={() => navigate(`#/week/${week.id}`)}
+                onClick={() => navigate(`#/plan/${week.id}`)}
                 className="w-full rounded-xl border border-line bg-s2 p-3 text-left transition hover:border-line-strong"
               >
                 <div className="flex items-center justify-between gap-2">
@@ -185,14 +219,14 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 </div>
                 {week.gate.attempts.length > 0 ? (
                   <p className="faint mt-1.5 text-[10px]">
-                    Last gate {formatShortDate(week.gate.attempts[week.gate.attempts.length - 1]!.at)}
+                    Last checkpoint {formatShortDate(week.gate.attempts[week.gate.attempts.length - 1]!.at)}
                   </p>
                 ) : null}
               </button>
             ) : (
               <button
                 type="button"
-                onClick={() => navigate('#/curriculum')}
+                onClick={() => navigate('#/plan')}
                 className="w-full rounded-xl border border-dashed border-line-strong p-3 text-left text-[11.5px] text-t2 hover:bg-s2"
               >
                 Add this track's first week →
@@ -244,7 +278,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 <span className="faint text-[11px]">{viewLabel(route.view)}</span>
               </div>
               <p className="mt-0.5 hidden text-[12.5px] font-semibold lg:block">
-                {route.detail ? 'Detail view' : 'Your command center'}
+                {route.detail ? 'Detail view' : 'Command center'}
               </p>
             </div>
 
@@ -254,13 +288,29 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
               className="hidden h-9 w-[min(360px,34vw)] items-center gap-2 rounded-[10px] border border-line bg-s1 px-3 text-left text-[12px] text-t3 transition hover:border-line-strong xl:flex"
             >
               <Search size={14} className="flex-none" aria-hidden />
-              <span className="flex-1 truncate">Search weeks, nodes, cards…</span>
+              <span className="flex-1 truncate">Search weeks, concepts, cards…</span>
               <span className="flex items-center gap-0.5 rounded border border-line bg-s2 px-1 py-0.5 font-mono text-[9.5px]">
                 <Command size={9} /> K
               </span>
             </button>
 
             <div className="flex flex-none items-center gap-1">
+              <span className="hidden items-center gap-1 lg:flex">
+                <IconButton
+                  label={`Undo${undoDepth > 0 ? ` (${undoDepth})` : ''}`}
+                  onClick={handleUndo}
+                  disabled={undoDepth === 0}
+                >
+                  <Undo2 size={16} />
+                </IconButton>
+                <IconButton
+                  label={`Redo${redoDepth > 0 ? ` (${redoDepth})` : ''}`}
+                  onClick={handleRedo}
+                  disabled={redoDepth === 0}
+                >
+                  <Redo2 size={16} />
+                </IconButton>
+              </span>
               <ModePill />
               <span className="mx-1 h-5 w-px bg-line" aria-hidden />
               <SavedIndicator />
@@ -317,12 +367,13 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
         aria-label="Mobile views"
       >
         <div className="safe-bottom grid grid-cols-5">
-          {VIEWS.map((entry) => {
-            const Icon = NAV_ICONS[entry.id]
-            const active = route.view === entry.id
+          {MOBILE_TABS.map((id) => {
+            const entry = VIEWS.find((view) => view.id === id)!
+            const Icon = NAV_ICONS[id]
+            const active = route.view === id
             return (
               <a
-                key={entry.id}
+                key={id}
                 href={entry.hash}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
@@ -338,14 +389,35 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 >
                   <Icon size={19} strokeWidth={active ? 2.4 : 2} aria-hidden />
                 </span>
-                <span>{MOBILE_LABELS[entry.id]}</span>
+                <span>{MOBILE_LABELS[id]}</span>
               </a>
             )
           })}
+          <button
+            type="button"
+            onClick={openMore}
+            aria-expanded={moreOpen}
+            aria-current={moreActive ? 'page' : undefined}
+            className={cn(
+              'flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium transition',
+              moreActive || moreOpen ? 'text-accent' : 'text-t3',
+            )}
+          >
+            <span
+              className={cn(
+                'grid h-7 w-10 place-items-center rounded-full transition',
+                (moreActive || moreOpen) && 'bg-accent-soft',
+              )}
+            >
+              <MoreHorizontal size={19} strokeWidth={moreActive || moreOpen ? 2.4 : 2} aria-hidden />
+            </span>
+            <span>More</span>
+          </button>
         </div>
       </nav>
 
       {subjectSheetOpen ? <SubjectCreateSheet onClose={closeSubjectSheet} /> : null}
+      {moreOpen ? <MobileMoreSheet /> : null}
     </div>
   )
 }

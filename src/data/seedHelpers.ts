@@ -9,6 +9,7 @@ import type {
   Week,
   Weekday,
 } from '../types/schema'
+import { estimateForMinutes } from '../engine/estimates'
 
 export interface CheckSpec {
   label: string
@@ -19,15 +20,22 @@ export interface CheckSpec {
 }
 
 export function checks(weekId: string, specs: CheckSpec[]): ChecklistItem[] {
-  return specs.map((spec, index) => ({
-    id: `${weekId}-c${index + 1}`,
-    label: spec.label,
-    context: spec.context,
-    ...(spec.tier ? { tier: spec.tier } : {}),
-    ...(spec.day !== undefined ? { day: spec.day } : {}),
-    minutes: spec.minutes ?? (spec.context === 'passive' ? 30 : 60),
-    done: false,
-  }))
+  return specs.map((spec, index) => {
+    const minutes = spec.minutes ?? (spec.context === 'passive' ? 30 : 60)
+    // Day 1 is Monday and Day 7 is Sunday. Spreading tasks one per day gives
+    // every week a usable schedule until authored day plans replace it.
+    const day = spec.day ?? (((index + 1) % 7) as Weekday)
+    return {
+      id: `${weekId}-c${index + 1}`,
+      label: spec.label,
+      context: spec.context,
+      ...(spec.tier ? { tier: spec.tier } : {}),
+      day,
+      minutes,
+      estimate: estimateForMinutes(minutes),
+      done: false,
+    }
+  })
 }
 
 export function standardChecks(
@@ -35,13 +43,13 @@ export function standardChecks(
   opts: { docs: string; book: string; paper: string; build: string; error: string; tests: string; gate: string },
 ): ChecklistItem[] {
   return checks(weekId, [
-    { label: `Official docs: ${opts.docs}`, context: 'passive', minutes: 60 },
-    { label: `Canon 30m: ${opts.book} → 3 raw bullets`, context: 'passive', minutes: 30 },
-    { label: `Paper drill: ${opts.paper}`, context: 'passive', minutes: 45 },
-    { label: `Tier A · 60m build: ${opts.build}`, context: 'active', tier: 'A', minutes: 60 },
-    { label: `Deliberate error: ${opts.error}`, context: 'active', tier: 'A', minutes: 15 },
-    { label: `Tier B · night block: ${opts.tests}`, context: 'active', tier: 'B', minutes: 60 },
-    { label: `Tier C · Sunday: ${opts.gate}`, context: 'active', tier: 'C', minutes: 60 },
+    { label: `Read the docs: ${opts.docs}`, context: 'passive', minutes: 60 },
+    { label: `Read and note: ${opts.book} → 3 bullets`, context: 'passive', minutes: 30 },
+    { label: `Sketch it on paper: ${opts.paper}`, context: 'passive', minutes: 45 },
+    { label: `Build: ${opts.build}`, context: 'active', tier: 'A', minutes: 60 },
+    { label: `Break it on purpose: ${opts.error}`, context: 'active', tier: 'A', minutes: 15 },
+    { label: `Test and write it up: ${opts.tests}`, context: 'active', tier: 'B', minutes: 60 },
+    { label: `Weekly checkpoint: ${opts.gate}`, context: 'active', tier: 'C', minutes: 60 },
   ])
 }
 

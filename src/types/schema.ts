@@ -4,7 +4,7 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 export const SEED_VERSION = 1
 
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -30,6 +30,39 @@ export type ResourceStatus = 'toRead' | 'reading' | 'done'
 export type CardSource = 'core' | 'mistake'
 
 export type DetailLevel = 'full' | 'compact'
+
+/**
+ * A planned effort range, in minutes. Estimates are deliberately vague: the
+ * planner budgets with `max`, while progress reports the whole range.
+ */
+export interface Estimate {
+  min: number
+  max: number
+}
+
+/** Per-device planning capacity. Never part of the curriculum content. */
+export interface PlannerSettings {
+  weekdayActiveMinutes: number
+  weekdayPassiveMinutes: number
+  weekendActiveMinutes: number
+  weekendPassiveMinutes: number
+  /** Days the learner intends to study. 0 = Sunday. */
+  studyDays: Weekday[]
+  /** Catch-up / review day. 0 = Sunday. */
+  bufferDay: Weekday
+  /** Suggested focus block length, used when splitting a task. */
+  sessionMinutes: number
+}
+
+export const DEFAULT_PLANNER: PlannerSettings = {
+  weekdayActiveMinutes: 90,
+  weekdayPassiveMinutes: 45,
+  weekendActiveMinutes: 120,
+  weekendPassiveMinutes: 60,
+  studyDays: [1, 2, 3, 4, 5, 6],
+  bufferDay: 0,
+  sessionMinutes: 25,
+}
 
 export interface KnowledgePoint {
   id: string
@@ -85,7 +118,10 @@ export interface ChecklistItem {
   context: 'passive' | 'active'
   tier?: 'A' | 'B' | 'C'
   day?: Weekday
+  /** Legacy planned minutes from schema v1. Superseded by `estimate`. */
   minutes?: number
+  /** v2 planned effort range. Falls back to `minutes` when absent. */
+  estimate?: Estimate
   done: boolean
 }
 
@@ -215,6 +251,7 @@ export interface AppData {
   dailyLog: Record<string, DayLog>
   overrides: Overrides
   prefs: AppPrefs
+  planner: PlannerSettings
 }
 
 export interface RhythmItem {

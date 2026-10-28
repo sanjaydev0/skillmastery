@@ -87,7 +87,7 @@ export function VaultView() {
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow">Reference, not rabbit holes</p>
-          <h1 className="h1 mt-1">Vault</h1>
+          <h1 className="h1 mt-1">Library</h1>
           <p className="muted mt-1 max-w-2xl text-[13px]">
             The docs, the 30-minute canon and the community curricula. Saved locally; external links only open
             when you choose.

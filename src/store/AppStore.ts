@@ -7,12 +7,15 @@ import type {
   Flashcard,
   KnowledgeNode,
   Mode,
+  Overrides,
+  PlannerSettings,
   Resource,
   ResourceKind,
   ResourceStatus,
   Subject,
   Theme,
   Week,
+  Weekday,
 } from '../types/schema'
 import { createSeedData } from '../data/seedData'
 import { activeWeek } from '../engine/gating'
@@ -22,11 +25,19 @@ import { addRepairFlag, clearFlagsFrom, clearRepairFlag, recordKpFailure, resetN
 import { gradeCard } from '../engine/srs'
 import type { Grade } from '../engine/srs'
 import { recordAttempt } from '../engine/mastery'
+import { estimateForMinutes } from '../engine/estimates'
 import { seedBook } from '../data/seedHelpers'
 import { uniqueId } from '../lib/utils'
 import { dateKey } from '../lib/dates'
 import { savePersisted, mirrorNow } from '../services/storage'
 import { setSaveState } from '../services/saveStatus'
+import {
+  popRedo,
+  popUndo,
+  recordHistory,
+  snapshotOf,
+  snapshotsEqual,
+} from '../services/history'
 
 export interface ActionResult {
   ok: boolean
@@ -109,9 +120,16 @@ interface AppStore extends AppData {
   clearOverride: (kind: 'week' | 'node', id: string) => void
   importData: (data: AppData, mode: 'replace' | 'merge') => void
   resetToSeed: () => void
+  resetChecklistItem: (weekId: string, itemId: string) => void
+  resetProgress: (scope: ResetScope, id?: string) => ActionResult
+  undo: () => boolean
+  redo: () => boolean
   markExported: () => void
   updatePrefs: (patch: Partial<AppData['prefs']>) => void
+  updatePlanner: (patch: Partial<PlannerSettings>) => void
 }
+
+export type ResetScope = 'week' | 'subject' | 'all'
 
 const now = () => Date.now()
 
@@ -129,54 +147,55 @@ function patchSubject(state: AppData, updater: (subject: Subject) => Subject, ti
 }
 
 function makeChecklist(weekId: string, title: string): ChecklistItem[] {
-  return [
-    {
-      id: `${weekId}-c1`,
-      label: `Read the official documentation for ${title}`,
-      context: 'passive',
-      done: false,
-      minutes: 45,
-    },
-    {
-      id: `${weekId}-c2`,
-      label: 'Paper drill: sketch the primitive before touching the keyboard',
-      context: 'passive',
-      done: false,
-      minutes: 45,
-    },
-    {
-      id: `${weekId}-c3`,
-      label: 'Tier A · 60-minute build slice translated from paper',
-      context: 'active',
-      tier: 'A',
-      done: false,
-      minutes: 60,
-    },
-    {
-      id: `${weekId}-c4`,
-      label: 'Trigger one deliberate error, observe it, fix it',
-      context: 'active',
-      tier: 'A',
-      done: false,
-      minutes: 20,
-    },
-    {
-      id: `${weekId}-c5`,
-      label: 'Tier B · tests, polish, and compile the wiki note',
-      context: 'active',
-      tier: 'B',
-      done: false,
-      minutes: 60,
-    },
-    {
-      id: `${weekId}-c6`,
-      label: 'Tier C · blind 60-minute mastery gate',
-      context: 'active',
-      tier: 'C',
-      done: false,
-      minutes: 60,
-    },
+  const items: Array<Omit<ChecklistItem, 'id' | 'estimate' | 'day'>> = [
+    { label: `Read the docs for ${title}`, context: 'passive', done: false, minutes: 45 },
+    { label: 'Sketch the idea on paper before coding', context: 'passive', done: false, minutes: 45 },
+    { label: 'Build the main feature', context: 'active', tier: 'A', done: false, minutes: 60 },
+    { label: 'Break it on purpose, then fix it', context: 'active', tier: 'A', done: false, minutes: 20 },
+    { label: 'Test it and write what you learned', context: 'active', tier: 'B', done: false, minutes: 60 },
+    { label: 'Weekly checkpoint: rebuild it without notes', context: 'active', tier: 'C', done: false, minutes: 60 },
   ]
+  return items.map((item, index) => ({
+    ...item,
+    id: `${weekId}-c${index + 1}`,
+    day: ((index + 1) % 7) as Weekday,
+    estimate: estimateForMinutes(item.minutes),
+  }))
+}
+
+/** Clearing progress must never touch the curriculum text, only the evidence. */
+function resetNodeProgress(node: KnowledgeNode, at: number): KnowledgeNode {
+  return {
+    ...node,
+    status: 'locked',
+    srs: emptySrs(),
+    repairFlags: [],
+    knowledgePoints: node.knowledgePoints.map((point) => {
+      const next = { ...point, fails: 0 }
+      delete next.lastFailedAt
+      return next
+    }),
+    updatedAt: at,
+  }
+}
+
+function resetCardProgress(card: Flashcard, at: number): Flashcard {
+  return { ...card, scheduleStep: 0, dueAt: 0, lapses: 0, reviews: 0, updatedAt: at }
+}
+
+function clearGateProgress(week: Week): Week {
+  return {
+    ...week,
+    checklist: week.checklist.map((item) => ({ ...item, done: false })),
+    gate: { attempts: [], notes: week.gate.notes },
+  }
+}
+
+function pruneOverrides(overrides: Overrides, weekIds: Set<string>, nodeIds: Set<string>): Overrides {
+  return {
+    weeks: Object.fromEntries(Object.entries(overrides.weeks).filter(([key]) => !weekIds.has(key))),
+    nodes: Object.fromEntries(Object.entries(overrides.nodes).filter(([key]) => !nodeIds.has(key))),
+  }
 }
 
 export const useAppStore = create<AppStore>()((set, get) => ({
@@ -802,6 +821,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           ? state.activeSubjectId
           : incoming.activeSubjectId,
         prefs: { ...incoming.prefs, theme: state.prefs.theme },
+        // Capacity belongs to this device, not to the imported file.
+        planner: { ...state.planner, studyDays: [...state.planner.studyDays] },
       })
       return
     }
@@ -843,14 +864,142 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({
       ...seed,
       prefs: { ...seed.prefs, theme: state.prefs.theme, mode: state.prefs.mode },
+      planner: { ...state.planner, studyDays: [...state.planner.studyDays] },
       hydrated: true,
     })
+  },
+
+  resetChecklistItem: (weekId, itemId) =>
+    set((state) => {
+      const at = now()
+      return patchSubject(
+        state,
+        (subject) => ({
+          ...subject,
+          weeks: subject.weeks.map((week) =>
+            week.id === weekId
+              ? {
+                  ...week,
+                  checklist: week.checklist.map((item) =>
+                    item.id === itemId ? { ...item, done: false } : item,
+                  ),
+                }
+              : week,
+          ),
+        }),
+        at,
+      )
+    }),
+
+  resetProgress: (scope, id) => {
+    const state = get()
+    const at = now()
+
+    if (scope === 'week') {
+      if (!id) return { ok: false, message: 'Choose a week to reset.' }
+      const subject = activeSubjectOf(state)
+      const week = subject?.weeks.find((entry) => entry.id === id)
+      if (!subject || !week) return { ok: false, message: 'Week not found.' }
+      const nodeIds = new Set(subject.nodes.filter((node) => node.weekId === id).map((node) => node.id))
+      set({
+        ...patchSubject(
+          state,
+          (current) => ({
+            ...current,
+            weeks: current.weeks.map((entry) => (entry.id === id ? clearGateProgress(entry) : entry)),
+            nodes: current.nodes.map((node) => (nodeIds.has(node.id) ? resetNodeProgress(node, at) : node)),
+            cards: current.cards.map((card) => (card.weekId === id ? resetCardProgress(card, at) : card)),
+          }),
+          at,
+        ),
+        overrides: pruneOverrides(state.overrides, new Set([id]), nodeIds),
+      })
+      return {
+        ok: true,
+        message: `Week ${week.weekNumber} progress cleared. Content is untouched, and Undo restores it.`,
+      }
+    }
+
+    if (scope === 'subject') {
+      const subject = activeSubjectOf(state)
+      if (!subject) return { ok: false, message: 'No active subject.' }
+      const weekIds = new Set(subject.weeks.map((week) => week.id))
+      const nodeIds = new Set(subject.nodes.map((node) => node.id))
+      set({
+        ...patchSubject(
+          state,
+          (current) => ({
+            ...current,
+            weeks: current.weeks.map(clearGateProgress),
+            nodes: current.nodes.map((node) => resetNodeProgress(node, at)),
+            cards: current.cards.map((card) => resetCardProgress(card, at)),
+            resources: current.resources.map((resource) => ({ ...resource, status: 'toRead' })),
+          }),
+          at,
+        ),
+        overrides: pruneOverrides(state.overrides, weekIds, nodeIds),
+      })
+      return {
+        ok: true,
+        message: `${subject.shortName} progress cleared. Content is untouched, and Undo restores it.`,
+      }
+    }
+
+    const seed = createSeedData()
+    set({
+      ...seed,
+      prefs: {
+        ...seed.prefs,
+        theme: state.prefs.theme,
+        mode: state.prefs.mode,
+        sidebarCollapsed: state.prefs.sidebarCollapsed,
+      },
+      planner: { ...state.planner, studyDays: [...state.planner.studyDays] },
+      hydrated: true,
+    })
+    return {
+      ok: true,
+      message: 'Everything reset to the seed plan. Undo restores the previous state; export a backup first for a permanent copy.',
+    }
+  },
+
+  undo: () => {
+    const entry = popUndo()
+    if (!entry) return false
+    set({ ...entry.before })
+    return true
+  },
+
+  redo: () => {
+    const entry = popRedo()
+    if (!entry) return false
+    set({ ...entry.after })
+    return true
   },
 
   markExported: () => set((state) => ({ prefs: { ...state.prefs, lastExportAt: now() } })),
 
   updatePrefs: (patch) =>
     set((state) => ({ prefs: { ...state.prefs, ...patch }, updatedAt: now() })),
+
+  updatePlanner: (patch) =>
+    set((state) => {
+      const next = { ...state.planner, ...patch }
+      const clamp = (value: number, min: number, max: number) =>
+        Math.max(min, Math.min(max, Math.round(Number.isFinite(value) ? value : min)))
+      return {
+        planner: {
+          weekdayActiveMinutes: clamp(next.weekdayActiveMinutes, 0, 720),
+          weekdayPassiveMinutes: clamp(next.weekdayPassiveMinutes, 0, 720),
+          weekendActiveMinutes: clamp(next.weekendActiveMinutes, 0, 720),
+          weekendPassiveMinutes: clamp(next.weekendPassiveMinutes, 0, 720),
+          studyDays: [...next.studyDays],
+          bufferDay: next.bufferDay,
+          sessionMinutes: clamp(next.sessionMinutes, 5, 180),
+        },
+        updatedAt: now(),
+      }
+    }),
 }))
 
 export function useActiveSubject(): Subject {
@@ -876,6 +1025,7 @@ export function getStoredAppData(): AppData {
     dailyLog: state.dailyLog,
     overrides: state.overrides,
     prefs: state.prefs,
+    planner: state.planner,
   }
 }
 
@@ -934,3 +1084,63 @@ export function applyHydratedData(data: AppData, issue: 'corrupt' | null): void 
     bootIssue: issue,
   })
 }
+
+/**
+ * Every user-visible content mutation is undoable. Preferences and navigation
+ * are deliberately excluded: undoing a theme change is confusing, and undoing
+ * a tab switch is meaningless.
+ */
+const UNDOABLE_ACTIONS: Record<string, string> = {
+  addSubject: 'Create track',
+  toggleChecklist: 'Toggle task',
+  saveGate: 'Save checkpoint',
+  addWeek: 'Add week',
+  updateWeek: 'Edit week',
+  deleteWeek: 'Delete week',
+  startNode: 'Start concept',
+  markNodeMastered: 'Master concept',
+  logNodeReview: 'Log review',
+  failKnowledgePoint: 'Log mistake',
+  clearRepair: 'Clear repair drill',
+  addNode: 'Add concept',
+  updateNode: 'Edit concept',
+  deleteNode: 'Delete concept',
+  addCard: 'Add flashcard',
+  updateCard: 'Edit flashcard',
+  deleteCard: 'Delete flashcard',
+  reviewCard: 'Review flashcard',
+  addResource: 'Add resource',
+  cycleResource: 'Update resource status',
+  updateResource: 'Edit resource',
+  deleteResource: 'Delete resource',
+  updateBook: 'Update book progress',
+  addBook: 'Add book',
+  deleteBook: 'Delete book',
+  toggleDailyItem: 'Toggle daily habit',
+  unlockWeek: 'Unlock week',
+  unlockNode: 'Unlock concept',
+  clearOverride: 'Clear override',
+  importData: 'Import data',
+  resetToSeed: 'Reset to seed',
+  resetChecklistItem: 'Uncheck task',
+  resetProgress: 'Reset progress',
+}
+
+function installUndo(): void {
+  const initial = useAppStore.getState()
+  const patch: Record<string, unknown> = {}
+  for (const [key, label] of Object.entries(UNDOABLE_ACTIONS)) {
+    const original = initial[key as keyof typeof initial]
+    if (typeof original !== 'function') continue
+    patch[key] = (...args: unknown[]) => {
+      const before = snapshotOf(getStoredAppData())
+      const result = (original as (...inner: unknown[]) => unknown).apply(null, args)
+      const after = snapshotOf(getStoredAppData())
+      if (!snapshotsEqual(before, after)) recordHistory(label, before, after)
+      return result
+    }
+  }
+  useAppStore.setState(patch as Partial<AppStore>)
+}
+
+installUndo()

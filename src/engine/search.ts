@@ -71,7 +71,7 @@ export function buildSearchIndex(subjects: Subject[], books: Book[]): SearchDoc[
         tags: [`week-${week.weekNumber}`],
         subjectId: subject.id,
         subjectName: subject.shortName,
-        hash: `#/week/${week.id}`,
+        hash: `#/plan/${week.id}`,
         haystack,
       })
     }
@@ -101,7 +101,7 @@ export function buildSearchIndex(subjects: Subject[], books: Book[]): SearchDoc[
         tags: card.tags,
         subjectId: subject.id,
         subjectName: subject.shortName,
-        hash: `#/recall`,
+        hash: `#/practice`,
         haystack: normalise(`${card.front} ${card.back} ${card.tags.join(' ')}`),
       })
     }
@@ -114,7 +114,7 @@ export function buildSearchIndex(subjects: Subject[], books: Book[]): SearchDoc[
         tags: resource.tags,
         subjectId: subject.id,
         subjectName: subject.shortName,
-        hash: `#/vault`,
+        hash: `#/library`,
         haystack: normalise(`${resource.title} ${resource.url} ${resource.tags.join(' ')}`),
       })
     }
@@ -126,7 +126,7 @@ export function buildSearchIndex(subjects: Subject[], books: Book[]): SearchDoc[
       title: book.title,
       subtitle: `${book.author} · ${book.pillar}`,
       tags: ['book canon', book.pillar],
-      hash: '#/vault',
+      hash: '#/library',
       haystack: normalise(`${book.title} ${book.author} ${book.pillar} ${book.notes ?? ''}`),
     })
   }

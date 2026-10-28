@@ -1,5 +1,5 @@
 import type { AppData } from '../types/schema'
-import { SCHEMA_VERSION, SEED_VERSION } from '../types/schema'
+import { DEFAULT_PLANNER, SCHEMA_VERSION, SEED_VERSION } from '../types/schema'
 import { seedBooks } from './books'
 import { flutterSubject } from './tracks/flutter'
 import { fullstackSubject } from './tracks/fullstack'
@@ -31,5 +31,6 @@ export function createSeedData(): AppData {
       mode: 'active',
       sidebarCollapsed: false,
     },
+    planner: { ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] },
   }
 }

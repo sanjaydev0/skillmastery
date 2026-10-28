@@ -226,7 +226,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
                 variant="outline"
                 className="mt-2"
                 icon={<ArrowUpRight size={13} />}
-                onClick={() => navigate(`#/week/${week.id}`)}
+                onClick={() => navigate(`#/plan/${week.id}`)}
               >
                 Open Week {week.weekNumber}
               </Button>

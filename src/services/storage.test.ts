@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createStore, get, set } from 'idb-keyval'
 import { createSeedData } from '../data/seedData'
-import type { AppData } from '../types/schema'
+import type { AppData, Subject } from '../types/schema'
+import { SCHEMA_VERSION } from '../types/schema'
 import {
   LOCAL_DATA_KEY,
   LOCAL_THEME_KEY,
+  MIGRATION_BACKUP_KEY,
+  MIGRATION_BACKUP_META_KEY,
   clearPersisted,
   loadPersisted,
   readThemePreference,
@@ -73,6 +76,28 @@ describe('SkillMastery storage namespace', () => {
     expect(result.issue).toBe('corrupt')
     expect(result.data).toBeNull()
     expect(Object.keys(localStorage).some((key) => key.startsWith('skillmastery:corrupt:'))).toBe(true)
+  })
+
+  it('backs up a schema v1 copy before migrating it and persists v2', async () => {
+    const legacy = fixture('V1 copy', 600) as unknown as Record<string, unknown>
+    legacy.schemaVersion = 1
+    delete legacy.planner
+    for (const subject of legacy.subjects as Subject[]) {
+      for (const week of subject.weeks) {
+        for (const item of week.checklist) delete item.estimate
+      }
+    }
+    localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(legacy))
+
+    const result = await loadPersisted()
+    expect(result.data?.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(result.data?.planner.weekdayActiveMinutes).toBe(90)
+    expect(result.data?.subjects[0]!.weeks[0]!.checklist[0]!.estimate).toBeDefined()
+
+    expect(localStorage.getItem(MIGRATION_BACKUP_KEY)).not.toBeNull()
+    const meta = JSON.parse(localStorage.getItem(MIGRATION_BACKUP_META_KEY)!) as { fromVersion: number }
+    expect(meta.fromVersion).toBe(1)
+    expect(JSON.parse(localStorage.getItem(LOCAL_DATA_KEY)!).schemaVersion).toBe(SCHEMA_VERSION)
   })
 
   it('migrates the legacy theme key without losing the preference', () => {

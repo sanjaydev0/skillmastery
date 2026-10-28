@@ -126,7 +126,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
           <Button variant="ghost" onClick={onClose}>
             Close
           </Button>
-          <Button variant="soft" onClick={() => navigate('#/nodes')} icon={<Target size={14} />}>
+          <Button variant="soft" onClick={() => navigate('#/map')} icon={<Target size={14} />}>
             Open graph
           </Button>
         </>

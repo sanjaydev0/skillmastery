@@ -1,5 +1,6 @@
 import { createStore, del, get, set } from 'idb-keyval'
 import type { AppData, Theme } from '../types/schema'
+import { SCHEMA_VERSION } from '../types/schema'
 import { appDataSchema, migrateAppData } from './validation'
 
 const DB_STORE = createStore('skillmastery', 'state')
@@ -10,6 +11,9 @@ export const LOCAL_THEME_KEY = 'skillmastery:theme'
 const LEGACY_LOCAL_DATA_KEY = 'mh:data'
 const LEGACY_LOCAL_THEME_KEY = 'mh:theme'
 const QUARANTINE_PREFIX = 'skillmastery:corrupt:'
+/** Kept until the next successful manual export, so a bad migration is recoverable. */
+export const MIGRATION_BACKUP_KEY = 'skillmastery:pre-migration-backup'
+export const MIGRATION_BACKUP_META_KEY = 'skillmastery:pre-migration-meta'
 
 export interface LoadResult {
   data: AppData | null
@@ -25,13 +29,16 @@ interface StoredCandidate {
 
 interface ValidCandidate extends StoredCandidate {
   data: AppData
+  /** Version as stored, before migration. */
+  version: number
 }
 
-function parseCandidate(raw: string | null | undefined): AppData | null {
+function parseCandidate(raw: string | null | undefined): { data: AppData; version: number } | null {
   if (!raw) return null
   try {
-    const parsed = appDataSchema.parse(JSON.parse(raw))
-    return migrateAppData(parsed as AppData)
+    const parsed = appDataSchema.parse(JSON.parse(raw)) as AppData
+    const version = parsed.schemaVersion
+    return { data: migrateAppData(parsed), version }
   } catch {
     return null
   }
@@ -59,6 +66,26 @@ function quarantine(raw: string | null | undefined): void {
     localStorage.setItem(`${QUARANTINE_PREFIX}${Date.now()}`, raw.slice(0, 2_000_000))
   } catch {
     // Storage is full or unavailable; the original copy stays where it was.
+  }
+}
+
+/**
+ * A migration rewrites every checklist item, so keep the exact pre-upgrade
+ * payload. The mirror can hold ~4.5 MB; if the raw copy is larger than that,
+ * skip the backup rather than silently truncating it into something that looks
+ * valid but is not.
+ */
+function backupBeforeMigration(raw: string | null | undefined, fromVersion: number): void {
+  if (!raw) return
+  if (raw.length > 4_500_000) return
+  try {
+    localStorage.setItem(MIGRATION_BACKUP_KEY, raw)
+    localStorage.setItem(
+      MIGRATION_BACKUP_META_KEY,
+      JSON.stringify({ fromVersion, toVersion: SCHEMA_VERSION, at: Date.now(), bytes: raw.length }),
+    )
+  } catch {
+    // Quota exceeded: the migration is still safe because it is additive.
   }
 }
 
@@ -111,14 +138,22 @@ export async function loadPersisted(): Promise<LoadResult> {
 
   const valid: ValidCandidate[] = []
   for (const candidate of candidates) {
-    const data = parseCandidate(candidate.raw)
-    if (data) valid.push({ ...candidate, data })
+    const parsed = parseCandidate(candidate.raw)
+    if (parsed) valid.push({ ...candidate, data: parsed.data, version: parsed.version })
   }
 
   if (valid.length) {
     const chosen = valid.reduce((newest, candidate) =>
       candidate.data.updatedAt > newest.data.updatedAt ? candidate : newest,
     )
+    if (chosen.version < SCHEMA_VERSION) {
+      backupBeforeMigration(chosen.raw, chosen.version)
+      try {
+        await savePersisted(chosen.data)
+      } catch {
+        // The in-memory copy is migrated and the autosave will retry.
+      }
+    }
     if (chosen.legacy) await migrateLegacy(chosen.data)
     else await removeLegacyCopies()
     return { data: chosen.data, source: chosen.source }

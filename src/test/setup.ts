@@ -5,6 +5,7 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import { createSeedData } from '../data/seedData'
 import { useAppStore } from '../store/AppStore'
 import { useUiStore } from '../store/uiStore'
+import { clearHistory } from '../services/history'
 
 type MediaListener = (event: MediaQueryListEvent) => void
 
@@ -50,11 +51,13 @@ globalThis.ResizeObserver = class ResizeObserver {
 }
 
 function resetState(): void {
+  clearHistory()
   useAppStore.setState({ ...createSeedData(), hydrated: true, bootIssue: null })
   useUiStore.setState({
     paletteOpen: false,
     settingsOpen: false,
     subjectSheetOpen: false,
+    moreOpen: false,
     toasts: [],
   })
   try {
@@ -62,7 +65,7 @@ function resetState(): void {
   } catch {
     // jsdom without localStorage should not break a test.
   }
-  window.location.hash = '#/overview'
+  window.location.hash = '#/today'
 }
 
 beforeEach(resetState)

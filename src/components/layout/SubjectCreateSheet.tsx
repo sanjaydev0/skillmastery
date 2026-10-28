@@ -42,7 +42,7 @@ export function SubjectCreateSheet({ onClose }: { onClose: () => void }) {
     }
     toast(result.message, 'success')
     onClose()
-    navigate('#/curriculum')
+    navigate('#/plan')
   }
 
   return (

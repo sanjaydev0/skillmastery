@@ -68,9 +68,18 @@ export function addDaysToKey(key: string, days: number): string {
   return dateKey(date)
 }
 
+/**
+ * Monday-first index for display strips. 0 = Monday ... 6 = Sunday.
+ * Planning data uses the schema's Sunday-first order instead; use
+ * `schemaWeekday` when reading or writing `ChecklistItem.day`.
+ */
 export function weekdayOf(date: Date = new Date()): Weekday {
-  // JS: 0 = Sunday. We use 0 = Monday.
   return ((date.getDay() + 6) % 7) as Weekday
+}
+
+/** Schema weekday for plans: 0 = Sunday, matching JavaScript's getDay(). */
+export function schemaWeekday(date: Date = new Date()): Weekday {
+  return date.getDay() as Weekday
 }
 
 export function formatShortDate(ts: number): string {

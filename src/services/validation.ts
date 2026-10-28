@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import type { AppData } from '../types/schema'
-import { SCHEMA_VERSION } from '../types/schema'
+import type { AppData, PlannerSettings, Weekday } from '../types/schema'
+import { DEFAULT_PLANNER, SCHEMA_VERSION } from '../types/schema'
+import { estimateForMinutes } from '../engine/estimates'
 
 const knowledgePointSchema = z.object({
   id: z.string().min(1),
@@ -52,6 +53,13 @@ const checklistItemSchema = z.object({
   tier: z.enum(['A', 'B', 'C']).optional(),
   day: z.number().int().min(0).max(6).optional(),
   minutes: z.number().int().min(0).optional(),
+  estimate: z
+    .object({
+      min: z.number().int().min(0),
+      max: z.number().int().min(0),
+    })
+    .refine((value) => value.max >= value.min, 'estimate.max must be >= estimate.min')
+    .optional(),
   done: z.boolean().default(false),
 })
 
@@ -170,8 +178,19 @@ const overridesSchema = z.object({
   nodes: z.record(z.string(), z.number()).default({}),
 })
 
+const plannerSchema = z.object({
+  weekdayActiveMinutes: z.number().int().min(0).max(720).default(90),
+  weekdayPassiveMinutes: z.number().int().min(0).max(720).default(45),
+  weekendActiveMinutes: z.number().int().min(0).max(720).default(120),
+  weekendPassiveMinutes: z.number().int().min(0).max(720).default(60),
+  studyDays: z.array(z.number().int().min(0).max(6)).default([1, 2, 3, 4, 5, 6]),
+  bufferDay: z.number().int().min(0).max(6).default(0),
+  sessionMinutes: z.number().int().min(5).max(180).default(25),
+})
+
 export const appDataSchema = z.object({
-  schemaVersion: z.number().int().default(SCHEMA_VERSION),
+  // Missing versions predate explicit versioning, so they must migrate too.
+  schemaVersion: z.number().int().default(1),
   seedVersion: z.number().int().default(0),
   createdAt: z.number().default(0),
   updatedAt: z.number().default(0),
@@ -181,6 +200,7 @@ export const appDataSchema = z.object({
   dailyLog: z.record(z.string(), dayLogSchema).default({}),
   overrides: overridesSchema.default({ weeks: {}, nodes: {} }),
   prefs: prefsSchema.default({ theme: 'dark', mode: 'active', sidebarCollapsed: false }),
+  planner: plannerSchema.default(() => ({ ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] })),
 })
 
 export interface ParsedBackup {
@@ -193,14 +213,39 @@ export function parseBackupJson(raw: string): ParsedBackup {
   const envelope = json as { data?: unknown; exportedAt?: string }
   const candidate = envelope && typeof envelope === 'object' && 'data' in envelope ? envelope.data : json
   const parsed = appDataSchema.parse(candidate)
-  return { data: parsed as AppData, exportedAt: envelope?.exportedAt }
+  return { data: migrateAppData(parsed as AppData), exportedAt: envelope?.exportedAt }
 }
+
+/** Schema v1 predates `planner`; migrating accepts payloads that omit it. */
+export type MigratableAppData = Omit<AppData, 'planner'> & { planner?: PlannerSettings }
 
 /**
  * Future schema upgrades land here. Each step must be additive and defensive:
  * a failed migration returns the original payload rather than throwing.
  */
-export function migrateAppData(data: AppData): AppData {
-  if (data.schemaVersion >= SCHEMA_VERSION) return data
-  return { ...data, schemaVersion: SCHEMA_VERSION }
+export function migrateAppData(input: MigratableAppData): AppData {
+  const planner: PlannerSettings = input.planner
+    ? { ...input.planner, studyDays: [...input.planner.studyDays] }
+    : { ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] }
+
+  if (input.schemaVersion >= SCHEMA_VERSION) return { ...input, planner }
+
+  return {
+    ...input,
+    schemaVersion: SCHEMA_VERSION,
+    planner,
+    subjects: input.subjects.map((subject) => ({
+      ...subject,
+      weeks: subject.weeks.map((week) => ({
+        ...week,
+        checklist: week.checklist.map((item, index) => {
+          // v1 had no day assignments; spread them one per day so the new Plan
+          // view has a real schedule instead of a single undated pile.
+          const day = (item.day ?? ((index + 1) % 7)) as Weekday
+          const estimate = item.estimate ?? estimateForMinutes(item.minutes)
+          return { ...item, day, ...(estimate.max > 0 ? { estimate } : {}) }
+        }),
+      })),
+    })),
+  }
 }

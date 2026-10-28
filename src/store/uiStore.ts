@@ -13,6 +13,7 @@ interface UiStore {
   paletteOpen: boolean
   settingsOpen: boolean
   subjectSheetOpen: boolean
+  moreOpen: boolean
   toasts: ToastItem[]
   openPalette: () => void
   closePalette: () => void
@@ -21,6 +22,8 @@ interface UiStore {
   closeSettings: () => void
   openSubjectSheet: () => void
   closeSubjectSheet: () => void
+  openMore: () => void
+  closeMore: () => void
   toast: (message: string, kind?: ToastKind, duration?: number) => void
   dismissToast: (id: string) => void
 }
@@ -31,6 +34,7 @@ export const useUiStore = create<UiStore>()((set, get) => ({
   paletteOpen: false,
   settingsOpen: false,
   subjectSheetOpen: false,
+  moreOpen: false,
   toasts: [],
   openPalette: () => set({ paletteOpen: true }),
   closePalette: () => set({ paletteOpen: false }),
@@ -39,6 +43,8 @@ export const useUiStore = create<UiStore>()((set, get) => ({
   closeSettings: () => set({ settingsOpen: false }),
   openSubjectSheet: () => set({ subjectSheetOpen: true }),
   closeSubjectSheet: () => set({ subjectSheetOpen: false }),
+  openMore: () => set({ moreOpen: true }),
+  closeMore: () => set({ moreOpen: false }),
   toast: (message, kind = 'info', duration = 3800) => {
     const id = `toast-${++toastSeq}`
     set((state) => ({

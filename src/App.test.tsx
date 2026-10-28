@@ -3,12 +3,13 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import App from './App'
 
 describe('application smoke tests', () => {
-  it('renders the hydrated Overview and the active seed week', async () => {
+  it('renders Today with the active seed week and day plan', async () => {
     render(<App />)
-    expect(await screen.findByText(/Ready to compound\?/)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
     expect(screen.getAllByText(/Dart types, sound null safety/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: 'Overview' }).length).toBeGreaterThan(0)
-    expect(screen.getByText(/new cards unscheduled/i)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Today' }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: "Today's plan" })).toBeInTheDocument()
+    expect(screen.getByText(/credits its full estimate range/i)).toBeInTheDocument()
   })
 
   it('opens settings, switches theme, and closes accessibly', async () => {
@@ -43,9 +44,51 @@ describe('application smoke tests', () => {
 
   it('navigates with the hash router', async () => {
     render(<App />)
-    window.location.hash = '#/recall'
+    window.location.hash = '#/practice'
     fireEvent(window, new HashChangeEvent('hashchange'))
-    expect(await screen.findByRole('heading', { name: 'Recall' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Practice' })).toBeInTheDocument()
     expect(screen.getByText(/SRS queue/i)).toBeInTheDocument()
+  })
+
+  it('renders a week as seven day cards', async () => {
+    render(<App />)
+    window.location.hash = '#/plan/fl-w1'
+    fireEvent(window, new HashChangeEvent('hashchange'))
+    expect(await screen.findByRole('heading', { name: /Dart types, sound null safety/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Seven-day plan' })).toBeInTheDocument()
+    expect(screen.getAllByText(/Day 1 · Monday/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/estimated range, no timer/).length).toBe(7)
+  })
+
+  it('credits a completed task to week totals and undoes it from the keyboard', async () => {
+    render(<App />)
+    window.location.hash = '#/plan/fl-w1'
+    fireEvent(window, new HashChangeEvent('hashchange'))
+    await screen.findByRole('heading', { name: 'Seven-day plan' })
+
+    const totals = screen.getByRole('region', { name: 'Week totals' })
+    expect(within(totals).getByText('0 min')).toBeInTheDocument()
+
+    const firstTask = screen.getAllByRole('checkbox')[0]!
+    expect(firstTask).toHaveAttribute('aria-checked', 'false')
+    fireEvent.click(firstTask)
+    expect(firstTask).toHaveAttribute('aria-checked', 'true')
+    expect(within(totals).getByText('60–75 min')).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true })
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox')[0]).toHaveAttribute('aria-checked', 'false'),
+    )
+    expect(within(totals).getByText('0 min')).toBeInTheDocument()
+    expect(await screen.findByText(/Undid: Toggle task/)).toBeInTheDocument()
+  })
+
+  it('opens the mobile More sheet and reaches Help', async () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+    const sheet = await screen.findByRole('dialog', { name: 'More' })
+    fireEvent.click(within(sheet).getByRole('link', { name: /Help/ }))
+    expect(await screen.findByRole('heading', { name: 'Help' })).toBeInTheDocument()
+    expect(screen.getByText('How do I know what to do today?')).toBeInTheDocument()
   })
 })

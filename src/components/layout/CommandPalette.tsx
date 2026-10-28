@@ -8,6 +8,7 @@ import {
   CalendarRange,
   Command,
   Download,
+  HelpCircle,
   LayoutDashboard,
   Library,
   Moon,
@@ -16,6 +17,7 @@ import {
   Search,
   Settings,
   Sun,
+  TrendingUp,
   X,
 } from 'lucide-react'
 import { useAppStore } from '../../store/AppStore'
@@ -54,11 +56,13 @@ const KIND_LABEL: Record<SearchKind, string> = {
 }
 
 const VIEW_ICONS: Record<string, typeof LayoutDashboard> = {
-  overview: LayoutDashboard,
-  curriculum: CalendarRange,
-  nodes: Network,
-  recall: BrainCircuit,
-  vault: Library,
+  today: LayoutDashboard,
+  plan: CalendarRange,
+  map: Network,
+  practice: BrainCircuit,
+  library: Library,
+  progress: TrendingUp,
+  help: HelpCircle,
 }
 
 export function CommandPalette() {

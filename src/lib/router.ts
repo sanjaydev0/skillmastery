@@ -1,6 +1,13 @@
 import { useMemo, useSyncExternalStore } from 'react'
 
-export type ViewName = 'overview' | 'curriculum' | 'nodes' | 'recall' | 'vault'
+export type ViewName =
+  | 'today'
+  | 'plan'
+  | 'map'
+  | 'practice'
+  | 'library'
+  | 'progress'
+  | 'help'
 
 export interface Route {
   view: ViewName
@@ -8,12 +15,23 @@ export interface Route {
 }
 
 export const VIEWS: { id: ViewName; label: string; hash: string }[] = [
-  { id: 'overview', label: 'Overview', hash: '#/overview' },
-  { id: 'curriculum', label: 'Curriculum', hash: '#/curriculum' },
-  { id: 'nodes', label: 'Knowledge nodes', hash: '#/nodes' },
-  { id: 'recall', label: 'Recall', hash: '#/recall' },
-  { id: 'vault', label: 'Vault', hash: '#/vault' },
+  { id: 'today', label: 'Today', hash: '#/today' },
+  { id: 'plan', label: 'Plan', hash: '#/plan' },
+  { id: 'map', label: 'Map', hash: '#/map' },
+  { id: 'practice', label: 'Practice', hash: '#/practice' },
+  { id: 'library', label: 'Library', hash: '#/library' },
+  { id: 'progress', label: 'Progress', hash: '#/progress' },
+  { id: 'help', label: 'Help', hash: '#/help' },
 ]
+
+/** Old links keep working after the information architecture change. */
+const LEGACY_VIEWS: Record<string, ViewName> = {
+  overview: 'today',
+  curriculum: 'plan',
+  nodes: 'map',
+  recall: 'practice',
+  vault: 'library',
+}
 
 function subscribe(listener: () => void): () => void {
   window.addEventListener('hashchange', listener)
@@ -21,20 +39,21 @@ function subscribe(listener: () => void): () => void {
 }
 
 function getHash(): string {
-  return window.location.hash || '#/overview'
+  return window.location.hash || '#/today'
 }
 
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split('?')[0] ?? ''
   const [head, id] = path.split('/')
-  if (head === 'week' && id) return { view: 'curriculum', detail: { kind: 'week', id } }
-  if (head === 'node' && id) return { view: 'nodes', detail: { kind: 'node', id } }
-  const view = VIEWS.find((entry) => entry.id === head)?.id ?? 'overview'
+  if ((head === 'week' || head === 'plan') && id) return { view: 'plan', detail: { kind: 'week', id } }
+  if (head === 'node' && id) return { view: 'map', detail: { kind: 'node', id } }
+  if (head && LEGACY_VIEWS[head]) return { view: LEGACY_VIEWS[head] }
+  const view = VIEWS.find((entry) => entry.id === head)?.id ?? 'today'
   return { view }
 }
 
 export function useHashRoute(): Route {
-  const hash = useSyncExternalStore(subscribe, getHash, () => '#/overview')
+  const hash = useSyncExternalStore(subscribe, getHash, () => '#/today')
   return useMemo(() => parseHash(hash), [hash])
 }
 

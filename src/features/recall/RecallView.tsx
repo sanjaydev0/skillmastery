@@ -20,8 +20,8 @@ export function RecallView() {
     <div>
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="eyebrow">Retrieval, not recognition</p>
-          <h1 className="h1 mt-1">Recall</h1>
+          <p className="eyebrow">Recall, not recognition</p>
+          <h1 className="h1 mt-1">Practice</h1>
           <p className="muted mt-1 max-w-2xl text-[13px]">
             The SRS queue, the Anki-compatible deck, and the prompt hub. Everything runs against local state.
           </p>

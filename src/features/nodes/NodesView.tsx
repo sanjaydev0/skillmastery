@@ -250,7 +250,7 @@ export function NodesView() {
               icon={<Lock size={17} />}
               title="Add a week first"
               description="Nodes belong to weeks. Create a week in the curriculum, then attach nodes to it."
-              action={<Button variant="primary" onClick={() => { setCreateOpen(false); navigate('#/curriculum') }}>Open curriculum</Button>}
+              action={<Button variant="primary" onClick={() => { setCreateOpen(false); navigate('#/plan') }}>Open curriculum</Button>}
             />
           ) : (
             <NodeEditorForm
