@@ -3,9 +3,16 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import App from './App'
 
 describe('application smoke tests', () => {
-  it('renders Today with the active seed week and day plan', async () => {
+  it('opens Day 0, starts the clock, then shows Today', async () => {
     render(<App />)
-    expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'The course starts when you do' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/One hundred and sixty-eight days/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Start Day 1/ }))
+
+    expect(await screen.findByRole('heading', { name: /Day 1 of 168/ })).toBeInTheDocument()
     expect(screen.getAllByText(/money, types and null/i).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: 'Today' }).length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: "Today's plan" })).toBeInTheDocument()
@@ -56,7 +63,7 @@ describe('application smoke tests', () => {
     fireEvent(window, new HashChangeEvent('hashchange'))
     expect(await screen.findByRole('heading', { name: /money, types and null/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Seven-day plan' })).toBeInTheDocument()
-    expect(screen.getAllByText(/Monday, day 1/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Day 1, Monday/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Estimated range, no timer/i).length).toBe(7)
   })
 

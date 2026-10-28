@@ -6,8 +6,11 @@ import {
   CalendarDays,
   CheckCircle2,
   Layers,
+  Palette,
+  Pause,
+  Play,
 } from 'lucide-react'
-import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
+import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import {
   estimateOf,
@@ -20,7 +23,14 @@ import {
 import { dueCards } from '../../engine/srs'
 import { weekStatus } from '../../engine/gating'
 import { navigate } from '../../lib/router'
-import { schemaWeekday } from '../../lib/dates'
+import { formatShortDate } from '../../lib/dates'
+import {
+  consistency,
+  courseDay,
+  courseWeek,
+  daySlot,
+  isPaused,
+} from '../../lib/courseClock'
 import { cn, percent } from '../../lib/utils'
 import {
   Badge,
@@ -30,23 +40,40 @@ import {
   ProgressBar,
   WeekBadge,
 } from '../../components/ui/primitives'
-import { MONDAY_FIRST, dayName, dayNumber, modeLabel, shortDayName } from '../plan/dayPlan'
+import { DAY_SLOTS, dayName, modeLabel, shortDayName } from '../plan/dayPlan'
+import { paragraphs } from '../../content/style'
+
+const COURSE_DAYS = 168
 
 export function TodayView() {
   const subject = useActiveSubject()
-  const week = useActiveWeek()
   const overrides = useAppStore((state) => state.overrides)
   const planner = useAppStore((state) => state.planner)
+  const journey = useAppStore((state) => state.journey)
+  const dayPlans = useAppStore((state) => state.dayPlans)
+  const dailyLog = useAppStore((state) => state.dailyLog)
   const toggleChecklist = useAppStore((state) => state.toggleChecklist)
+  const pauseCourse = useAppStore((state) => state.pauseCourse)
+  const resumeCourse = useAppStore((state) => state.resumeCourse)
   const toast = useUiStore((state) => state.toast)
 
-  const today = schemaWeekday()
+  const clockDay = courseDay(journey)
+  const clockWeek = clockDay === null ? null : courseWeek(clockDay)
+  const slot = clockDay === null ? null : daySlot(clockDay)
+  const week =
+    clockWeek === null
+      ? undefined
+      : subject.weeks.find((entry) => entry.weekNumber === clockWeek)
   const summary = useMemo(
-    () => (week ? summariseWeek(week, planner) : null),
-    [week, planner],
+    () => (week ? summariseWeek(week, planner, journey.startWeekday) : null),
+    [week, planner, journey.startWeekday],
   )
   const course = useMemo(() => summariseSubject(subject), [subject])
   const due = useMemo(() => dueCards(subject.cards).length, [subject.cards])
+  const stats = useMemo(
+    () => consistency(journey, dailyLog, [subject]),
+    [journey, dailyLog, subject],
+  )
   const [todayLabel] = useState(() =>
     new Date().toLocaleDateString(undefined, {
       weekday: 'long',
@@ -55,22 +82,63 @@ export function TodayView() {
     }),
   )
 
-  if (!week || !summary) {
+  const paused = isPaused(journey)
+  const openPause = journey.pauses.find((entry) => entry.to === null)
+
+  const setPause = () => {
+    const result = paused ? resumeCourse() : pauseCourse()
+    toast(result.message, result.ok ? 'success' : 'error', 3200)
+  }
+
+  if (clockDay === null || slot === null) {
     return (
       <div>
         <header>
           <p className="eyebrow">Today</p>
-          <h1 className="h1 mt-1">Nothing planned yet</h1>
-          <p className="muted mt-1 text-[13px]">Add a week to this track, then its days will appear here.</p>
+          <h1 className="h1 mt-1">The course has not started</h1>
+          <p className="muted mt-1 max-w-[60ch] text-[13px]">
+            Day 1 begins when you press Start. Read the Day 0 guide first, then set the hours your week can hold.
+          </p>
         </header>
         <div className="card mt-4">
           <EmptyState
             icon={<CalendarDays size={18} />}
-            title="This track has no weeks"
-            description="A week holds seven day plans. Create the first one to start the schedule."
+            title="Start the clock when you are ready"
+            description="The course is 168 days. Pausing freezes the day count, so a missed week does not throw you forward."
             action={
-              <Button variant="primary" onClick={() => navigate('#/plan')}>
-                Open the plan
+              <Button variant="primary" onClick={() => navigate('#/start')}>
+                Open Day 0
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (!week || !summary) {
+    const finished = clockDay > COURSE_DAYS
+    return (
+      <div>
+        <header>
+          <p className="eyebrow">{todayLabel}</p>
+          <h1 className="h1 mt-1">{finished ? 'One hundred and sixty-eight days' : `Day ${clockDay}`}</h1>
+        </header>
+        <div className="card mt-4">
+          <EmptyState
+            icon={<Layers size={18} />}
+            title={finished ? 'The six months are done' : `Week ${clockWeek} is not in this track`}
+            description={
+              finished
+                ? 'The clock has reached the end of the plan. The work is yours now: keep the habits, and keep shipping.'
+                : 'The next course week has not been added to this track yet. Open the plan to add it.'
+            }
+            action={
+              <Button
+                variant="primary"
+                onClick={() => navigate(finished ? '#/progress' : '#/plan')}
+              >
+                {finished ? 'Open progress' : 'Open the plan'}
               </Button>
             }
           />
@@ -80,16 +148,21 @@ export function TodayView() {
   }
 
   const status = weekStatus(week, subject.weeks, overrides)
-  const todaySummary = summary.days.find((entry) => entry.day === today)!
+  const todaySummary = summary.days.find((entry) => entry.slot === slot)!
   const todayItems = todaySummary.items
   const todayLeft = sumItems(todayItems.filter((item) => !item.done))
   const todayDone = todayItems.filter((item) => item.done).length
-  const nextTask = todayItems.find((item) => !item.done) ?? week.checklist.find((item) => !item.done)
-  const nextIsToday = nextTask ? nextTask.day === today : false
+  const nextTask =
+    todayItems.find((item) => !item.done) ?? week.checklist.find((item) => !item.done)
+  const nextIsToday = nextTask ? nextTask.day === slot : false
   const phase = subject.phases.find((entry) => entry.id === week.phaseId)
   const overBy = todaySummary.overBy.active + todaySummary.overBy.passive
   const weekRatio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const courseRatio = course.items > 0 ? course.doneItems / course.items : 0
+  const plan = dayPlans[week.id]?.find((entry) => entry.day === slot)
+  const planParagraphs = plan ? paragraphs(plan.summary) : []
+  const lead = planParagraphs[0]
+  const rest = planParagraphs.slice(1)
 
   const completeTask = (taskId: string) => {
     const task = week.checklist.find((item) => item.id === taskId)
@@ -109,7 +182,9 @@ export function TodayView() {
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow">{todayLabel}</p>
-          <h1 className="h1 mt-1.5">Today</h1>
+          <h1 className="h1 mt-1.5">
+            Day {clockDay} <span className="faint font-normal">of {COURSE_DAYS}</span>
+          </h1>
           <p className="muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
             <span className="font-medium text-t1">
               Week {week.weekNumber}, {week.title}
@@ -127,11 +202,35 @@ export function TodayView() {
           >
             This week's plan
           </Button>
-          <Button variant="outline" size="sm" icon={<BrainCircuit size={14} />} onClick={() => navigate('#/practice')}>
-            Review {due > 0 ? `(${due})` : ''}
+          <Button
+            variant={paused ? 'primary' : 'ghost'}
+            size="sm"
+            icon={paused ? <Play size={14} /> : <Pause size={14} />}
+            onClick={setPause}
+          >
+            {paused ? 'Resume course' : 'Pause course'}
           </Button>
         </div>
       </header>
+
+      {paused ? (
+        <section
+          className="mt-4 flex flex-col gap-2 rounded-xl border border-line bg-s2 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+          aria-label="Course paused"
+        >
+          <div>
+            <p className="text-[12.5px] font-semibold">
+              Paused{openPause ? ` since ${formatShortDate(openPause.from)}` : ''}
+            </p>
+            <p className="faint mt-0.5 text-[11.5px]">
+              The course day stays on Day {clockDay}. It does not move until you resume.
+            </p>
+          </div>
+          <Button variant="primary" size="sm" icon={<Play size={14} />} onClick={setPause} className="flex-none">
+            Resume course
+          </Button>
+        </section>
+      ) : null}
 
       {nextTask ? (
         <section className="mt-7 border-l-[3px] border-accent pl-4 sm:pl-5" aria-label="Up next">
@@ -141,7 +240,7 @@ export function TodayView() {
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
             <p className="muted flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
-              <span>{nextIsToday ? 'For today' : `${dayName(nextTask.day ?? today)} this week`}</span>
+              <span>{nextIsToday ? 'For today' : `Day ${nextTask.day} this week`}</span>
               <span>{modeLabel(nextTask.context)}</span>
               <span className="num">{formatEstimate(estimateOf(nextTask))}</span>
             </p>
@@ -185,6 +284,91 @@ export function TodayView() {
         </section>
       )}
 
+      {plan ? (
+        <section className="card mt-4 p-3.5 sm:p-4" aria-labelledby="day-card-heading">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="eyebrow">Day {slot} lesson</p>
+              <h2 id="day-card-heading" className="h2 mt-0.5">
+                {plan.title}
+              </h2>
+            </div>
+            <span className="faint num flex-none text-[11.5px]">{plan.estMinutes} min</span>
+          </div>
+
+          {lead ? (
+            <p className="muted mt-2 max-w-[68ch] text-[13px] leading-relaxed">{lead}</p>
+          ) : null}
+
+          {rest.length > 0 ? (
+            <details className="group mt-2">
+              <summary className="link inline-flex cursor-pointer items-center gap-1 text-[11.5px]">
+                Read the mechanism and the trap
+                <ArrowRight
+                  size={11}
+                  className="transition group-open:rotate-90"
+                  aria-hidden
+                />
+              </summary>
+              <div className="mt-2 max-w-[68ch] space-y-2">
+                {rest.map((paragraph, index) => (
+                  <p key={index} className="muted text-[13px] leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </details>
+          ) : null}
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-line bg-s2 p-2.5">
+              <p className="eyebrow">Do this, not that</p>
+              <p className="mt-1 text-[12px] leading-relaxed">{plan.direction}</p>
+            </div>
+            <div className="rounded-lg border border-accent/20 bg-accent-soft/60 p-2.5">
+              <p className="eyebrow flex items-center gap-1.5">
+                <Palette size={11} aria-hidden /> Design note
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed">{plan.designNote}</p>
+            </div>
+          </div>
+
+          {plan.resources.length > 0 ? (
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              {plan.resources.map((resource) =>
+                resource.url ? (
+                  <a
+                    key={resource.label}
+                    className="link text-[11.5px]"
+                    href={resource.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {resource.label}
+                  </a>
+                ) : (
+                  <span key={resource.label} className="faint text-[11.5px]">
+                    {resource.label}
+                  </span>
+                ),
+              )}
+            </div>
+          ) : null}
+
+          <p className="faint mt-2.5 border-t border-line pt-2 text-[11px]">
+            The card explains the day. The checklist below is the evidence; only a checked task earns credit.
+          </p>
+        </section>
+      ) : (
+        <section className="card mt-4 p-3.5" aria-label="Day card not written yet">
+          <p className="text-[12.5px] font-semibold">This week has no day card yet</p>
+          <p className="faint mt-0.5 max-w-[62ch] text-[11.5px] leading-relaxed">
+            Work from the checklist. The blueprint still names the week's idea, project and checkpoint, so the day is
+            not empty.
+          </p>
+        </section>
+      )}
+
       <section className="ledger mt-6" aria-label="Today at a glance">
         <LedgerFact
           label="Left today"
@@ -193,9 +377,10 @@ export function TodayView() {
           tone={todayItems.length > 0 && todayItems.every((item) => item.done) ? 'good' : undefined}
         />
         <LedgerFact
-          label="This week"
-          value={formatTotal(summary.done)}
-          meta={`of ${formatTotal(summary.planned)} completed`}
+          label="Consistency"
+          value={`${percent(stats.ratio)}%`}
+          meta={`${stats.kept} of ${stats.elapsed} day${stats.elapsed === 1 ? '' : 's'} with evidence`}
+          tone={stats.ratio >= 0.8 ? 'good' : undefined}
         />
         <LedgerFact
           label="Reviews due"
@@ -214,7 +399,9 @@ export function TodayView() {
         <section className="card p-3.5 sm:p-4" aria-labelledby="today-plan-heading">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <p className="eyebrow">{dayName(today)}, day {dayNumber(today)}</p>
+              <p className="eyebrow">
+                Day {slot}, {dayName(todaySummary.weekday)}
+              </p>
               <h2 id="today-plan-heading" className="h2 mt-0.5">
                 Today's plan
               </h2>
@@ -233,17 +420,28 @@ export function TodayView() {
             </Badge>
             {overBy > 0 ? (
               <span className="text-[11.5px] text-warn">
-                Over today's budget by {overBy} min — spread a task to another day.
+                Over today's budget by {overBy} min. Spread a task to another day.
               </span>
             ) : null}
           </div>
 
           {todayItems.length === 0 ? (
             <div className="mt-3 rounded-xl border border-dashed border-line px-3 py-5 text-center">
-              <p className="text-[12.5px] font-medium">No tasks scheduled for {dayName(today)}</p>
+              <p className="text-[12.5px] font-medium">
+                No tasks scheduled for Day {slot}
+              </p>
               <p className="faint mt-1 text-[11.5px]">
                 Use the buffer, review a few cards, or pick the next unfinished task from the week.
               </p>
+              {plan && plan.tasks.length > 0 ? (
+                <ul className="mx-auto mt-2 max-w-[46ch] space-y-1 text-left">
+                  {plan.tasks.map((task) => (
+                    <li key={task} className="text-[12px] leading-snug">
+                      {task}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <Button variant="soft" size="sm" className="mt-2.5" onClick={() => navigate(`#/plan/${week.id}`)}>
                 Open the week
               </Button>
@@ -289,32 +487,45 @@ export function TodayView() {
               </a>
             </div>
             <div className="mt-3 grid grid-cols-7 gap-px overflow-hidden rounded-[6px] border border-line bg-line">
-              {MONDAY_FIRST.map((day) => {
-                const daySummary = summary.days.find((entry) => entry.day === day)!
+              {DAY_SLOTS.map((entrySlot) => {
+                const daySummary = summary.days.find((entry) => entry.slot === entrySlot)!
                 const done = daySummary.items.filter((item) => item.done).length
                 const total = daySummary.items.length
                 const ratio = total > 0 ? done / total : 0
-                const isToday = day === today
+                const isToday = entrySlot === slot
                 return (
                   <button
-                    key={day}
+                    key={entrySlot}
                     type="button"
                     onClick={() => navigate(`#/plan/${week.id}`)}
-                    aria-label={`Day ${dayNumber(day)} ${dayName(day)}, ${done} of ${total} done`}
+                    aria-label={`Day ${entrySlot}, ${dayName(daySummary.weekday)}, ${done} of ${total} done`}
                     aria-current={isToday ? 'date' : undefined}
                     className={cn(
-                      'min-w-0 px-1 pt-1.5 pb-2 text-center transition',
+                      'min-w-0 px-0.5 pt-1.5 pb-2 text-center transition',
                       isToday ? 'bg-accent-soft' : 'bg-s1 hover:bg-s2',
                     )}
                   >
-                    <span className={cn('block truncate text-[11.5px]', isToday ? 'text-accent-strong' : 'text-t3')}>
-                      {shortDayName(day)}
+                    <span
+                      className={cn(
+                        'block truncate text-[10.5px]',
+                        isToday ? 'text-accent-strong' : 'text-t3',
+                      )}
+                    >
+                      Day {entrySlot}
                     </span>
-                    <span className="num mt-0.5 block text-[12px] font-semibold">{done}/{total}</span>
-                    <span className="mt-1.5 block h-[3px] overflow-hidden bg-s3">
+                    <span className="faint mt-0.5 block truncate text-[10px]">
+                      {shortDayName(daySummary.weekday)}
+                    </span>
+                    <span className="num mt-0.5 block text-[11.5px] font-semibold">
+                      {done}/{total}
+                    </span>
+                    <span className="mt-1 block h-[3px] overflow-hidden bg-s3">
                       <span
                         className="block h-full"
-                        style={{ width: `${percent(ratio)}%`, background: isToday ? 'var(--accent)' : 'var(--good)' }}
+                        style={{
+                          width: `${percent(ratio)}%`,
+                          background: isToday ? 'var(--accent)' : 'var(--good)',
+                        }}
                       />
                     </span>
                   </button>
@@ -359,13 +570,15 @@ export function TodayView() {
               </span>
               <ArrowRight size={13} className="flex-none text-t3" aria-hidden />
             </a>
-            <a href="#/progress" className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition hover:bg-s2">
+            <a href="#/start" className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition hover:bg-s2">
               <span className="grid h-7 w-7 flex-none place-items-center rounded-lg bg-s2 text-t2">
-                <Layers size={14} aria-hidden />
+                <CalendarDays size={14} aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[12px] font-medium">Progress</span>
-                <span className="faint block text-[11.5px]">Course totals and checkpoints</span>
+                <span className="block text-[12px] font-medium">Course</span>
+                <span className="faint block text-[11.5px]">
+                  Day {clockDay} of {COURSE_DAYS}, pause and capacity
+                </span>
               </span>
               <ArrowRight size={13} className="flex-none text-t3" aria-hidden />
             </a>

@@ -4,8 +4,8 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 4
-export const SEED_VERSION = 4
+export const SCHEMA_VERSION = 5
+export const SEED_VERSION = 5
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
 export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
@@ -222,12 +222,19 @@ export interface ChecklistItem {
   label: string
   context: 'passive' | 'active'
   tier?: 'A' | 'B' | 'C'
-  day?: Weekday
+  /**
+   * Day slot inside the course week, 1–7. This is deliberately not a weekday:
+   * the course keeps its own seven-day cycle even when Day 1 is a Wednesday.
+   * The real weekday is derived with `weekdayOfSlot(journey.startWeekday, slot)`.
+   */
+  day?: DaySlot
   /** Legacy planned minutes from schema v1. Superseded by `estimate`. */
   minutes?: number
   /** v2 planned effort range. Falls back to `minutes` when absent. */
   estimate?: Estimate
   done: boolean
+  /** When the task was last checked. Cleared on uncheck; drives consistency. */
+  doneAt?: number
 }
 
 export interface GateAttempt {

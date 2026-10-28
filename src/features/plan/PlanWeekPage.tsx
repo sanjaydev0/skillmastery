@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react'
-import type { Week, Weekday } from '../../types/schema'
+import type { DayPlan, DaySlot, Week } from '../../types/schema'
 import { useActiveSubject, useAppStore, useActiveWeek } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { nodeBadge, weekStatus } from '../../engine/gating'
@@ -23,6 +23,7 @@ import {
   summariseWeek,
 } from '../../engine/estimates'
 import { formatShortDate, schemaWeekday } from '../../lib/dates'
+import { courseDay, courseWeek } from '../../lib/courseClock'
 import { blueprintFor } from '../../data/curriculum/blueprint'
 import { cn, percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
@@ -36,20 +37,22 @@ import {
   WeekBadge,
 } from '../../components/ui/primitives'
 import { WeekSheet } from '../curriculum/WeekSheet'
-import { MONDAY_FIRST, dayName, dayNumber, modeLabel } from './dayPlan'
+import { DAY_SLOTS, dayName, modeLabel } from './dayPlan'
 
 export function PlanWeekPage({ weekId }: { weekId: string }) {
   const subject = useActiveSubject()
   const activeWeek = useActiveWeek()
   const overrides = useAppStore((state) => state.overrides)
   const planner = useAppStore((state) => state.planner)
+  const journey = useAppStore((state) => state.journey)
+  const dayPlans = useAppStore((state) => state.dayPlans)
   const toggleChecklist = useAppStore((state) => state.toggleChecklist)
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const week = subject.weeks.find((entry) => entry.id === weekId)
   const summary = useMemo(
-    () => (week ? summariseWeek(week, planner) : null),
-    [week, planner],
+    () => (week ? summariseWeek(week, planner, journey.startWeekday) : null),
+    [week, planner, journey.startWeekday],
   )
 
   if (!week || !summary) return null
@@ -58,6 +61,9 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
   const phase = subject.phases.find((entry) => entry.id === week.phaseId)
   const nodes = subject.nodes.filter((node) => node.weekId === week.id)
   const today = schemaWeekday()
+  const clockDay = courseDay(journey)
+  const clockWeek = clockDay === null ? null : courseWeek(clockDay)
+  const isCurrentWeek = clockWeek === week.weekNumber
   const doneTasks = week.checklist.filter((item) => item.done).length
   const ratio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const left = summary.remaining
@@ -165,7 +171,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
       <section className="mt-4" aria-labelledby="days-heading">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b border-line pb-2">
           <div>
-            <p className="eyebrow">Monday to Sunday</p>
+            <p className="eyebrow">Day 1 to Day 7</p>
             <h2 id="days-heading" className="h2 mt-0.5">
               Seven-day plan
             </h2>
@@ -178,15 +184,16 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
         </div>
 
         <div className="mt-2.5 grid gap-2.5 lg:grid-cols-2">
-          {MONDAY_FIRST.map((day) => {
-            const daySummary = summary.days.find((entry) => entry.day === day)!
+          {DAY_SLOTS.map((slot) => {
+            const daySummary = summary.days.find((entry) => entry.slot === slot)!
             return (
               <DayCard
-                key={day}
+                key={slot}
                 week={week}
-                day={day}
+                slot={slot}
                 summary={daySummary}
-                isToday={day === today}
+                plan={dayPlans[week.id]?.find((entry) => entry.day === slot)}
+                isToday={isCurrentWeek && daySummary.weekday === today}
                 onToggle={(itemId) => toggleChecklist(week.id, itemId)}
               />
             )
@@ -286,14 +293,16 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
 
 function DayCard({
   week,
-  day,
+  slot,
   summary,
+  plan,
   isToday,
   onToggle,
 }: {
   week: Week
-  day: Weekday
+  slot: DaySlot
   summary: DaySummary
+  plan?: DayPlan
   isToday: boolean
   onToggle: (itemId: string) => void
 }) {
@@ -304,14 +313,14 @@ function DayCard({
 
   return (
     <section
-      id={`day-${dayNumber(day)}`}
+      id={`day-${slot}`}
       className={cn('card p-3.5', isToday && 'ring-1 ring-accent/45')}
-      aria-label={`Day ${dayNumber(day)} ${dayName(day)}`}
+      aria-label={`Day ${slot}, ${dayName(summary.weekday)}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="eyebrow flex items-center gap-1.5">
-            {dayName(day)}, day {dayNumber(day)}
+            Day {slot}, {dayName(summary.weekday)}
             {isToday ? <Badge tone="accent">Today</Badge> : null}
           </p>
           <p className="faint mt-0.5 text-[11.5px]">
@@ -323,6 +332,15 @@ function DayCard({
           <span className="faint block text-[11px]">credited</span>
         </span>
       </div>
+
+      {plan ? (
+        <div className="mt-2 border-l-2 border-accent/30 pl-2.5">
+          <p className="text-[12.5px] leading-snug font-semibold">{plan.title}</p>
+          {plan.direction ? (
+            <p className="faint mt-0.5 text-[11px] leading-snug">{plan.direction}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <Badge tone={overActive > 0 ? 'warn' : 'neutral'}>
@@ -340,9 +358,18 @@ function DayCard({
       </div>
 
       {total === 0 ? (
-        <p className="faint mt-2.5 rounded-lg border border-dashed border-line px-2.5 py-3 text-[11.5px]">
-          Nothing scheduled. Catch up, review your notes, or rest — this is the buffer.
-        </p>
+        <div className="mt-2.5 rounded-lg border border-dashed border-line px-2.5 py-3">
+          <p className="text-[11.5px]">Nothing scheduled. Catch up, review your notes, or rest.</p>
+          {plan && plan.tasks.length > 0 ? (
+            <ul className="mt-1.5 space-y-1">
+              {plan.tasks.map((task) => (
+                <li key={task} className="text-[11.5px] leading-snug">
+                  {task}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : (
         <div className="mt-2 space-y-0.5">
           {summary.items.map((item) => (
@@ -359,7 +386,7 @@ function DayCard({
 
       {summary.items.length > 0 ? (
         <p className="faint mt-2 border-t border-line pt-2 text-[11px]">
-          Week {week.weekNumber}, day {dayNumber(day)}. Estimated range, no timer
+          Week {week.weekNumber}, day {slot}. Estimated range, no timer
         </p>
       ) : null}
     </section>

@@ -1,11 +1,11 @@
-import type { Weekday } from '../../types/schema'
+import type { DaySlot, Weekday } from '../../types/schema'
 import { DAY_LABELS } from '../../engine/estimates'
 
-/** Monday-first display order. `Weekday` itself keeps Sunday at 0. */
-export const MONDAY_FIRST: Weekday[] = [1, 2, 3, 4, 5, 6, 0]
+/** Course slots, always in order. The course keeps its own seven-day week. */
+export const DAY_SLOTS: DaySlot[] = [1, 2, 3, 4, 5, 6, 7]
 
-export function dayNumber(day: Weekday): number {
-  return ((day + 6) % 7) + 1
+export function slotLabel(slot: DaySlot): string {
+  return `Day ${slot}`
 }
 
 export function dayName(day: Weekday): string {

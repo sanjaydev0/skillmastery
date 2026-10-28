@@ -19,7 +19,8 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react'
-import type { AppData, Mode, Theme } from '../../types/schema'
+import type { AppData, Mode, Theme, Weekday } from '../../types/schema'
+import { DEFAULT_PLANNER } from '../../types/schema'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { migrateAppData, parseBackupJson } from '../../services/validation'
@@ -30,6 +31,7 @@ import {
 } from '../../services/storage'
 import { exportBackupJson, exportObsidianMarkdown } from '../../services/exports'
 import { formatBytes } from '../../lib/utils'
+import { formatTotal, dailyCapacity } from '../../engine/estimates'
 import { formatDateTime } from '../../lib/dates'
 import { getInstallState, promptInstall, subscribeInstall } from '../../services/install'
 import {
@@ -41,6 +43,7 @@ import {
 } from '../../services/ai'
 import { useAiKey } from '../../hooks/useAiKey'
 import { Sheet } from '../../components/ui/Sheet'
+import { CapacitySliders } from '../../components/ui/CapacitySliders'
 import { Alert, Badge, Button, InlineError, ProgressBar, SectionHead, Spinner } from '../../components/ui/primitives'
 
 const THEMES: { id: Theme; label: string; icon: typeof Sun; detail: string }[] = [
@@ -66,6 +69,17 @@ const MODES: { id: Mode; label: string; detail: string; examples: string }[] = [
 
 const WEEK_MS = 7 * 86_400_000
 
+/** Monday-first, matching every other day strip in the app. Values are schema weekdays. */
+const STUDY_DAY_ORDER: { day: Weekday; label: string }[] = [
+  { day: 1, label: 'Mon' },
+  { day: 2, label: 'Tue' },
+  { day: 3, label: 'Wed' },
+  { day: 4, label: 'Thu' },
+  { day: 5, label: 'Fri' },
+  { day: 6, label: 'Sat' },
+  { day: 0, label: 'Sun' },
+]
+
 interface PendingImport {
   data: AppData
   exportedAt?: string
@@ -78,6 +92,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const seedVersion = useAppStore((state) => state.seedVersion)
   const setTheme = useAppStore((state) => state.setTheme)
   const setMode = useAppStore((state) => state.setMode)
+  const planner = useAppStore((state) => state.planner)
+  const updatePlanner = useAppStore((state) => state.updatePlanner)
   const importData = useAppStore((state) => state.importData)
   const resetToSeed = useAppStore((state) => state.resetToSeed)
   const toast = useUiStore((state) => state.toast)
@@ -115,6 +131,14 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   }, [])
 
   const backupStale = !prefs.lastExportAt || Date.now() - prefs.lastExportAt > WEEK_MS
+  const daily = dailyCapacity(planner)
+
+  const toggleStudyDay = (day: Weekday) => {
+    const next = planner.studyDays.includes(day)
+      ? planner.studyDays.filter((entry) => entry !== day)
+      : [...planner.studyDays, day]
+    updatePlanner({ studyDays: next })
+  }
 
   const runBackup = () => {
     const result = exportBackupJson()
@@ -286,6 +310,64 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </div>
           <p className="faint mt-1.5 text-[11.5px]">
             Mode filters the daily rhythm and the week checklist. It does not change stored mastery.
+          </p>
+        </section>
+
+        <section>
+          <SectionHead
+            title="Study week"
+            eyebrow="Capacity · the days you actually study"
+            action={<Badge tone="neutral">{planner.studyDays.length} of 7</Badge>}
+          />
+          <div className="rounded-xl border border-line bg-s2 p-3">
+            <CapacitySliders showSummary={false} />
+            <div className="mt-3 border-t border-line pt-2.5">
+              <p className="text-[12px] font-medium">Study days</p>
+              <p className="faint mt-0.5 text-[11.5px] leading-relaxed">
+                The weekly hours are split across these days. A day you leave off is not a failure; it is a day the
+                plan does not count on.
+              </p>
+              <div className="mt-2 grid grid-cols-7 gap-1" role="group" aria-label="Study days">
+                {STUDY_DAY_ORDER.map((entry) => {
+                  const active = planner.studyDays.includes(entry.day)
+                  const lastOne = active && planner.studyDays.length === 1
+                  return (
+                    <button
+                      key={entry.day}
+                      type="button"
+                      aria-pressed={active}
+                      disabled={lastOne}
+                      title={lastOne ? 'Keep at least one study day' : undefined}
+                      onClick={() => toggleStudyDay(entry.day)}
+                      className={`min-h-11 rounded-lg border px-1 text-[11.5px] font-medium transition ${
+                        active
+                          ? 'border-accent/40 bg-accent-soft text-t1'
+                          : 'border-line bg-s1 text-t3 hover:border-line-strong hover:text-t2'
+                      } ${lastOne ? 'cursor-not-allowed opacity-70' : ''}`}
+                    >
+                      {entry.label}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={planner.studyDays.length === 7}
+                  onClick={() => updatePlanner({ studyDays: [...DEFAULT_PLANNER.studyDays] })}
+                >
+                  Use all seven days
+                </Button>
+                <span className="faint num text-[11px]">
+                  {formatTotal({ min: daily.active, max: daily.active })} active +{' '}
+                  {formatTotal({ min: daily.passive, max: daily.passive })} passive per study day
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="faint mt-1.5 text-[11.5px]">
+            Capacity is device-local. Importing a backup never overwrites it.
           </p>
         </section>
 

@@ -66,7 +66,7 @@ export function CapacitySliders({
       {showSummary ? (
         <p className="faint border-t border-line pt-2 text-[11px] leading-snug">
           {hoursLabel(daily.active)} active + {hoursLabel(daily.passive)} passive on each of the{' '}
-          {days} study {days === 1 ? 'day' : 'days'} you picked. Change the days in Settings.
+          {days} study {days === 1 ? 'day' : 'days'} you picked. Change those days in Settings, under Study week.
         </p>
       ) : null}
     </div>

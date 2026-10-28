@@ -107,7 +107,7 @@ describe('day plans', () => {
       const summary = summariseWeek(week, DEFAULT_PLANNER)
       expect(week.checklist.length).toBeGreaterThanOrEqual(14)
       for (const day of summary.days) {
-        expect(day.items.length, `week ${weekNumber} day ${day.day}`).toBeGreaterThan(0)
+        expect(day.items.length, `week ${weekNumber} day ${day.slot}`).toBeGreaterThan(0)
         expect(day.items.some((item) => item.context === 'active')).toBe(true)
       }
       expect(week.checklist.some((item) => /git|github|commit|pull request/i.test(item.label))).toBe(true)

@@ -1,4 +1,4 @@
-import type { DayLog, Journey, Pause, Weekday } from '../types/schema'
+import type { DayLog, Journey, Pause, Subject, Weekday } from '../types/schema'
 
 /**
  * The course clock.
@@ -123,16 +123,28 @@ export interface Consistency {
 }
 
 /**
- * Consistency counts days with at least one logged habit. It is a ratio, not
- * a streak: a missed day lowers it and nothing resets to zero.
+ * Consistency counts days with at least one piece of evidence: a checked task
+ * or a logged habit. It is a ratio, not a streak: a missed day lowers it and
+ * nothing resets to zero.
  */
 export function consistency(
   journey: Journey,
   dailyLog: Record<string, DayLog>,
+  subjects: Subject[] = [],
   now = Date.now(),
 ): Consistency {
   const dates = elapsedStudyDates(journey, now)
-  const kept = dates.filter((date) => (dailyLog[date]?.items.length ?? 0) > 0).length
+  const checked = new Set<string>()
+  for (const subject of subjects) {
+    for (const week of subject.weeks) {
+      for (const item of week.checklist) {
+        if (item.doneAt) checked.add(isoDate(item.doneAt))
+      }
+    }
+  }
+  const kept = dates.filter(
+    (date) => (dailyLog[date]?.items.length ?? 0) > 0 || checked.has(date),
+  ).length
   const elapsed = dates.length
   return { kept, elapsed, ratio: elapsed === 0 ? 0 : kept / elapsed }
 }

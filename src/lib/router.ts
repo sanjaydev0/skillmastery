@@ -8,11 +8,19 @@ export type ViewName =
   | 'library'
   | 'progress'
   | 'help'
+  | 'start'
 
 export interface Route {
   view: ViewName
   detail?: { kind: 'week' | 'node'; id: string }
 }
+
+/**
+ * Day 0 and the course clock are a route, not a tab. It is reachable from
+ * Today, the command palette and the mobile More sheet, and it must stay out of
+ * the seven daily views so the sidebar does not grow an eighth item.
+ */
+export const START_VIEW = { id: 'start', label: 'Day 0', hash: '#/start' } as const
 
 export const VIEWS: { id: ViewName; label: string; hash: string }[] = [
   { id: 'today', label: 'Today', hash: '#/today' },
@@ -47,6 +55,7 @@ export function parseHash(hash: string): Route {
   const [head, id] = path.split('/')
   if ((head === 'week' || head === 'plan') && id) return { view: 'plan', detail: { kind: 'week', id } }
   if (head === 'node' && id) return { view: 'map', detail: { kind: 'node', id } }
+  if (head === 'start') return { view: 'start' }
   if (head && LEGACY_VIEWS[head]) return { view: LEGACY_VIEWS[head] }
   const view = VIEWS.find((entry) => entry.id === head)?.id ?? 'today'
   return { view }

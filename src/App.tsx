@@ -9,6 +9,7 @@ import { AppShell } from './components/layout/AppShell'
 import { CommandPalette } from './components/layout/CommandPalette'
 import { SettingsSheet } from './components/layout/SettingsSheet'
 import { Toaster } from './components/ui/Toaster'
+import { StartView } from './features/start/StartView'
 import { TodayView } from './features/today/TodayView'
 import { PlanView } from './features/plan/PlanView'
 import { PlanWeekPage } from './features/plan/PlanWeekPage'
@@ -28,6 +29,7 @@ export default function App() {
   const route = useHashRoute()
   const subject = useActiveSubject()
   const hydrated = useAppStore((state) => state.hydrated)
+  const started = useAppStore((state) => state.journey.startedAt !== null)
   const bootIssue = useAppStore((state) => state.bootIssue)
   const paletteOpen = useUiStore((state) => state.paletteOpen)
   const settingsOpen = useUiStore((state) => state.settingsOpen)
@@ -114,7 +116,8 @@ export default function App() {
   return (
     <>
       <AppShell route={route}>
-        {route.view === 'today' ? <TodayView /> : null}
+        {route.view === 'today' ? started ? <TodayView /> : <StartView /> : null}
+        {route.view === 'start' ? <StartView /> : null}
         {route.view === 'plan' ? (
           route.detail?.kind === 'week' ? (
             <PlanWeekPage key={route.detail.id} weekId={route.detail.id} />

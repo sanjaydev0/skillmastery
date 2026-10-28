@@ -19,6 +19,7 @@ export function PlanView() {
   const active = useActiveWeek()
   const overrides = useAppStore((state) => state.overrides)
   const planner = useAppStore((state) => state.planner)
+  const startWeekday = useAppStore((state) => state.journey.startWeekday)
 
   const orderedWeeks = useMemo(
     () => [...subject.weeks].sort((a, b) => a.weekNumber - b.weekNumber),
@@ -26,8 +27,8 @@ export function PlanView() {
   )
   const course = useMemo(() => summariseSubject(subject), [subject])
   const summaries = useMemo(
-    () => new Map(orderedWeeks.map((week) => [week.id, summariseWeek(week, planner)])),
-    [orderedWeeks, planner],
+    () => new Map(orderedWeeks.map((week) => [week.id, summariseWeek(week, planner, startWeekday)])),
+    [orderedWeeks, planner, startWeekday],
   )
   const cleared = orderedWeeks.filter((week) => week.gate.passedAt).length
 

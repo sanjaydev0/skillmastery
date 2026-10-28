@@ -106,16 +106,32 @@ describe('week summary', () => {
   it('groups tasks by day and leaves undated tasks unassigned', () => {
     const summary = summariseWeek(week, DEFAULT_PLANNER)
     expect(summary.days).toHaveLength(7)
-    expect(summary.days[1]!.items.map((entry) => entry.label)).toEqual(['Read', 'Build'])
+    expect(summary.days.find((entry) => entry.slot === 1)!.items.map((entry) => entry.label)).toEqual([
+      'Read',
+      'Build',
+    ])
     expect(summary.unassigned.map((entry) => entry.label)).toEqual(['Optional read'])
+  })
+
+  it('keeps content on day slots while capacity follows the start weekday', () => {
+    // A course that starts on a Friday still opens with the Day 1 card, but
+    // Day 1's capacity is Friday's share of the planner.
+    const planner = { ...DEFAULT_PLANNER, studyDays: [5] as Weekday[] }
+    const summary = summariseWeek(week, planner, 5)
+    const first = summary.days.find((entry) => entry.slot === 1)!
+    expect(first.weekday).toBe(5)
+    expect(first.items.map((entry) => entry.label)).toEqual(['Read', 'Build'])
+    expect(first.capacity).toEqual({ active: 720, passive: 420 })
+    expect(summary.days.find((entry) => entry.slot === 2)!.weekday).toBe(6)
+    expect(summary.days.find((entry) => entry.slot === 2)!.capacity).toEqual({ active: 0, passive: 0 })
   })
 
   it('flags a day that exceeds its active capacity', () => {
     // 90 active minutes a day is the authored reference budget for this week.
     const planner = { ...DEFAULT_PLANNER, weeklyActiveMinutes: 630, weeklyPassiveMinutes: 315 }
     const summary = summariseWeek(week, planner)
-    expect(summary.days[1]!.overBy).toEqual({ active: 0, passive: 0 })
-    expect(summary.days[2]!.overBy.active).toBe(15)
+    expect(summary.days.find((entry) => entry.slot === 1)!.overBy).toEqual({ active: 0, passive: 0 })
+    expect(summary.days.find((entry) => entry.slot === 2)!.overBy.active).toBe(15)
     expect(summary.overloadedDays).toEqual([2])
   })
 

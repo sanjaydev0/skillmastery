@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CalendarDays,
   HelpCircle,
   Library,
   Network,
@@ -16,6 +17,7 @@ import { useRedoDepth, useUndoDepth } from '../../hooks/useHistoryDepth'
 import { navigate } from '../../lib/router'
 
 const EXTRA_VIEWS = [
+  { href: '#/start', label: 'Day 0 and the clock', description: 'Start, pause, weekly capacity', icon: CalendarDays },
   { href: '#/map', label: 'Map', description: 'Concepts and prerequisites', icon: Network },
   { href: '#/library', label: 'Library', description: 'Docs, books and links', icon: Library },
   { href: '#/help', label: 'Help', description: 'How the app and course work', icon: HelpCircle },

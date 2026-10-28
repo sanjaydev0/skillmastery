@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Journey } from '../types/schema'
+import type { Journey, Subject } from '../types/schema'
 import {
   addLocalDays,
   calendarDaysBetween,
@@ -131,8 +131,26 @@ describe('consistency', () => {
       [isoDate(addLocalDays(start, 1))]: { items: [] },
       [isoDate(addLocalDays(start, 2))]: { items: ['b'] },
     }
-    const result = consistency(journey, dailyLog, addLocalDays(start, 2))
+    const result = consistency(journey, dailyLog, [], addLocalDays(start, 2))
     expect(result).toEqual({ kept: 2, elapsed: 3, ratio: 2 / 3 })
+  })
+
+  it('counts a day with a checked task as evidence', () => {
+    const journey = journeyFrom(start)
+    const subjects = [
+      {
+        weeks: [
+          {
+            checklist: [
+              { id: 'a', label: 'Task', context: 'active', done: true, doneAt: start },
+              { id: 'b', label: 'Other', context: 'active', done: false },
+            ],
+          },
+        ],
+      },
+    ] as unknown as Subject[]
+    const result = consistency(journey, {}, subjects, addLocalDays(start, 2))
+    expect(result).toEqual({ kept: 1, elapsed: 3, ratio: 1 / 3 })
   })
 
   it('excludes paused days from both sides of the ratio', () => {

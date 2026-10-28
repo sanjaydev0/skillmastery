@@ -1,13 +1,17 @@
 import type {
   ChecklistItem,
+  DaySlot,
   Estimate,
   PlannerSettings,
   Subject,
   Week,
   Weekday,
 } from '../types/schema'
+import { weekdayOfSlot } from '../lib/courseClock'
 
 export const WEEKDAYS: Weekday[] = [0, 1, 2, 3, 4, 5, 6]
+
+export const DAY_SLOTS: DaySlot[] = [1, 2, 3, 4, 5, 6, 7]
 
 export const DAY_LABELS: Record<Weekday, string> = {
   0: 'Sunday',
@@ -100,7 +104,10 @@ export function capacityFor(day: Weekday, planner: PlannerSettings): DayCapacity
 }
 
 export interface DaySummary {
-  day: Weekday
+  /** 1–7 inside the course week, independent of weekday names. */
+  slot: DaySlot
+  /** The real calendar weekday this slot lands on. */
+  weekday: Weekday
   items: ChecklistItem[]
   planned: Estimate
   done: Estimate
@@ -119,7 +126,7 @@ export interface WeekSummary {
   remaining: Estimate
   activeMinutes: number
   passiveMinutes: number
-  overloadedDays: Weekday[]
+  overloadedDays: DaySlot[]
 }
 
 function minutesByMode(items: ChecklistItem[], context: 'active' | 'passive'): number {
@@ -128,14 +135,25 @@ function minutesByMode(items: ChecklistItem[], context: 'active' | 'passive'): n
     .reduce((total, item) => total + estimateOf(item).max, 0)
 }
 
-export function summariseWeek(week: Week, planner: PlannerSettings): WeekSummary {
-  const days: DaySummary[] = WEEKDAYS.map((day) => {
-    const items = week.checklist.filter((item) => item.day === day)
-    const capacity = capacityFor(day, planner)
+/**
+ * `startWeekday` is the weekday of course Day 1. It only moves capacity: the
+ * content stays on slots 1–7, so a course that starts on a Wednesday still
+ * opens with the Week 1 Day 1 card.
+ */
+export function summariseWeek(
+  week: Week,
+  planner: PlannerSettings,
+  startWeekday: Weekday = 1,
+): WeekSummary {
+  const days: DaySummary[] = DAY_SLOTS.map((slot) => {
+    const weekday = weekdayOfSlot(startWeekday, slot)
+    const items = week.checklist.filter((item) => item.day === slot)
+    const capacity = capacityFor(weekday, planner)
     const activeMinutes = minutesByMode(items, 'active')
     const passiveMinutes = minutesByMode(items, 'passive')
     return {
-      day,
+      slot,
+      weekday,
       items,
       planned: sumItems(items),
       done: sumItems(items.filter((item) => item.done)),
@@ -159,7 +177,9 @@ export function summariseWeek(week: Week, planner: PlannerSettings): WeekSummary
     remaining: makeEstimate(planned.min - done.min, planned.max - done.max),
     activeMinutes: minutesByMode(week.checklist, 'active'),
     passiveMinutes: minutesByMode(week.checklist, 'passive'),
-    overloadedDays: days.filter((entry) => entry.overBy.active > 0 || entry.overBy.passive > 0).map((entry) => entry.day),
+    overloadedDays: days
+      .filter((entry) => entry.overBy.active > 0 || entry.overBy.passive > 0)
+      .map((entry) => entry.slot),
   }
 }
 

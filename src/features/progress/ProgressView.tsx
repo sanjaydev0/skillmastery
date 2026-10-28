@@ -17,6 +17,7 @@ export function ProgressView() {
   const subject = useActiveSubject()
   const overrides = useAppStore((state) => state.overrides)
   const planner = useAppStore((state) => state.planner)
+  const startWeekday = useAppStore((state) => state.journey.startWeekday)
 
   const course = useMemo(() => summariseSubject(subject), [subject])
   const mastered = subject.nodes.filter((node) => node.status === 'mastered').length
@@ -29,8 +30,8 @@ export function ProgressView() {
     [subject.weeks],
   )
   const summaries = useMemo(
-    () => new Map(orderedWeeks.map((week) => [week.id, summariseWeek(week, planner)])),
-    [orderedWeeks, planner],
+    () => new Map(orderedWeeks.map((week) => [week.id, summariseWeek(week, planner, startWeekday)])),
+    [orderedWeeks, planner, startWeekday],
   )
 
   return (

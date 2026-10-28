@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import {
   BrainCircuit,
+  CalendarDays,
   CalendarRange,
   ChevronsLeft,
   ChevronsRight,
@@ -21,7 +22,7 @@ import {
   Undo2,
 } from 'lucide-react'
 import type { ViewName } from '../../lib/router'
-import { VIEWS, navigate, useHashRoute } from '../../lib/router'
+import { VIEWS, START_VIEW, navigate, useHashRoute } from '../../lib/router'
 import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { cn } from '../../lib/utils'
@@ -45,6 +46,7 @@ const NAV_ICONS: Record<ViewName, typeof LayoutDashboard> = {
   library: Library,
   progress: TrendingUp,
   help: HelpCircle,
+  start: CalendarDays,
 }
 
 const MOBILE_LABELS: Record<ViewName, string> = {
@@ -55,12 +57,14 @@ const MOBILE_LABELS: Record<ViewName, string> = {
   library: 'Library',
   progress: 'Progress',
   help: 'Help',
+  start: 'Day 0',
 }
 
 const MOBILE_TABS: ViewName[] = ['today', 'plan', 'practice', 'progress']
-const MORE_VIEWS: ViewName[] = ['map', 'library', 'help']
+const MORE_VIEWS: ViewName[] = ['map', 'library', 'help', 'start']
 
 function viewLabel(view: ViewName): string {
+  if (view === 'start') return START_VIEW.label
   return VIEWS.find((entry) => entry.id === view)?.label ?? 'Today'
 }
 

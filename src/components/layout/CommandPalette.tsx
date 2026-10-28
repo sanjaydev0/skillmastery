@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BookOpen,
   BrainCircuit,
+  CalendarDays,
   CalendarRange,
   Command,
   Download,
@@ -105,6 +106,18 @@ export function CommandPalette() {
         run: () => {
           closePalette()
           openSubjectSheet()
+        },
+      },
+      {
+        id: 'action-course-clock',
+        group: 'Actions',
+        label: 'Open Day 0 and the course clock',
+        subtitle: 'Start, pause, capacity and study days',
+        icon: <CalendarDays size={15} />,
+        keywords: 'start course clock pause resume restart capacity day 0 journey',
+        run: () => {
+          closePalette()
+          navigate('#/start')
         },
       },
       {

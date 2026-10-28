@@ -1,5 +1,14 @@
 import { z } from 'zod'
-import type { AppData, Journey, PlannerSettings, TrashEntry, Weekday } from '../types/schema'
+import type {
+  AppData,
+  ChecklistItem,
+  DaySlot,
+  Journey,
+  PlannerSettings,
+  Subject,
+  TrashEntry,
+  Weekday,
+} from '../types/schema'
 import {
   DEFAULT_JOURNEY,
   DEFAULT_PLANNER,
@@ -57,7 +66,7 @@ const checklistItemSchema = z.object({
   label: z.string().min(1),
   context: z.enum(['passive', 'active']),
   tier: z.enum(['A', 'B', 'C']).optional(),
-  day: z.number().int().min(0).max(6).optional(),
+  day: z.number().int().min(0).max(7).optional(),
   minutes: z.number().int().min(0).optional(),
   estimate: z
     .object({
@@ -451,6 +460,37 @@ function normaliseDayPlans(raw: AppData['dayPlans'] | undefined): AppData['dayPl
 }
 
 /**
+ * Schema v5 moved checklist placement from weekday numbers to day slots.
+ * Slot 7 used to be stored as weekday 0 (Sunday); every other value is already
+ * the slot number. Keep accepting 0 so a v4 backup still imports.
+ */
+function normaliseChecklistDay(raw: number | undefined): DaySlot | undefined {
+  if (raw === undefined || !Number.isInteger(raw)) return undefined
+  if (raw === 0) return 7
+  if (raw >= 1 && raw <= 7) return raw as DaySlot
+  return undefined
+}
+
+function normaliseSubjects(subjects: Subject[], fillMissingDays: boolean): Subject[] {
+  return subjects.map((subject) => ({
+    ...subject,
+    weeks: subject.weeks.map((week) => ({
+      ...week,
+      checklist: week.checklist.map((item, index): ChecklistItem => {
+        const fallback = fillMissingDays ? (index % 7) + 1 : undefined
+        const day = normaliseChecklistDay(item.day ?? fallback)
+        const estimate = item.estimate ?? estimateForMinutes(item.minutes)
+        return {
+          ...item,
+          ...(day === undefined ? {} : { day }),
+          ...(estimate.max > 0 ? { estimate } : {}),
+        }
+      }),
+    })),
+  }))
+}
+
+/**
  * Future schema upgrades land here. Each step must be additive and defensive:
  * a failed migration returns the original payload rather than throwing.
  */
@@ -466,9 +506,10 @@ export function migrateAppData(input: MigratableAppData): AppData {
   const journey = normaliseJourney(input.journey)
   const dayPlans = normaliseDayPlans(input.dayPlans)
   const trash = (input.trash ?? []).slice(0, TRASH_LIMIT)
+  const subjects = normaliseSubjects(input.subjects, input.schemaVersion < SCHEMA_VERSION)
 
   if (input.schemaVersion >= SCHEMA_VERSION) {
-    return { ...input, planner, promptOverrides, journey, dayPlans, trash }
+    return { ...input, subjects, planner, promptOverrides, journey, dayPlans, trash }
   }
 
   return {
@@ -479,18 +520,6 @@ export function migrateAppData(input: MigratableAppData): AppData {
     journey,
     dayPlans,
     trash,
-    subjects: input.subjects.map((subject) => ({
-      ...subject,
-      weeks: subject.weeks.map((week) => ({
-        ...week,
-        checklist: week.checklist.map((item, index) => {
-          // v1 had no day assignments; spread them one per day so the new Plan
-          // view has a real schedule instead of a single undated pile.
-          const day = (item.day ?? ((index + 1) % 7)) as Weekday
-          const estimate = item.estimate ?? estimateForMinutes(item.minutes)
-          return { ...item, day, ...(estimate.max > 0 ? { estimate } : {}) }
-        }),
-      })),
-    })),
+    subjects,
   }
 }

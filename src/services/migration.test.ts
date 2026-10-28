@@ -121,6 +121,58 @@ describe('schema v4 migration', () => {
   })
 })
 
+function v4Payload(): MigratableAppData {
+  const seed = createSeedData()
+  // A real v4 payload stored Sunday as weekday 0, so the seventh slot was 0.
+  const subjects = seed.subjects.map((subject) => ({
+    ...subject,
+    weeks: subject.weeks.map((week) => ({
+      ...week,
+      checklist: week.checklist.map((item) => (item.day === 7 ? { ...item, day: 0 } : item)),
+    })),
+  })) as AppData['subjects']
+  return { ...seed, schemaVersion: 4, subjects } as MigratableAppData
+}
+
+describe('schema v5 day slots', () => {
+  it('maps a stored weekday 0 onto slot 7', () => {
+    const migrated = migrateAppData(v4Payload())
+    const week = migrated.subjects[0]!.weeks[0] as Week
+    expect(week.checklist.map((item) => item.day)).not.toContain(0)
+    expect(week.checklist.some((item) => item.day === 7)).toBe(true)
+    expect(week.checklist.map((item) => item.day)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 7, 7])
+  })
+
+  it('fills a missing day for an older payload without inventing one for v5', () => {
+    const payload = v4Payload()
+    const week = payload.subjects[0]!.weeks[0]!
+    week.checklist[0] = { ...week.checklist[0]!, day: undefined }
+    const migrated = migrateAppData(payload)
+    expect(migrated.subjects[0]!.weeks[0]!.checklist[0]!.day).toBe(1)
+
+    const current = migrateAppData(v4Payload())
+    current.schemaVersion = SCHEMA_VERSION
+    current.subjects[0]!.weeks[0]!.checklist[0] = {
+      ...current.subjects[0]!.weeks[0]!.checklist[0]!,
+      day: undefined,
+    }
+    const again = migrateAppData(current)
+    expect(again.subjects[0]!.weeks[0]!.checklist[0]!.day).toBeUndefined()
+    expect(again.schemaVersion).toBe(SCHEMA_VERSION)
+  })
+
+  it('still imports a v4 backup envelope', () => {
+    const raw = JSON.stringify({
+      app: 'skillmastery',
+      exportedAt: '2026-06-01T00:00:00.000Z',
+      data: v4Payload(),
+    })
+    const parsed = parseBackupJson(raw)
+    expect(parsed.data.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(parsed.data.subjects[0]!.weeks[0]!.checklist.some((item) => item.day === 7)).toBe(true)
+  })
+})
+
 describe('schema migration', () => {
   it('adds planner defaults without touching existing preferences', () => {
     const legacy = v1Payload()

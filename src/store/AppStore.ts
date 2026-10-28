@@ -4,6 +4,9 @@ import type {
   Book,
   CardSource,
   ChecklistItem,
+  DayPlan,
+  DayPlanOrigin,
+  DaySlot,
   Flashcard,
   KnowledgeNode,
   Mode,
@@ -15,8 +18,6 @@ import type {
   Subject,
   Theme,
   TrashEntry,
-  DayPlan,
-  DayPlanOrigin,
   Week,
   Weekday,
 } from '../types/schema'
@@ -202,7 +203,7 @@ function makeChecklist(weekId: string, title: string): ChecklistItem[] {
   return items.map((item, index) => ({
     ...item,
     id: `${weekId}-c${index + 1}`,
-    day: ((index + 1) % 7) as Weekday,
+    day: (((index % 7) + 1) as DaySlot),
     estimate: estimateForMinutes(item.minutes),
   }))
 }
@@ -230,7 +231,7 @@ function resetCardProgress(card: Flashcard, at: number): Flashcard {
 function clearGateProgress(week: Week): Week {
   return {
     ...week,
-    checklist: week.checklist.map((item) => ({ ...item, done: false })),
+    checklist: week.checklist.map((item) => ({ ...item, done: false, doneAt: undefined })),
     gate: { attempts: [], notes: week.gate.notes },
   }
 }
@@ -591,7 +592,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
               ? {
                   ...week,
                   checklist: week.checklist.map((item) =>
-                    item.id === itemId ? { ...item, done: !item.done } : item,
+                    item.id === itemId
+                      ? item.done
+                        ? { ...item, done: false, doneAt: undefined }
+                        : { ...item, done: true, doneAt: at }
+                      : item,
                   ),
                 }
               : week,
@@ -1226,7 +1231,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
               ? {
                   ...week,
                   checklist: week.checklist.map((item) =>
-                    item.id === itemId ? { ...item, done: false } : item,
+                    item.id === itemId ? { ...item, done: false, doneAt: undefined } : item,
                   ),
                 }
               : week,

@@ -1,13 +1,13 @@
 import type {
   Book,
   ChecklistItem,
+  DaySlot,
   Flashcard,
   KnowledgeNode,
   KnowledgePoint,
   Resource,
   ResourceKind,
   Week,
-  Weekday,
 } from '../types/schema'
 import { estimateForMinutes } from '../engine/estimates'
 
@@ -17,16 +17,18 @@ export interface CheckSpec {
   label: string
   context: 'passive' | 'active'
   tier?: 'A' | 'B' | 'C'
-  day?: Weekday
+  /** Day slot inside the course week, 1–7. Not a weekday. */
+  day?: DaySlot
   minutes?: number
 }
 
 export function checks(weekId: string, specs: CheckSpec[]): ChecklistItem[] {
   return specs.map((spec, index) => {
     const minutes = spec.minutes ?? (spec.context === 'passive' ? 30 : 60)
-    // Day 1 is Monday and Day 7 is Sunday. Spreading tasks one per day gives
-    // every week a usable schedule until authored day plans replace it.
-    const day = spec.day ?? (((index + 1) % 7) as Weekday)
+    // Day 1 is the first day of the course week, whatever weekday it lands on.
+    // Spreading tasks one per day gives every week a usable schedule until
+    // authored day plans replace it.
+    const day = spec.day ?? (((index % 7) + 1) as DaySlot)
     return {
       id: spec.id ?? `${weekId}-c${index + 1}`,
       label: spec.label,
@@ -42,8 +44,8 @@ export function checks(weekId: string, specs: CheckSpec[]): ChecklistItem[] {
 
 /**
  * The shape every unauthored week follows: orient, orient, design, build,
- * break, apply, checkpoint. Minutes are chosen so the upper bound of each
- * estimate fits the default weekday capacity (90 active / 45 passive).
+ * break, apply, checkpoint. Minutes are chosen to fit the default daily
+ * capacity (103 active / 60 passive) with room for the authored day card.
  */
 export function standardChecks(
   weekId: string,
