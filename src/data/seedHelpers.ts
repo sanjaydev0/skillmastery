@@ -12,6 +12,8 @@ import type {
 import { estimateForMinutes } from '../engine/estimates'
 
 export interface CheckSpec {
+  /** Stable id. Authored plans use it so a content refresh keeps progress. */
+  id?: string
   label: string
   context: 'passive' | 'active'
   tier?: 'A' | 'B' | 'C'
@@ -26,7 +28,7 @@ export function checks(weekId: string, specs: CheckSpec[]): ChecklistItem[] {
     // every week a usable schedule until authored day plans replace it.
     const day = spec.day ?? (((index + 1) % 7) as Weekday)
     return {
-      id: `${weekId}-c${index + 1}`,
+      id: spec.id ?? `${weekId}-c${index + 1}`,
       label: spec.label,
       context: spec.context,
       ...(spec.tier ? { tier: spec.tier } : {}),
@@ -38,17 +40,27 @@ export function checks(weekId: string, specs: CheckSpec[]): ChecklistItem[] {
   })
 }
 
+/**
+ * The shape every unauthored week follows: orient, orient, design, build,
+ * break, apply, checkpoint. Minutes are chosen so the upper bound of each
+ * estimate fits the default weekday capacity (90 active / 45 passive).
+ */
 export function standardChecks(
   weekId: string,
   opts: { docs: string; book: string; paper: string; build: string; error: string; tests: string; gate: string },
 ): ChecklistItem[] {
   return checks(weekId, [
-    { label: `Read the docs: ${opts.docs}`, context: 'passive', minutes: 60 },
+    { label: `Read the docs: ${opts.docs}`, context: 'passive', minutes: 30 },
     { label: `Read and note: ${opts.book} → 3 bullets`, context: 'passive', minutes: 30 },
-    { label: `Sketch it on paper: ${opts.paper}`, context: 'passive', minutes: 45 },
+    { label: `Sketch it on paper: ${opts.paper}`, context: 'passive', minutes: 30 },
     { label: `Build: ${opts.build}`, context: 'active', tier: 'A', minutes: 60 },
     { label: `Break it on purpose: ${opts.error}`, context: 'active', tier: 'A', minutes: 15 },
-    { label: `Test and write it up: ${opts.tests}`, context: 'active', tier: 'B', minutes: 60 },
+    {
+      label: `Test and write it up: ${opts.tests} — then commit and push with a clear message`,
+      context: 'active',
+      tier: 'B',
+      minutes: 60,
+    },
     { label: `Weekly checkpoint: ${opts.gate}`, context: 'active', tier: 'C', minutes: 60 },
   ])
 }

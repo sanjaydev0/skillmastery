@@ -14,6 +14,7 @@ import type { Phase, PlannerSettings, Week } from '../../types/schema'
 import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
 import { weekStatus } from '../../engine/gating'
 import { formatTotal, summariseSubject, summariseWeek } from '../../engine/estimates'
+import { blueprintFor } from '../../data/curriculum/blueprint'
 import { minutesLabel } from '../../lib/dates'
 import { cn, percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
@@ -170,6 +171,7 @@ function WeekPlanCard({
   const ratio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const overloaded = summary.overloadedDays.length
   const doneTasks = week.checklist.filter((item) => item.done).length
+  const blueprint = blueprintFor(week.weekNumber)
 
   return (
     <a
@@ -243,7 +245,7 @@ function WeekPlanCard({
         <span className="faint truncate text-[10px]">
           {status === 'mastered'
             ? `Checkpoint cleared · ${formatTotal(summary.done)} credited`
-            : week.bookFocus}
+            : (blueprint?.project ?? week.bookFocus)}
         </span>
         <ChevronRight size={12} className="flex-none text-t3" aria-hidden />
       </div>

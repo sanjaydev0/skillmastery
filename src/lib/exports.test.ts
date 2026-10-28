@@ -63,7 +63,7 @@ describe('Obsidian export', () => {
     expect(markdown).toContain(`title: "${subject.name}"`)
     expect(markdown).toContain('source: SkillMastery')
     expect(markdown).toContain('## Phase 1 · Foundations')
-    expect(markdown).toContain('### Week 01 — Dart types, sound null safety & memory models')
+    expect(markdown).toContain('### Week 01 — Your first Dart program: money, types and null')
     expect(markdown).toContain('#### Knowledge nodes')
     expect(markdown).toContain('**Primitive:**')
     expect(markdown).toContain('**Q:**')

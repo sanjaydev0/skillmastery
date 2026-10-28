@@ -30,6 +30,7 @@ import { seedBook } from '../data/seedHelpers'
 import { uniqueId } from '../lib/utils'
 import { dateKey } from '../lib/dates'
 import { savePersisted, mirrorNow } from '../services/storage'
+import { refreshSeedContent } from '../services/seedUpgrade'
 import { setSaveState } from '../services/saveStatus'
 import {
   popRedo,
@@ -814,13 +815,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   importData: (incoming, mode) => {
     const state = get()
     if (mode === 'replace') {
+      const { data: refreshed } = refreshSeedContent(incoming)
       set({
-        ...incoming,
+        ...refreshed,
         hydrated: true,
-        activeSubjectId: incoming.subjects.some((subject) => subject.id === state.activeSubjectId)
+        activeSubjectId: refreshed.subjects.some((subject) => subject.id === state.activeSubjectId)
           ? state.activeSubjectId
-          : incoming.activeSubjectId,
-        prefs: { ...incoming.prefs, theme: state.prefs.theme },
+          : refreshed.activeSubjectId,
+        prefs: { ...refreshed.prefs, theme: state.prefs.theme },
         // Capacity belongs to this device, not to the imported file.
         planner: { ...state.planner, studyDays: [...state.planner.studyDays] },
       })
@@ -1078,8 +1080,9 @@ export function startAutosave(): void {
 }
 
 export function applyHydratedData(data: AppData, issue: 'corrupt' | null): void {
+  const { data: refreshed } = refreshSeedContent(data)
   useAppStore.setState({
-    ...data,
+    ...refreshed,
     hydrated: true,
     bootIssue: issue,
   })

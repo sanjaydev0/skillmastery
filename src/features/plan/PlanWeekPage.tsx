@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Clock3,
   ExternalLink,
+  GitBranch,
+  Hammer,
   RotateCcw,
   Sparkles,
   Target,
@@ -24,6 +26,7 @@ import {
   summariseWeek,
 } from '../../engine/estimates'
 import { formatShortDate, schemaWeekday } from '../../lib/dates'
+import { blueprintFor } from '../../data/curriculum/blueprint'
 import { cn, percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 import {
@@ -61,6 +64,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
   const doneTasks = week.checklist.filter((item) => item.done).length
   const ratio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const left = summary.remaining
+  const blueprint = blueprintFor(week.weekNumber)
 
   return (
     <div>
@@ -104,6 +108,23 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
         <p className="eyebrow">The one idea</p>
         <p className="muted mt-1 text-[13px] leading-relaxed">{week.anchor}</p>
       </div>
+
+      {blueprint ? (
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="card p-3">
+            <p className="eyebrow flex items-center gap-1.5">
+              <Hammer size={11} aria-hidden /> You build
+            </p>
+            <p className="mt-1 text-[12.5px] leading-snug font-medium">{blueprint.project}</p>
+          </div>
+          <div className="card p-3">
+            <p className="eyebrow flex items-center gap-1.5">
+              <GitBranch size={11} aria-hidden /> Git habit
+            </p>
+            <p className="mt-1 text-[12.5px] leading-snug font-medium">{blueprint.git}</p>
+          </div>
+        </div>
+      ) : null}
 
       <section className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Week totals">
         <WeekStat label="Planned" value={formatTotal(summary.planned)} meta={`${week.checklist.length} tasks`} icon={<Clock3 size={13} />} />
@@ -181,7 +202,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3.5 [&::-webkit-details-marker]:hidden">
           <div>
             <p className="eyebrow">Go deeper</p>
-            <p className="mt-0.5 text-[13px] font-semibold">Checkpoint, concepts, reading and repair</p>
+            <p className="mt-0.5 text-[13px] font-semibold">The computer science behind this week</p>
           </div>
           <ChevronRight size={16} className="flex-none text-t3" aria-hidden />
         </summary>

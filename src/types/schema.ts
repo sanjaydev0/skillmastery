@@ -5,7 +5,7 @@
  */
 
 export const SCHEMA_VERSION = 2
-export const SEED_VERSION = 1
+export const SEED_VERSION = 2
 
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
 

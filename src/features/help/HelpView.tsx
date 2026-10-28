@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Database,
   Gauge,
+  GitBranch,
   HelpCircle,
   Keyboard,
   Lock,
@@ -48,7 +49,9 @@ export function HelpView() {
         <Step n={4} title="Back up" body="Export a JSON copy from Settings. Data lives only on this device." href="#/progress" />
       </section>
 
-      <div className="mt-5 grid gap-2 lg:grid-cols-2">
+      {/* items-start stops a closed <details> from stretching to the height of
+          the open one beside it and painting an empty card. */}
+      <div className="mt-5 grid items-start gap-2 lg:grid-cols-2">
         <Faq
           id="today"
           title="How do I know what to do today?"
@@ -165,11 +168,37 @@ export function HelpView() {
             <li>Flutter and Dart from the command line — no Android Studio.</li>
             <li>A physical Android phone over USB; no emulator.</li>
             <li>Chromium for the web preview, and Linux desktop for fast iteration.</li>
+            <li>Git and a free GitHub account for saving each week's work.</li>
             <li>AnkiDroid on the phone for spaced repetition, plus this app's built-in review queue.</li>
           </ul>
           <p className="mt-2">
             The 8 GB RAM target is why the course avoids Android Studio and emulators. Keep one build running at a
             time and close unused browser tabs.
+          </p>
+        </Faq>
+
+        <Faq id="git" title="How do I save my work to GitHub?" icon={<GitBranch size={15} />}>
+          <p>Week 1 ends with a real repository. Set it up once on your machine:</p>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-4">
+            <li>
+              Tell Git who you are:{' '}
+              <Code>git config --global user.name "Your Name"</Code> and{' '}
+              <Code>git config --global user.email "you@example.com"</Code>.
+            </li>
+            <li>Create an empty repository on GitHub and copy its HTTPS URL.</li>
+            <li>
+              In your project folder run <Code>git init</Code>, <Code>git add .</Code>,{' '}
+              <Code>git commit -m "First Dart program"</Code>, <Code>git branch -M main</Code>,{' '}
+              <Code>git remote add origin YOUR_URL</Code>, then <Code>git push -u origin main</Code>.
+            </li>
+          </ol>
+          <p className="mt-2">
+            When Git asks for a password, use a personal access token from GitHub, not your account password. Never
+            paste a token into a file, a screenshot, or this app.
+          </p>
+          <p className="mt-2">
+            Every later week ends with a commit and push. Week 2 adds a branch and a pull request; Week 24 adds a
+            signed release tag.
           </p>
         </Faq>
 
@@ -257,5 +286,11 @@ function Shortcut({ keys, label }: { keys: string[]; label: string }) {
         ))}
       </dd>
     </div>
+  )
+}
+
+function Code({ children }: { children: ReactNode }) {
+  return (
+    <code className="rounded bg-s2 px-1 py-0.5 font-mono text-[10.5px] break-words text-t1">{children}</code>
   )
 }

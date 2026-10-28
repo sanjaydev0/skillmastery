@@ -1,33 +1,39 @@
 # SkillMastery
 
-An offline-first command center for building any skill through deliberate practice, mastery gates, and long-term retention. Two 24-week curricula are included — **Flutter, Dart & High-Craft UI/UX** and **Full-Stack Web, Product Design & Systems** — and you can create a custom subject track for anything else. Every bit of progress lives in your browser.
+An offline-first command centre for a six-month Flutter, Dart and UI/UX course. It is the dashboard, not the classroom: it tells you what to do today, keeps the estimate honest, and points you at the real work.
 
-**Live app:** <https://sanjaydev0.github.io/skillmastery/>
+**Live app:** <https://skillmastery-jay.vercel.app/>
+
+Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Full-Stack Web, Product Design & Systems** — and you can add a custom track for anything else. Progress lives only in your browser.
 
 ## What it does
 
-- **Overview** — today's active week, daily rhythm, graph mastery, gates cleared, recall queue, repair drills, canon reading, and a prompt of the day.
-- **Curriculum** — 24-week phase maps, browser-local print/PDF export, week detail sheets, checklist work, 4-score blind gates, and add-week flows.
-- **Knowledge Nodes** — a prerequisite graph with Primitive → Concept → Failure Mode knowledge points, freshness, repair flags, and a slide-over editor.
-- **Recall** — an Anki-style manager with a fixed 1 / 3 / 6 / 10 / weekly SRS ladder, AI-JSON import, TSV/CSV export, and a context-aware prompt hub.
-- **Vault** — docs, community curricula, the shared 30-minute book canon, and editable reading progress.
-- **Command palette** — `Cmd/Ctrl+K` searches weeks, nodes, cards, resources, and books across every track.
-- **Settings** — light/dark/system theme, passive/active study mode, install-to-home-screen prompt, storage status, persistent-storage request, validated JSON backup restore, Obsidian Markdown export, and reset-to-seed.
-- **Installable PWA** — a standalone Android/iOS home-screen app with an offline app shell, cached routes, maskable icons, app shortcuts, and explicit install instructions.
+- **Today** — the current week, only today's tasks, one clear "up next" action, review count, and a seven-day completion strip.
+- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and editable weekday/weekend capacity for active and passive work.
+- **Week pages** — seven day cards derived from each task's day, a plain-language "you build" brief, the git habit, outcomes, and the checkpoint.
+- **Map** — a prerequisite knowledge graph with Primitive → Concept → Failure Mode points, freshness and repair drills.
+- **Practice** — the SRS queue, Anki-compatible deck, and the prompt hub.
+- **Library** — docs, the shared 30-minute canon, reading progress and saved links.
+- **Progress** — completed estimate ranges, phase rollups, checkpoints and concept mastery.
+- **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups and undo.
+- **Command palette** — `Cmd/Ctrl+K` searches weeks, nodes, cards, resources and books across every track.
+- **Installable PWA** — offline app shell, cached routes, maskable icons and explicit Android install steps.
 
-### Mastery rules, not checkboxes
+### Planning rules, not timers
 
-- A week opens only after the previous week's blind gate has passed (or an audited override is recorded).
-- A node opens only when its week is open **and** every direct prerequisite is mastered.
-- A gate passes only when the average is **≥ 4.0** with no category below **3**.
-- FIRe gives fractional implicit credit to encompassed nodes: +0.5 strength (cap 5), interval ×1.5 (cap 120 days), 12-hour cooldown. It never marks a node mastered.
-- Two failures on one knowledge point put the node into repair and flag its direct prerequisites for a 30-minute repair drill.
+- Every task carries an estimate range. Checking it credits the whole range to the day, week and course; unchecking removes it. No timer runs in the background.
+- Days are derived from checklist `day` fields, so there is one source of truth.
+- A day over capacity is flagged instead of silently stretched. Capacity is device-local and is not overwritten by an imported backup.
+- The week has a shape: Days 1–2 orient, 3–4 build and debug, 5 test, 6 apply, 7 buffer and checkpoint.
+- Every passive block is paired with an active output; the active share rises from roughly 45/55 to 70/30 over six months.
+- A week opens only after the previous week's blind checkpoint passes, or an audited override is recorded.
+- A checkpoint passes at an average of **≥ 4.0** with no category below **3**.
 
 ## Stack
 
 React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS 4 · Zustand 5 · IndexedDB (`idb-keyval`) with a localStorage mirror · Zod backup validation · `vite-plugin-pwa` · Vitest + Testing Library.
 
-The seeded content is plain TypeScript under `src/data/`. The app has no backend, accounts, analytics, or runtime data requests.
+The seeded content is plain TypeScript under `src/data/`. There is no backend, account, analytics or runtime data request.
 
 ## Local development
 
@@ -40,56 +46,48 @@ npm run build        # PWA production build in dist/
 npm run preview
 ```
 
-The production build uses the relative base `./`, so the exact same `dist/` works at a host root (Vercel, Cloudflare Pages, a custom domain) or under a repository subpath (GitHub Pages). Set `VITE_BASE=/some/path/` only if you deliberately need an absolute base.
+The production build uses the relative base `./`, so `dist/` also works at a host root or under a subpath.
+
+## Content layout
+
+- `src/data/tracks/flutterWeeks1to6.ts` — Weeks 1–2 are fully authored day plans for a 13-year-old; Weeks 3–6 keep the technical authoring.
+- `src/data/curriculum/blueprint.ts` — the 24-week route: plain theme, project, git habit, checkpoint and seven day focuses. Weeks 1–2 are backed by real checklists; later weeks use the blueprint as the locked brief for AI generation.
+- `src/data/tracks/` — the remaining Flutter and full-stack weeks, nodes, cards and resources.
+- Git is part of the course, not an afterthought: Week 1 ends with a first push, Week 2 with a branch and pull request, every later week with a commit and push, and Week 24 with a signed release tag.
 
 ## Local-first data
 
 - IndexedDB is the primary store; localStorage is a second copy and a last-chance mirror on `pagehide`.
-- On boot the newest valid copy (by `updatedAt`) wins. Invalid data is quarantined in localStorage and a fresh seed opens with an explicit warning.
-- The header's **● Saved offline** indicator reflects actual write success, not a timer or network state.
+- On boot the newest valid copy wins. Invalid data is quarantined and a fresh seed opens with an explicit warning.
 - JSON backups are schema-validated before import and can replace all data or merge by id.
-- Upgrading from the pre-rename build? The old IndexedDB/localStorage namespace is detected and migrated on first boot, so existing tracks, cards and settings carry over without a manual export.
-- Obsidian export writes Markdown frontmatter, phases, weeks, knowledge nodes, recall cards, canon progress, and vault resources.
+- A seed-version upgrade refreshes authored curriculum text and day plans without wiping checks, checkpoint history, notes or user-added weeks.
+- Upgrading from the pre-rename build? The old namespace is detected and migrated on first boot.
+- Obsidian export writes Markdown frontmatter, phases, weeks, knowledge nodes, recall cards, canon progress and resources.
 
 Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy.
 
 ## Install as an Android app
 
-1. Open the HTTPS deployment (or `localhost`) in Chrome on Android.
+1. Open <https://skillmastery-jay.vercel.app/> in Chrome on Android.
 2. Use **Settings → Install app**, or Chrome's **⋮ → Add to Home screen / Install app**.
-3. Launch the icon like a native app. The service worker caches the app shell on first load; later opens and hash-route refreshes work fully offline. Your learning data is already local.
+3. Launch the icon like a native app. The service worker caches the shell on first load; later opens and hash-route refreshes work offline.
 
-The manifest declares `display: standalone`, relative `start_url`/`scope`, 192/512 icons, a maskable icon, theme colours, and Recall/Curriculum shortcuts. `Page.getInstallabilityErrors` reports zero errors at both a host root and a GitHub Pages subpath; offline reloads of `#/recall` were verified in both cases.
+## Hosting
 
-## Hosting and refresh safety
+Vercel builds `main` on every push (`npm run build`, output `dist`). `vercel.json` also states the build settings, the SPA rewrite and no-cache headers for `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html`; fingerprinted assets are immutable.
 
-The app uses hash routing (`#/overview`, `#/recall`, …), so a refresh never sends a missing path to the host. The repository also includes defence in depth for static hosts:
-
-- `vercel.json` — Vercel build settings, catch-all SPA rewrite, and no-cache headers for `sw.js`, `registerSW.js`, `manifest.webmanifest`, and `index.html`.
-- `public/_redirects` — Cloudflare Pages / Netlify SPA fallback (`/* /index.html 200`). Existing files take precedence, so `sw.js` and fingerprinted assets are never swallowed.
-- `public/_headers` — Cloudflare Pages cache and MIME safety headers.
-- `.github/workflows/pages.yml` — test, build, and deploy the relative-base build to GitHub Pages.
-
-For Vercel, import the repository and keep the detected Vite settings (build `npm run build`, output `dist`); `vercel.json` also states them explicitly. For Cloudflare Pages, use build command `npm run build` and output directory `dist`. No environment variables are required for either.
-
-## Seed provenance
-
-The Flutter curriculum was authored from the source plan preserved at [`docs/source/flutter-24-week-plan.txt`](docs/source/flutter-24-week-plan.txt). The full-stack track lives in the same typed seed format alongside it.
-
-## Deployment
-
-Pushes to `main` run the test suite, build the PWA, and deploy `dist/` to GitHub Pages through `.github/workflows/pages.yml`. Enable **Settings → Pages → Source: GitHub Actions** once for the repository.
+`npm test`, `npm run lint` and `npm run build` must pass before a push. There are no environment variables.
 
 ## Project map
 
 ```text
 src/
   components/       layout, sheets, primitives
-  data/             seed tracks, books, prompts, starter helpers
-  engine/           gating, FIRe, remediation, mastery gates, SRS, search
-  features/         Overview, Curriculum, Nodes, Recall, Vault
-  lib/              hash router, date and export utilities
-  services/         IndexedDB/localStorage, validation, save status
+  data/             seed tracks, 24-week blueprint, books, prompts
+  engine/           estimates, gating, FIRe, remediation, mastery, SRS, search
+  features/         today, plan, nodes, recall, vault, progress, help
+  lib/              hash router, dates, export utilities
+  services/         storage, validation, seed upgrades, history, save status
   store/            Zustand state and persisted actions
   test/             Vitest setup
 ```

@@ -6,7 +6,7 @@ describe('application smoke tests', () => {
   it('renders Today with the active seed week and day plan', async () => {
     render(<App />)
     expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
-    expect(screen.getAllByText(/Dart types, sound null safety/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/money, types and null/i).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: 'Today' }).length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: "Today's plan" })).toBeInTheDocument()
     expect(screen.getByText(/credits its full estimate range/i)).toBeInTheDocument()
@@ -54,7 +54,7 @@ describe('application smoke tests', () => {
     render(<App />)
     window.location.hash = '#/plan/fl-w1'
     fireEvent(window, new HashChangeEvent('hashchange'))
-    expect(await screen.findByRole('heading', { name: /Dart types, sound null safety/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /money, types and null/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Seven-day plan' })).toBeInTheDocument()
     expect(screen.getAllByText(/Day 1 · Monday/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/estimated range, no timer/).length).toBe(7)
@@ -73,7 +73,7 @@ describe('application smoke tests', () => {
     expect(firstTask).toHaveAttribute('aria-checked', 'false')
     fireEvent.click(firstTask)
     expect(firstTask).toHaveAttribute('aria-checked', 'true')
-    expect(within(totals).getByText('60–75 min')).toBeInTheDocument()
+    expect(within(totals).getByText('30–40 min')).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true })
     await waitFor(() =>
