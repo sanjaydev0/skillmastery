@@ -4,8 +4,8 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 3
-export const SEED_VERSION = 3
+export const SCHEMA_VERSION = 4
+export const SEED_VERSION = 4
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
 export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
@@ -43,29 +43,131 @@ export interface Estimate {
   max: number
 }
 
-/** Per-device planning capacity. Never part of the curriculum content. */
+/**
+ * Per-device planning capacity. Never part of the curriculum content.
+ *
+ * Capacity is declared per week, because that is the unit a person can
+ * honestly promise. The per-day figure is derived by spreading the weekly
+ * total across `studyDays`; see `dailyCapacity()`.
+ */
 export interface PlannerSettings {
-  weekdayActiveMinutes: number
-  weekdayPassiveMinutes: number
-  weekendActiveMinutes: number
-  weekendPassiveMinutes: number
+  weeklyActiveMinutes: number
+  weeklyPassiveMinutes: number
   /** Days the learner intends to study. 0 = Sunday. */
   studyDays: Weekday[]
-  /** Catch-up / review day. 0 = Sunday. */
-  bufferDay: Weekday
+  /** Optional catch-up day, excluded from capacity when set. */
+  bufferDay: Weekday | null
   /** Suggested focus block length, used when splitting a task. */
   sessionMinutes: number
 }
 
 export const DEFAULT_PLANNER: PlannerSettings = {
-  weekdayActiveMinutes: 90,
-  weekdayPassiveMinutes: 45,
-  weekendActiveMinutes: 120,
-  weekendPassiveMinutes: 60,
-  studyDays: [1, 2, 3, 4, 5, 6],
-  bufferDay: 0,
+  // Measured from the authored weeks: the busiest day carries 100 active
+  // minutes, so 12 h/week across seven days is the honest floor. Lowering the
+  // slider is allowed; the plan will say which days no longer fit.
+  weeklyActiveMinutes: 720,
+  weeklyPassiveMinutes: 420,
+  studyDays: [0, 1, 2, 3, 4, 5, 6],
+  bufferDay: null,
   sessionMinutes: 25,
 }
+
+/** 1–7: the day slot inside a course week, independent of weekday names. */
+export type DaySlot = 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+export type DayPlanOrigin = 'authored' | 'ai' | 'user'
+
+export interface DayResource {
+  label: string
+  url?: string
+  kind: ResourceKind
+}
+
+/**
+ * The editorial layer: what a day is asking of the learner and why.
+ * The checklist stays the evidence layer — only checked items earn credit.
+ */
+export interface DayPlan {
+  day: DaySlot
+  title: string
+  /** 250–500 words of explanation written for a beginner. */
+  summary: string
+  resources: DayResource[]
+  tasks: string[]
+  /** "Do this, not that" — the one instruction that prevents a common detour. */
+  direction: string
+  /** The design lesson this day carries, tied to the week's artefact. */
+  designNote: string
+  estMinutes: number
+  origin: DayPlanOrigin
+  model?: string
+  generatedAt?: number
+}
+
+/** A stretch of the course where the clock is stopped. `to: null` = active. */
+export interface Pause {
+  from: number
+  to: number | null
+}
+
+/** The course clock. Drives the week number, the day number and consistency. */
+export interface Journey {
+  /** Local midnight of Day 1. Null until the learner presses Start. */
+  startedAt: number | null
+  /** Weekday of Day 1, captured at Start so day slots can be labelled. */
+  startWeekday: Weekday
+  pauses: Pause[]
+  /** The gamified layer can be switched off without losing progress. */
+  gameLayer: boolean
+  onboardedAt: number | null
+}
+
+export const DEFAULT_JOURNEY: Journey = {
+  startedAt: null,
+  startWeekday: 1,
+  pauses: [],
+  gameLayer: true,
+  onboardedAt: null,
+}
+
+export type TrashKind = 'week' | 'subject' | 'dayPlans'
+
+export interface TrashCounts {
+  weeks?: number
+  nodes?: number
+  cards?: number
+  days?: number
+}
+
+/** A graph edge that was pruned from a surviving node when its week was deleted. */
+export interface TrashEdge {
+  nodeId: string
+  prerequisiteIds: string[]
+  encompassedNodeIds: string[]
+}
+
+export interface TrashEntry {
+  id: string
+  kind: TrashKind
+  deletedAt: number
+  label: string
+  subjectId: string
+  subjectName: string
+  /** A complete copy, so restore never depends on anything still living. */
+  payload: Week | Subject | DayPlan[]
+  /** Nodes deleted with the week. Restoring the week restores them. */
+  nodes?: KnowledgeNode[]
+  /** Cards deleted with the week. Restoring the week restores them. */
+  cards?: Flashcard[]
+  /** Inbound edges pruned on delete, so an undelete reconnects the graph. */
+  edges?: TrashEdge[]
+  /** Surviving weeks that listed the deleted week as a prerequisite. */
+  weekLinks?: string[]
+  counts: TrashCounts
+}
+
+/** Oldest entries are dropped once this many are kept. */
+export const TRASH_LIMIT = 20
 
 export interface KnowledgePoint {
   id: string
@@ -257,6 +359,12 @@ export interface AppData {
   planner: PlannerSettings
   /** User-edited prompt skills, keyed by the authored prompt id. */
   promptOverrides: Record<string, string>
+  /** The course clock, start date and pause history. */
+  journey: Journey
+  /** Editorial day cards, keyed by week id. Absent weeks are generation-ready. */
+  dayPlans: Record<string, DayPlan[]>
+  /** Recently deleted content, restorable, newest first. */
+  trash: TrashEntry[]
 }
 
 export interface RhythmItem {

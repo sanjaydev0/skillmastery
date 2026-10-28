@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChecklistItem } from '../types/schema'
+import type { ChecklistItem, Weekday } from '../types/schema'
 import { DEFAULT_PLANNER } from '../types/schema'
 import { createSeedData } from '../data/seedData'
 import { checks, seedWeek } from '../data/seedHelpers'
@@ -55,10 +55,26 @@ describe('estimate maths', () => {
 })
 
 describe('capacity', () => {
-  it('uses weekend capacity on Saturday and Sunday', () => {
-    expect(capacityFor(1, DEFAULT_PLANNER)).toEqual({ active: 90, passive: 45 })
-    expect(capacityFor(6, DEFAULT_PLANNER)).toEqual({ active: 120, passive: 60 })
-    expect(capacityFor(0, DEFAULT_PLANNER)).toEqual({ active: 120, passive: 60 })
+  it('spreads the weekly total evenly across study days', () => {
+    expect(capacityFor(1, DEFAULT_PLANNER)).toEqual({ active: 103, passive: 60 })
+    expect(capacityFor(6, DEFAULT_PLANNER)).toEqual({ active: 103, passive: 60 })
+    expect(capacityFor(0, DEFAULT_PLANNER)).toEqual({ active: 103, passive: 60 })
+  })
+
+  it('gives a rest day and the buffer day no new-work capacity', () => {
+    const planner = {
+      ...DEFAULT_PLANNER,
+      studyDays: [1, 2, 3, 4, 5] as Weekday[],
+      bufferDay: 0 as Weekday,
+    }
+    expect(capacityFor(0, planner)).toEqual({ active: 0, passive: 0 })
+    expect(capacityFor(6, planner)).toEqual({ active: 0, passive: 0 })
+    expect(capacityFor(1, planner)).toEqual({ active: 144, passive: 84 })
+  })
+
+  it('honours a capacity the learner set themselves', () => {
+    const planner = { ...DEFAULT_PLANNER, weeklyActiveMinutes: 420, weeklyPassiveMinutes: 700 }
+    expect(capacityFor(3, planner)).toEqual({ active: 60, passive: 100 })
   })
 })
 
@@ -95,7 +111,9 @@ describe('week summary', () => {
   })
 
   it('flags a day that exceeds its active capacity', () => {
-    const summary = summariseWeek(week, DEFAULT_PLANNER)
+    // 90 active minutes a day is the authored reference budget for this week.
+    const planner = { ...DEFAULT_PLANNER, weeklyActiveMinutes: 630, weeklyPassiveMinutes: 315 }
+    const summary = summariseWeek(week, planner)
     expect(summary.days[1]!.overBy).toEqual({ active: 0, passive: 0 })
     expect(summary.days[2]!.overBy.active).toBe(15)
     expect(summary.overloadedDays).toEqual([2])

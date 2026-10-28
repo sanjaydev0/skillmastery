@@ -101,12 +101,12 @@ describe('scoped resets', () => {
     const week = firstWeek()
     useAppStore.getState().toggleChecklist(week.id, week.checklist[0]!.id)
     useAppStore.getState().setTheme('light')
-    useAppStore.setState({ planner: { ...DEFAULT_PLANNER, weekdayActiveMinutes: 45 } })
+    useAppStore.setState({ planner: { ...DEFAULT_PLANNER, weeklyActiveMinutes: 300 } })
 
     const result = useAppStore.getState().resetProgress('subject')
     expect(result.ok).toBe(true)
     expect(useAppStore.getState().subjects[0]!.weeks[0]!.checklist[0]!.done).toBe(false)
-    expect(useAppStore.getState().planner.weekdayActiveMinutes).toBe(45)
+    expect(useAppStore.getState().planner.weeklyActiveMinutes).toBe(300)
     expect(useAppStore.getState().prefs.theme).toBe('light')
   })
 
@@ -124,13 +124,13 @@ describe('scoped resets', () => {
 describe('planner settings', () => {
   it('clamps capacity and never enters the undo history', () => {
     useAppStore.getState().updatePlanner({
-      weekdayActiveMinutes: 5000,
-      weekdayPassiveMinutes: -10,
+      weeklyActiveMinutes: 50_000,
+      weeklyPassiveMinutes: -10,
       sessionMinutes: 1,
     })
     const planner = useAppStore.getState().planner
-    expect(planner.weekdayActiveMinutes).toBe(720)
-    expect(planner.weekdayPassiveMinutes).toBe(0)
+    expect(planner.weeklyActiveMinutes).toBe(10_080)
+    expect(planner.weeklyPassiveMinutes).toBe(0)
     expect(planner.sessionMinutes).toBe(5)
     expect(historyDepth()).toEqual({ undo: 0, redo: 0 })
   })

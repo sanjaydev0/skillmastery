@@ -14,10 +14,13 @@ import type {
   ResourceStatus,
   Subject,
   Theme,
+  TrashEntry,
+  DayPlan,
+  DayPlanOrigin,
   Week,
   Weekday,
 } from '../types/schema'
-import { PROMPT_TEMPLATE_MAX_CHARS } from '../types/schema'
+import { DEFAULT_PLANNER, PROMPT_TEMPLATE_MAX_CHARS, TRASH_LIMIT } from '../types/schema'
 import { createSeedData } from '../data/seedData'
 import { activeWeek } from '../engine/gating'
 import { isNodeOpen } from '../engine/gating'
@@ -29,6 +32,7 @@ import { recordAttempt } from '../engine/mastery'
 import { estimateForMinutes } from '../engine/estimates'
 import { seedBook } from '../data/seedHelpers'
 import { uniqueId } from '../lib/utils'
+import { isPaused, startOfLocalDay } from '../lib/courseClock'
 import { dateKey } from '../lib/dates'
 import { savePersisted, mirrorNow } from '../services/storage'
 import { refreshSeedContent } from '../services/seedUpgrade'
@@ -60,6 +64,21 @@ interface AppStore extends AppData {
   setMode: (mode: Mode) => void
   setTheme: (theme: Theme) => void
   toggleSidebar: () => void
+  /** Stamp Day 1 and start the course clock. */
+  startCourse: () => ActionResult
+  /** Reset the clock to today without deleting any progress. */
+  restartCourse: () => ActionResult
+  pauseCourse: () => ActionResult
+  resumeCourse: () => ActionResult
+  completeOnboarding: () => void
+  setGameLayer: (on: boolean) => void
+  /** Replace a week's editorial day cards, keeping their origin. */
+  saveDayPlans: (weekId: string, plans: DayPlan[], origin: DayPlanOrigin) => ActionResult
+  deleteDayPlans: (weekId: string) => ActionResult
+  deleteSubject: (subjectId: string) => ActionResult
+  restoreTrash: (entryId: string) => ActionResult
+  purgeTrash: (entryId: string) => void
+  emptyTrash: () => void
   toggleChecklist: (weekId: string, itemId: string) => void
   saveGate: (weekId: string, scores: Week['gate']['scores']) => ActionResult
   addWeek: (input: { phaseId: string; title: string; anchor: string }) => ActionResult
@@ -148,6 +167,27 @@ function patchSubject(state: AppData, updater: (subject: Subject) => Subject, ti
     ),
     updatedAt: timestamp,
   }
+}
+
+/**
+ * Day cards are keyed by week id and deliberately outlive a deletion, so a
+ * restore brings them back. Only a permanent delete removes them.
+ */
+function plansWithout(
+  dayPlans: Record<string, DayPlan[]>,
+  entries: TrashEntry[],
+): Record<string, DayPlan[]> {
+  const weekIds = new Set<string>()
+  for (const entry of entries) {
+    if (entry.kind === 'week') weekIds.add((entry.payload as Week).id)
+    else if (entry.kind === 'subject') {
+      for (const week of (entry.payload as Subject).weeks) weekIds.add(week.id)
+    }
+  }
+  if (weekIds.size === 0) return dayPlans
+  const next = { ...dayPlans }
+  for (const weekId of weekIds) delete next[weekId]
+  return next
 }
 
 function makeChecklist(weekId: string, title: string): ChecklistItem[] {
@@ -273,6 +313,272 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       prefs: { ...state.prefs, sidebarCollapsed: !state.prefs.sidebarCollapsed },
     })),
 
+  startCourse: () => {
+    const state = get()
+    if (state.journey.startedAt !== null) {
+      return { ok: false, message: 'The course is already running. Use restart if you need to.' }
+    }
+    const startedAt = startOfLocalDay(now())
+    set({
+      journey: {
+        ...state.journey,
+        startedAt,
+        startWeekday: new Date(startedAt).getDay() as Weekday,
+        pauses: [],
+      },
+      updatedAt: now(),
+    })
+    return { ok: true, message: 'Day 1 begins today. The clock is running.' }
+  },
+
+  restartCourse: () => {
+    const startedAt = startOfLocalDay(now())
+    set((state) => ({
+      journey: {
+        ...state.journey,
+        startedAt,
+        startWeekday: new Date(startedAt).getDay() as Weekday,
+        pauses: [],
+      },
+      updatedAt: now(),
+    }))
+    return { ok: true, message: 'The clock starts again today. Your progress is untouched.' }
+  },
+
+  pauseCourse: () => {
+    const state = get()
+    if (state.journey.startedAt === null) {
+      return { ok: false, message: 'The course has not started yet.' }
+    }
+    if (isPaused(state.journey)) {
+      return { ok: false, message: 'The course is already paused.' }
+    }
+    const at = now()
+    set({
+      journey: { ...state.journey, pauses: [...state.journey.pauses, { from: at, to: null }] },
+      updatedAt: at,
+    })
+    return { ok: true, message: 'Paused. The course day will wait for you.' }
+  },
+
+  resumeCourse: () => {
+    const state = get()
+    const open = state.journey.pauses.some((pause) => pause.to === null)
+    if (!open) return { ok: false, message: 'The course is not paused.' }
+    const at = now()
+    const pauses = state.journey.pauses.map((pause) =>
+      pause.to === null ? { ...pause, to: at } : pause,
+    )
+    set({ journey: { ...state.journey, pauses }, updatedAt: at })
+    return { ok: true, message: 'Back on. The clock picks up where it stopped.' }
+  },
+
+  completeOnboarding: () => set((state) => ({ journey: { ...state.journey, onboardedAt: now() }, updatedAt: now() })),
+
+  setGameLayer: (on) =>
+    set((state) => ({ journey: { ...state.journey, gameLayer: on }, updatedAt: now() })),
+
+  saveDayPlans: (weekId, plans, origin) => {
+    const state = get()
+    const subject = activeSubjectOf(state)
+    if (!subject) return { ok: false, message: 'No active subject.' }
+    if (!subject.weeks.some((week) => week.id === weekId)) {
+      return { ok: false, message: 'That week no longer exists.' }
+    }
+    const clean = plans
+      .filter((plan) => plan.day >= 1 && plan.day <= 7)
+      .map((plan) => ({ ...plan, origin }))
+      .sort((a, b) => a.day - b.day)
+    if (clean.length !== 7) {
+      return { ok: false, message: `A week needs seven day cards. This draft has ${clean.length}.` }
+    }
+    if (new Set(clean.map((plan) => plan.day)).size !== 7) {
+      return { ok: false, message: 'Two day cards claim the same day.' }
+    }
+    set({ dayPlans: { ...state.dayPlans, [weekId]: clean }, updatedAt: now() })
+    return { ok: true, message: 'Seven day cards saved.' }
+  },
+
+  deleteDayPlans: (weekId) => {
+    const state = get()
+    const plans = state.dayPlans[weekId]
+    if (!plans || plans.length === 0) return { ok: false, message: 'That week has no day cards.' }
+    const subject = activeSubjectOf(state)
+    const week = subject?.weeks.find((entry) => entry.id === weekId)
+    const entry: TrashEntry = {
+      id: uniqueId('trash'),
+      kind: 'dayPlans',
+      deletedAt: now(),
+      label: week ? `${week.title} day cards` : 'Day cards',
+      // For this kind the subjectId field carries the week id.
+      subjectId: weekId,
+      subjectName: subject?.shortName ?? '',
+      payload: plans,
+      counts: { days: plans.length },
+    }
+    const dayPlans = { ...state.dayPlans }
+    delete dayPlans[weekId]
+    set({
+      dayPlans,
+      trash: [entry, ...state.trash].slice(0, TRASH_LIMIT),
+      updatedAt: now(),
+    })
+    return { ok: true, message: 'Day cards moved to trash.' }
+  },
+
+  deleteSubject: (subjectId) => {
+    const state = get()
+    if (state.subjects.length <= 1) {
+      return { ok: false, message: 'That is the only track left. Reset it instead.' }
+    }
+    const subject = state.subjects.find((entry) => entry.id === subjectId)
+    if (!subject) return { ok: false, message: 'That track no longer exists.' }
+    const entry: TrashEntry = {
+      id: uniqueId('trash'),
+      kind: 'subject',
+      deletedAt: now(),
+      label: subject.name,
+      subjectId: subject.id,
+      subjectName: subject.shortName,
+      payload: subject,
+      counts: {
+        weeks: subject.weeks.length,
+        nodes: subject.nodes.length,
+        cards: subject.cards.length,
+      },
+    }
+    // Day cards stay keyed by week id, so restoring the track restores them
+    // with it. They are simply unreachable while the track is gone.
+    const subjects = state.subjects.filter((entry2) => entry2.id !== subjectId)
+    set({
+      subjects,
+      activeSubjectId: state.activeSubjectId === subjectId ? subjects[0]!.id : state.activeSubjectId,
+      trash: [entry, ...state.trash].slice(0, TRASH_LIMIT),
+      updatedAt: now(),
+    })
+    return { ok: true, message: `“${subject.shortName}” moved to trash.` }
+  },
+
+  restoreTrash: (entryId) => {
+    const state = get()
+    const entry = state.trash.find((candidate) => candidate.id === entryId)
+    if (!entry) return { ok: false, message: 'That item is no longer in the trash.' }
+
+    if (entry.kind === 'week') {
+      const week = entry.payload as Week
+      const subject = state.subjects.find((candidate) => candidate.id === entry.subjectId)
+      if (!subject) return { ok: false, message: 'The track that owned that week is gone.' }
+      if (subject.weeks.some((candidate) => candidate.id === week.id)) {
+        return { ok: false, message: 'That week is already back.' }
+      }
+      const nodeIds = new Set((entry.nodes ?? []).map((node) => node.id))
+      const knownNodes = new Set(subject.nodes.map((node) => node.id))
+      const knownCards = new Set(subject.cards.map((card) => card.id))
+      const dependedOnIt = new Set(entry.weekLinks ?? [])
+      const pruned = new Map((entry.edges ?? []).map((edge) => [edge.nodeId, edge]))
+
+      const weeks = [...subject.weeks, week]
+        .sort((a, b) => a.weekNumber - b.weekNumber)
+        .map((candidate) =>
+          dependedOnIt.has(candidate.id) && !candidate.prerequisiteWeekIds.includes(week.id)
+            ? { ...candidate, prerequisiteWeekIds: [...candidate.prerequisiteWeekIds, week.id] }
+            : candidate,
+        )
+      const nodes = [...subject.nodes, ...(entry.nodes ?? []).filter((node) => !knownNodes.has(node.id))].map(
+        (node) => {
+          const edge = pruned.get(node.id)
+          if (!edge) return node
+          return {
+            ...node,
+            prerequisiteIds: [
+              ...new Set([...node.prerequisiteIds, ...edge.prerequisiteIds.filter((id) => nodeIds.has(id))]),
+            ],
+            encompassedNodeIds: [
+              ...new Set([
+                ...node.encompassedNodeIds,
+                ...edge.encompassedNodeIds.filter((id) => nodeIds.has(id)),
+              ]),
+            ],
+          }
+        },
+      )
+      const cards = [
+        ...subject.cards,
+        ...(entry.cards ?? []).filter((card) => !knownCards.has(card.id)),
+      ]
+
+      set({
+        subjects: state.subjects.map((candidate) =>
+          candidate.id === subject.id ? { ...candidate, weeks, nodes, cards } : candidate,
+        ),
+        trash: state.trash.filter((candidate) => candidate.id !== entryId),
+        updatedAt: now(),
+      })
+      return { ok: true, message: `“${entry.label}” restored.` }
+    }
+
+    if (entry.kind === 'subject') {
+      const subject = entry.payload as Subject
+      if (state.subjects.some((candidate) => candidate.id === subject.id)) {
+        return { ok: false, message: 'That track is already back.' }
+      }
+      set({
+        subjects: [...state.subjects, subject],
+        trash: state.trash.filter((candidate) => candidate.id !== entryId),
+        updatedAt: now(),
+      })
+      return { ok: true, message: `“${entry.label}” restored.` }
+    }
+
+    const weekId = entry.subjectId
+    if (state.dayPlans[weekId]) {
+      return { ok: false, message: 'That week already has day cards.' }
+    }
+    set({
+      dayPlans: { ...state.dayPlans, [weekId]: entry.payload as DayPlan[] },
+      trash: state.trash.filter((candidate) => candidate.id !== entryId),
+      updatedAt: now(),
+    })
+    return { ok: true, message: `“${entry.label}” restored.` }
+  },
+
+  purgeTrash: (entryId) =>
+    set((state) => {
+      const entry = state.trash.find((candidate) => candidate.id === entryId)
+      if (!entry) return {}
+      // A purged week is never coming back, so a card that pointed at one of
+      // its nodes loses the link now instead of keeping a dangling id.
+      const removedNodes = new Set((entry.nodes ?? []).map((node) => node.id))
+      const subjects =
+        entry.kind === 'week' && removedNodes.size > 0
+          ? state.subjects.map((subject) =>
+              subject.id === entry.subjectId
+                ? {
+                    ...subject,
+                    cards: subject.cards.map((card) =>
+                      card.nodeId && removedNodes.has(card.nodeId)
+                        ? { ...card, nodeId: undefined }
+                        : card,
+                    ),
+                  }
+                : subject,
+            )
+          : state.subjects
+      return {
+        trash: state.trash.filter((candidate) => candidate.id !== entryId),
+        dayPlans: plansWithout(state.dayPlans, [entry]),
+        subjects,
+        updatedAt: now(),
+      }
+    }),
+
+  emptyTrash: () =>
+    set((state) => ({
+      trash: [],
+      dayPlans: plansWithout(state.dayPlans, state.trash),
+      updatedAt: now(),
+    })),
+
   toggleChecklist: (weekId, itemId) =>
     set((state) => {
       const at = now()
@@ -378,37 +684,69 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ),
     ),
 
-  deleteWeek: (weekId) =>
-    set((state) =>
-      patchSubject(
-        state,
-        (subject) => {
-          const removedNodeIds = new Set(
-            subject.nodes.filter((node) => node.weekId === weekId).map((node) => node.id),
-          )
-          return {
-            ...subject,
-            weeks: subject.weeks
-              .filter((week) => week.id !== weekId)
-              .map((week) => ({
-                ...week,
-                prerequisiteWeekIds: week.prerequisiteWeekIds.filter((id) => id !== weekId),
-              })),
-            nodes: subject.nodes
-              .filter((node) => node.weekId !== weekId)
-              .map((node) => ({
-                ...node,
-                prerequisiteIds: node.prerequisiteIds.filter((id) => !removedNodeIds.has(id)),
-                encompassedNodeIds: node.encompassedNodeIds.filter((id) => !removedNodeIds.has(id)),
-              })),
-            cards: subject.cards
-              .filter((card) => card.weekId !== weekId)
-              .map((card) => (card.nodeId && removedNodeIds.has(card.nodeId) ? { ...card, nodeId: undefined } : card)),
-          }
-        },
+  deleteWeek: (weekId) => {
+    const state = get()
+    const subject = activeSubjectOf(state)
+    const week = subject?.weeks.find((entry) => entry.id === weekId)
+    if (!subject || !week) return
+    const removedNodeIds = new Set(
+      subject.nodes.filter((node) => node.weekId === weekId).map((node) => node.id),
+    )
+    const entry: TrashEntry = {
+      id: uniqueId('trash'),
+      kind: 'week',
+      deletedAt: now(),
+      label: `Week ${week.weekNumber}: ${week.title}`,
+      subjectId: subject.id,
+      subjectName: subject.shortName,
+      payload: week,
+      nodes: subject.nodes.filter((node) => node.weekId === weekId),
+      cards: subject.cards.filter((card) => card.weekId === weekId),
+      // Record the graph edges this delete is about to prune, so a restore puts
+      // them back instead of leaving a silently thinner prerequisite graph.
+      edges: subject.nodes
+        .filter((node) => node.weekId !== weekId)
+        .map((node) => ({
+          nodeId: node.id,
+          prerequisiteIds: node.prerequisiteIds.filter((id) => removedNodeIds.has(id)),
+          encompassedNodeIds: node.encompassedNodeIds.filter((id) => removedNodeIds.has(id)),
+        }))
+        .filter((edge) => edge.prerequisiteIds.length > 0 || edge.encompassedNodeIds.length > 0),
+      weekLinks: subject.weeks
+        .filter((candidate) => candidate.id !== weekId && candidate.prerequisiteWeekIds.includes(weekId))
+        .map((candidate) => candidate.id),
+      counts: {
+        nodes: removedNodeIds.size,
+        cards: subject.cards.filter((card) => card.weekId === weekId).length,
+        days: state.dayPlans[weekId]?.length ?? 0,
+      },
+    }
+    set((current) => ({
+      ...patchSubject(
+        current,
+        (active) => ({
+          ...active,
+          weeks: active.weeks
+            .filter((candidate) => candidate.id !== weekId)
+            .map((candidate) => ({
+              ...candidate,
+              prerequisiteWeekIds: candidate.prerequisiteWeekIds.filter((id) => id !== weekId),
+            })),
+          nodes: active.nodes
+            .filter((node) => node.weekId !== weekId)
+            .map((node) => ({
+              ...node,
+              prerequisiteIds: node.prerequisiteIds.filter((id) => !removedNodeIds.has(id)),
+              encompassedNodeIds: node.encompassedNodeIds.filter((id) => !removedNodeIds.has(id)),
+            })),
+          cards: active.cards.filter((card) => card.weekId !== weekId),
+        }),
         now(),
       ),
-    ),
+      // Day cards stay keyed by week id so a restore brings them back with it.
+      trash: [entry, ...current.trash].slice(0, TRASH_LIMIT),
+    }))
+  },
 
   startNode: (nodeId) =>
     set((state) => {
@@ -994,14 +1332,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const next = { ...state.planner, ...patch }
       const clamp = (value: number, min: number, max: number) =>
         Math.max(min, Math.min(max, Math.round(Number.isFinite(value) ? value : min)))
+      let studyDays = [...new Set(next.studyDays)]
+        .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
+        .sort((a, b) => a - b)
+      let bufferDay = next.bufferDay
+      if (studyDays.length >= 7) bufferDay = null
+      if (bufferDay !== null) {
+        const pruned = studyDays.filter((day) => day !== bufferDay)
+        if (pruned.length > 0) studyDays = pruned
+        else bufferDay = null
+      }
+      if (studyDays.length === 0) {
+        studyDays = [...DEFAULT_PLANNER.studyDays]
+        bufferDay = null
+      }
       return {
         planner: {
-          weekdayActiveMinutes: clamp(next.weekdayActiveMinutes, 0, 720),
-          weekdayPassiveMinutes: clamp(next.weekdayPassiveMinutes, 0, 720),
-          weekendActiveMinutes: clamp(next.weekendActiveMinutes, 0, 720),
-          weekendPassiveMinutes: clamp(next.weekendPassiveMinutes, 0, 720),
-          studyDays: [...next.studyDays],
-          bufferDay: next.bufferDay,
+          weeklyActiveMinutes: clamp(next.weeklyActiveMinutes, 0, 10_080),
+          weeklyPassiveMinutes: clamp(next.weeklyPassiveMinutes, 0, 10_080),
+          studyDays,
+          bufferDay,
           sessionMinutes: clamp(next.sessionMinutes, 5, 180),
         },
         updatedAt: now(),
@@ -1053,6 +1403,9 @@ export function getStoredAppData(): AppData {
     prefs: state.prefs,
     planner: state.planner,
     promptOverrides: state.promptOverrides,
+    journey: state.journey,
+    dayPlans: state.dayPlans,
+    trash: state.trash,
   }
 }
 
@@ -1120,6 +1473,14 @@ export function applyHydratedData(data: AppData, issue: 'corrupt' | null): void 
  */
 const UNDOABLE_ACTIONS: Record<string, string> = {
   addSubject: 'Create track',
+  startCourse: 'Start course',
+  restartCourse: 'Restart clock',
+  pauseCourse: 'Pause course',
+  resumeCourse: 'Resume course',
+  saveDayPlans: 'Save day cards',
+  deleteDayPlans: 'Delete day cards',
+  deleteSubject: 'Delete track',
+  restoreTrash: 'Restore from trash',
   toggleChecklist: 'Toggle task',
   saveGate: 'Save checkpoint',
   addWeek: 'Add week',

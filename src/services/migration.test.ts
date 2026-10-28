@@ -21,7 +21,14 @@ function stripEstimates(subject: Subject): Subject {
 
 function v1Payload(): MigratableAppData {
   const seed = createSeedData()
-  const { planner: _planner, promptOverrides: _prompts, ...rest } = seed
+  const {
+    planner: _planner,
+    promptOverrides: _prompts,
+    journey: _journey,
+    dayPlans: _dayPlans,
+    trash: _trash,
+    ...rest
+  } = seed
   return {
     ...rest,
     schemaVersion: 1,
@@ -31,12 +38,88 @@ function v1Payload(): MigratableAppData {
 
 function v2Payload(): MigratableAppData {
   const seed = createSeedData()
-  const { promptOverrides: _prompts, ...rest } = seed
+  const { promptOverrides: _prompts, journey: _journey, dayPlans: _dayPlans, trash: _trash, ...rest } = seed
   return {
     ...rest,
     schemaVersion: 2,
   } as MigratableAppData
 }
+
+function v3Payload(): MigratableAppData {
+  const seed = createSeedData()
+  const { journey: _journey, dayPlans: _dayPlans, trash: _trash, ...rest } = seed
+  return {
+    ...rest,
+    schemaVersion: 3,
+    planner: {
+      weekdayActiveMinutes: 120,
+      weekdayPassiveMinutes: 30,
+      weekendActiveMinutes: 60,
+      weekendPassiveMinutes: 15,
+      studyDays: [1, 2, 3, 4, 5, 6],
+      bufferDay: 0,
+      sessionMinutes: 30,
+    },
+  } as MigratableAppData
+}
+
+describe('schema v4 migration', () => {
+  it('folds per-day capacity into a weekly total', () => {
+    const migrated = migrateAppData(v3Payload())
+    // 120×5 + 60×2 = 720 active minutes; 30×5 + 15×2 = 180 passive.
+    expect(migrated.planner.weeklyActiveMinutes).toBe(720)
+    expect(migrated.planner.weeklyPassiveMinutes).toBe(180)
+    expect(migrated.planner.sessionMinutes).toBe(30)
+    expect(migrated.planner.bufferDay).toBe(0)
+    expect('weekdayActiveMinutes' in migrated.planner).toBe(false)
+  })
+
+  it('adds an unstarted journey, empty day plans and an empty trash', () => {
+    const migrated = migrateAppData(v3Payload())
+    expect(migrated.journey).toEqual({
+      startedAt: null,
+      startWeekday: 1,
+      pauses: [],
+      gameLayer: true,
+      onboardedAt: null,
+    })
+    expect(migrated.dayPlans).toEqual({})
+    expect(migrated.trash).toEqual([])
+  })
+
+  it('keeps day cards that a v3 payload already carried', () => {
+    const payload = v3Payload()
+    payload.dayPlans = {
+      'flutter-w1': [
+        {
+          day: 2,
+          title: 'Second day',
+          summary: 'Words.',
+          resources: [],
+          tasks: ['Do the thing'],
+          direction: 'Not that.',
+          designNote: 'Hierarchy.',
+          estMinutes: 45,
+          origin: 'ai',
+        },
+      ],
+    }
+    const migrated = migrateAppData(payload)
+    expect(migrated.dayPlans['flutter-w1']).toHaveLength(1)
+  })
+
+  it('drops a buffer day that is also a study day', () => {
+    const payload = v3Payload()
+    payload.planner = {
+      ...payload.planner,
+      studyDays: [0, 1, 2, 3, 4, 5, 6],
+      bufferDay: 0,
+    }
+    const migrated = migrateAppData(payload)
+    expect(migrated.planner.bufferDay).toBeNull()
+    expect(migrated.planner.studyDays).toHaveLength(7)
+  })
+})
 
 describe('schema migration', () => {
   it('adds planner defaults without touching existing preferences', () => {
@@ -74,7 +157,7 @@ describe('schema migration', () => {
     const parsed = parseBackupJson(raw)
     expect(parsed.exportedAt).toBe('2026-01-01T00:00:00.000Z')
     expect(parsed.data.schemaVersion).toBe(SCHEMA_VERSION)
-    expect(parsed.data.planner.weekdayActiveMinutes).toBe(90)
+    expect(parsed.data.planner.weeklyActiveMinutes).toBe(720)
     expect(parsed.data.subjects[0]!.weeks[0]!.checklist[0]!.estimate).toBeDefined()
   })
 

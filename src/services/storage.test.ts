@@ -91,7 +91,7 @@ describe('SkillMastery storage namespace', () => {
 
     const result = await loadPersisted()
     expect(result.data?.schemaVersion).toBe(SCHEMA_VERSION)
-    expect(result.data?.planner.weekdayActiveMinutes).toBe(90)
+    expect(result.data?.planner.weeklyActiveMinutes).toBe(720)
     expect(result.data?.subjects[0]!.weeks[0]!.checklist[0]!.estimate).toBeDefined()
 
     expect(localStorage.getItem(MIGRATION_BACKUP_KEY)).not.toBeNull()

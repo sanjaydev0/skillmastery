@@ -1,5 +1,5 @@
 import type { AppData } from '../types/schema'
-import { DEFAULT_PLANNER, SCHEMA_VERSION, SEED_VERSION } from '../types/schema'
+import { DEFAULT_JOURNEY, DEFAULT_PLANNER, SCHEMA_VERSION, SEED_VERSION } from '../types/schema'
 import { seedBooks } from './books'
 import { flutterSubject } from './tracks/flutter'
 import { fullstackSubject } from './tracks/fullstack'
@@ -33,5 +33,8 @@ export function createSeedData(): AppData {
     },
     planner: { ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] },
     promptOverrides: {},
+    journey: { ...DEFAULT_JOURNEY, pauses: [] },
+    dayPlans: {},
+    trash: [],
   }
 }

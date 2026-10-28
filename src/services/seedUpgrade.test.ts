@@ -82,6 +82,59 @@ describe('seed content refresh', () => {
     expect(next.resources.find((resource) => resource.id === 'user-resource')?.status).toBe('reading')
   })
 
+  it('keeps the journey, day cards, trash and weekly capacity through a refresh', () => {
+    const data = createSeedData()
+    data.seedVersion = 1
+    data.journey = {
+      startedAt: 1_700_000_000_000,
+      startWeekday: 3,
+      pauses: [{ from: 1_700_100_000_000, to: null }],
+      gameLayer: false,
+      onboardedAt: 1_700_000_100_000,
+    }
+    data.dayPlans = {
+      'fl-w1': [
+        {
+          day: 1,
+          title: 'Read variables',
+          summary: 'A binding points at an object.',
+          resources: [],
+          tasks: ['Write three bindings'],
+          direction: 'Name the type before the value.',
+          designNote: 'One number owns the screen.',
+          estMinutes: 45,
+          origin: 'authored',
+        },
+      ],
+    }
+    data.trash = [
+      {
+        id: 'trash-1',
+        kind: 'week',
+        deletedAt: 1_700_200_000_000,
+        label: 'Week 9: Routes',
+        subjectId: 'flutter',
+        subjectName: 'Flutter',
+        payload: data.subjects[0]!.weeks[8]!,
+        counts: { nodes: 3, cards: 5, days: 0 },
+      },
+    ]
+    data.planner = {
+      weeklyActiveMinutes: 300,
+      weeklyPassiveMinutes: 240,
+      studyDays: [1, 2, 3, 4, 5],
+      bufferDay: 6,
+      sessionMinutes: 30,
+    }
+
+    const { data: refreshed } = refreshSeedContent(data)
+    expect(refreshed.seedVersion).toBe(SEED_VERSION)
+    expect(refreshed.journey).toEqual(data.journey)
+    expect(refreshed.dayPlans).toEqual(data.dayPlans)
+    expect(refreshed.trash).toEqual(data.trash)
+    expect(refreshed.planner).toEqual(data.planner)
+  })
+
   it('is a no-op once the seed version is current', () => {
     const data = createSeedData()
     const { data: same, changed } = refreshSeedContent(data)

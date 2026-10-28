@@ -79,12 +79,24 @@ export interface DayCapacity {
   passive: number
 }
 
-export function capacityFor(day: Weekday, planner: PlannerSettings): DayCapacity {
-  const weekend = day === 0 || day === 6
+/**
+ * The weekly total is the promise; the daily figure is arithmetic. Splitting
+ * it across study days keeps one number honest instead of four that drift.
+ */
+export function dailyCapacity(planner: PlannerSettings): DayCapacity {
+  const days = Math.max(1, planner.studyDays.length)
   return {
-    active: weekend ? planner.weekendActiveMinutes : planner.weekdayActiveMinutes,
-    passive: weekend ? planner.weekendPassiveMinutes : planner.weekdayPassiveMinutes,
+    active: Math.round(planner.weeklyActiveMinutes / days),
+    passive: Math.round(planner.weeklyPassiveMinutes / days),
   }
+}
+
+export function capacityFor(day: Weekday, planner: PlannerSettings): DayCapacity {
+  // A day the learner is not studying has no new-work capacity. The buffer day
+  // is reserved for catch-up, so it carries none either.
+  if (!planner.studyDays.includes(day)) return { active: 0, passive: 0 }
+  if (planner.bufferDay === day) return { active: 0, passive: 0 }
+  return dailyCapacity(planner)
 }
 
 export interface DaySummary {

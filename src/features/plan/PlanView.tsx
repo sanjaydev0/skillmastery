@@ -4,14 +4,14 @@ import {
   CalendarDays,
   ChevronRight,
 } from 'lucide-react'
-import type { Phase, PlannerSettings, Week } from '../../types/schema'
+import type { Phase, Week } from '../../types/schema'
 import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
 import { weekStatus } from '../../engine/gating'
 import { formatTotal, summariseSubject, summariseWeek } from '../../engine/estimates'
 import { blueprintFor } from '../../data/curriculum/blueprint'
-import { minutesLabel } from '../../lib/dates'
-import { cn, percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
+import { CapacitySliders } from '../../components/ui/CapacitySliders'
+import { cn, percent } from '../../lib/utils'
 import { Badge, Button, ProgressBar, WeekBadge } from '../../components/ui/primitives'
 
 export function PlanView() {
@@ -223,70 +223,23 @@ function WeekPlanCard({
   )
 }
 
-type CapacityKey =
-  | 'weekdayActiveMinutes'
-  | 'weekdayPassiveMinutes'
-  | 'weekendActiveMinutes'
-  | 'weekendPassiveMinutes'
-
-const CAPACITY_FIELDS: { key: CapacityKey; label: string; hint: string }[] = [
-  { key: 'weekdayActiveMinutes', label: 'Weekday active', hint: 'Mon–Fri building and debugging' },
-  { key: 'weekdayPassiveMinutes', label: 'Weekday passive', hint: 'Mon–Fri reading and notes' },
-  { key: 'weekendActiveMinutes', label: 'Weekend active', hint: 'Sat–Sun building and testing' },
-  { key: 'weekendPassiveMinutes', label: 'Weekend passive', hint: 'Sat–Sun reading and review' },
-]
-
 function CapacityEditor() {
-  const planner = useAppStore((state) => state.planner)
-  const updatePlanner = useAppStore((state) => state.updatePlanner)
-  const weekdayTotal = planner.weekdayActiveMinutes + planner.weekdayPassiveMinutes
-  const weekendTotal = planner.weekendActiveMinutes + planner.weekendPassiveMinutes
-
-  const setValue = (key: CapacityKey, raw: string) => {
-    updatePlanner({ [key]: Number(raw) } as Partial<PlannerSettings>)
-  }
-
   return (
     <section className="card mt-4 p-3.5" aria-labelledby="capacity-heading">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="eyebrow">Your real week</p>
           <h2 id="capacity-heading" className="h2 mt-0.5">
-            Daily capacity
+            Weekly capacity
           </h2>
           <p className="faint mt-0.5 text-[11px]">
-            Minutes per day, not a target. Plan overload warnings use these numbers.
+            Hours you can actually protect. Plan warnings use these numbers.
           </p>
         </div>
-        <p className="faint num text-[11.5px]">
-          Weekday {minutesLabel(weekdayTotal)}, weekend {minutesLabel(weekendTotal)}
-        </p>
       </div>
-
-      <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {CAPACITY_FIELDS.map((field) => (
-          <label key={field.key} className="block">
-            <span className="label">{field.label}</span>
-            <span className="flex items-center gap-1.5">
-              <input
-                className="input num !h-8 !px-2 !text-[12px]"
-                type="number"
-                min={0}
-                max={720}
-                step={5}
-                inputMode="numeric"
-                value={planner[field.key]}
-                onChange={(event) => setValue(field.key, event.target.value)}
-                aria-label={`${field.label} minutes per day`}
-              />
-              <span className="faint text-[11.5px]">min</span>
-            </span>
-            <span className="faint mt-1 block text-[11px] leading-snug">{field.hint}</span>
-          </label>
-        ))}
-      </div>
+      <CapacitySliders className="mt-2.5" />
       <p className="faint mt-2 border-t border-line pt-2 text-[11px]">
-        Sunday is the buffer day. Capacity is stored on this device and is not overwritten by an imported backup.
+        Capacity is stored on this device and is not overwritten by an imported backup.
       </p>
     </section>
   )
