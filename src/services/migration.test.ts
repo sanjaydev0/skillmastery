@@ -21,7 +21,7 @@ function stripEstimates(subject: Subject): Subject {
 
 function v1Payload(): MigratableAppData {
   const seed = createSeedData()
-  const { planner: _planner, ...rest } = seed
+  const { planner: _planner, promptOverrides: _prompts, ...rest } = seed
   return {
     ...rest,
     schemaVersion: 1,
@@ -29,7 +29,16 @@ function v1Payload(): MigratableAppData {
   } as MigratableAppData
 }
 
-describe('schema v1 -> v2 migration', () => {
+function v2Payload(): MigratableAppData {
+  const seed = createSeedData()
+  const { promptOverrides: _prompts, ...rest } = seed
+  return {
+    ...rest,
+    schemaVersion: 2,
+  } as MigratableAppData
+}
+
+describe('schema migration', () => {
   it('adds planner defaults without touching existing preferences', () => {
     const legacy = v1Payload()
     const migrated = migrateAppData(legacy)
@@ -75,5 +84,35 @@ describe('schema v1 -> v2 migration', () => {
     const parsed = appDataSchema.parse(payload) as AppData
     expect(parsed.schemaVersion).toBe(1)
     expect(migrateAppData(parsed).schemaVersion).toBe(SCHEMA_VERSION)
+  })
+
+  it('adds empty prompt overrides to a v2 payload', () => {
+    const migrated = migrateAppData(v2Payload())
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(migrated.promptOverrides).toEqual({})
+    expect(migrated.planner).toEqual(DEFAULT_PLANNER)
+  })
+
+  it('keeps edited prompt skills through a current-schema pass', () => {
+    const current = createSeedData() as AppData
+    current.promptOverrides = { 'socratic-tutor': 'My edited Socratic skill' }
+    const migrated = migrateAppData(current)
+    expect(migrated.promptOverrides['socratic-tutor']).toBe('My edited Socratic skill')
+  })
+
+  it('drops a blank prompt override instead of rejecting the backup', () => {
+    const payload = v2Payload()
+    payload.schemaVersion = SCHEMA_VERSION
+    payload.promptOverrides = { 'socratic-tutor': '   ', 'anki-generator': 'Keep this skill' }
+    const parsed = appDataSchema.parse(payload) as AppData
+    const migrated = migrateAppData(parsed)
+    expect(migrated.promptOverrides).toEqual({ 'anki-generator': 'Keep this skill' })
+  })
+
+  it('imports a v2 envelope with prompt overrides filled in', () => {
+    const raw = JSON.stringify({ app: 'skillmastery', exportedAt: '2026-02-01T00:00:00.000Z', data: v2Payload() })
+    const parsed = parseBackupJson(raw)
+    expect(parsed.data.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(parsed.data.promptOverrides).toEqual({})
   })
 })

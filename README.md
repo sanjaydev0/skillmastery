@@ -12,10 +12,10 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 - **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and editable weekday/weekend capacity for active and passive work.
 - **Week pages** — seven day cards derived from each task's day, a plain-language "you build" brief, the git habit, outcomes, and the checkpoint.
 - **Map** — a prerequisite knowledge graph with Primitive → Concept → Failure Mode points, freshness and repair drills.
-- **Practice** — the SRS queue, Anki-compatible deck, and the prompt hub.
+- **Practice** — the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
 - **Library** — docs, the shared 30-minute canon, reading progress and saved links.
 - **Progress** — completed estimate ranges, phase rollups, checkpoints and concept mastery.
-- **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups and undo.
+- **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups, undo, exact AnkiDroid TSV import steps and the optional AI helper.
 - **Command palette** — `Cmd/Ctrl+K` searches weeks, nodes, cards, resources and books across every track.
 - **Installable PWA** — offline app shell, cached routes, maskable icons and explicit Android install steps.
 
@@ -32,13 +32,13 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 ## Project docs
 
 - [`DESIGN.md`](DESIGN.md) — the visual and copy contract: board-and-paper palette, typography, components, data-display rules and review checklist.
-- [`AGENTS.md`](AGENTS.md) — engineering contract for contributors and AI agents: architecture, data invariants, migrations, testing, deployment and Phase 5 AI guardrails.
+- [`AGENTS.md`](AGENTS.md) — engineering contract for contributors and AI agents: architecture, data invariants, migrations, testing, deployment and the AI proxy contract.
 
 ## Stack
 
 React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS 4 · Zustand 5 · IndexedDB (`idb-keyval`) with a localStorage mirror · Zod backup validation · `vite-plugin-pwa` · Vitest + Testing Library.
 
-The seeded content is plain TypeScript under `src/data/`. There is no backend, account, analytics or runtime data request.
+The seeded content is plain TypeScript under `src/data/`. The only server-side code is a stateless `/api/chat` proxy for the optional AI helper. There is no account, analytics, telemetry or runtime curriculum request, and the AI key stays in the browser.
 
 ## Local development
 
@@ -64,10 +64,12 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 
 - IndexedDB is the primary store; localStorage is a second copy and a last-chance mirror on `pagehide`.
 - On boot the newest valid copy wins. Invalid data is quarantined and a fresh seed opens with an explicit warning.
-- JSON backups are schema-validated before import and can replace all data or merge by id.
-- A seed-version upgrade refreshes authored curriculum text and day plans without wiping checks, checkpoint history, notes or user-added weeks.
+- JSON backups are schema-validated before import and can replace all data or merge by id. They include prompt-skill edits; they never include the Velona key.
+- A seed-version upgrade refreshes authored curriculum text, day plans and new resources without wiping checks, checkpoint history, notes, reading status or user-added weeks and links.
 - Upgrading from the pre-rename build? The old namespace is detected and migrated on first boot.
 - Obsidian export writes Markdown frontmatter, phases, weeks, knowledge nodes, recall cards, canon progress and resources.
+
+The optional AI key is stored separately under `skillmastery:ai-key` in this browser. It is sent only to the same-origin `/api/chat` proxy when you press **Run prompt**, and **Forget key** removes it.
 
 Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy.
 
@@ -79,20 +81,22 @@ Export a JSON backup before clearing browser storage or changing devices. There 
 
 ## Hosting
 
-Vercel builds `main` on every push (`npm run build`, output `dist`). `vercel.json` also states the build settings, the SPA rewrite and no-cache headers for `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html`; fingerprinted assets are immutable.
+Vercel builds `main` on every push (`npm run build`, output `dist`). `vercel.json` also states the build settings, the SPA rewrite (excluding `/api/`), and no-cache headers for `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html`; fingerprinted assets are immutable.
 
-`npm test`, `npm run lint` and `npm run build` must pass before a push. There are no environment variables.
+`npm test`, `npm run lint` and `npm run build` must pass before a push. There are no environment variables: the browser sends its device-local Velona key to `/api/chat` per request.
 
 ## Project map
 
 ```text
+api/
+  chat.ts           stateless Velona proxy for the optional prompt runner
 src/
   components/       layout, sheets, primitives
   data/             seed tracks, 24-week blueprint, books, prompts
   engine/           estimates, gating, FIRe, remediation, mastery, SRS, search
   features/         today, plan, nodes, recall, vault, progress, help
   lib/              hash router, dates, export utilities
-  services/         storage, validation, seed upgrades, history, save status
+  services/         storage, validation, seed upgrades, history, save status, AI client
   store/            Zustand state and persisted actions
   test/             Vitest setup
 ```

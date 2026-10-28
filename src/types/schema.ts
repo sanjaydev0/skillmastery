@@ -4,8 +4,11 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 2
-export const SEED_VERSION = 2
+export const SCHEMA_VERSION = 3
+export const SEED_VERSION = 3
+
+/** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
+export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
 
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
@@ -252,6 +255,8 @@ export interface AppData {
   overrides: Overrides
   prefs: AppPrefs
   planner: PlannerSettings
+  /** User-edited prompt skills, keyed by the authored prompt id. */
+  promptOverrides: Record<string, string>
 }
 
 export interface RhythmItem {

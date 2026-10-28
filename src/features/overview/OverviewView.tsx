@@ -224,7 +224,7 @@ export function OverviewView() {
                     <div className="mt-2.5 grid grid-cols-4 gap-1">
                       {(['concept', 'implementation', 'craft', 'debugging'] as const).map((key) => (
                         <div key={key} className="rounded-md bg-s2 px-1.5 py-1 text-center">
-                          <p className="faint text-[8.5px] tracking-wide">{key.slice(0, 4)}</p>
+                          <p className="faint text-[11px] tracking-wide">{key.slice(0, 4)}</p>
                           <p className="num text-[12px] font-semibold">{week.gate.scores?.[key] ?? '—'}</p>
                         </div>
                       ))}

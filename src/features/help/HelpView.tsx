@@ -1,17 +1,20 @@
 import type { ReactNode } from 'react'
 import {
+  Bot,
   CalendarDays,
   Database,
   Gauge,
   GitBranch,
   HelpCircle,
   Keyboard,
+  Layers,
   Lock,
   RotateCcw,
   ShieldCheck,
   Smartphone,
   Sparkles,
   Timer,
+  Wand2,
 } from 'lucide-react'
 import { useUiStore } from '../../store/uiStore'
 import { navigate } from '../../lib/router'
@@ -138,6 +141,108 @@ export function HelpView() {
           </p>
         </Faq>
 
+        <Faq id="anki" title="How do I get cards into AnkiDroid?" icon={<Layers size={15} />}>
+          <p>
+            SkillMastery exports a real Anki file, not a screenshot of one. The TSV carries the separator, note type
+            and deck name in its header, so the import needs almost no setup.
+          </p>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-4">
+            <li>
+              Open <strong>Practice → Deck</strong>. Clear the search and set both filters to <em>All weeks</em> and{' '}
+              <em>All sources</em> — export uses the current filter.
+            </li>
+            <li>
+              Press <strong>TSV</strong>. A file named <Code>skillmastery-&lt;short-name&gt;-YYYYMMDD.tsv</Code>{' '}
+              downloads. Its header sets <Code>#separator:tab</Code>, <Code>#notetype:Basic</Code> and{' '}
+              <Code>#deck:SkillMastery::&lt;short name&gt;</Code>.
+            </li>
+            <li>
+              Move the file to the phone: <Code>adb push ~/Downloads/&lt;file&gt;.tsv /sdcard/Download/</Code>, or
+              share it from the desktop and save it in Download.
+            </li>
+            <li>
+              In AnkiDroid open the deck list, tap the <strong>⋮</strong> menu and choose <strong>Import</strong>{' '}
+              (older versions say <strong>Import file</strong>). Pick the TSV from Download.
+            </li>
+            <li>
+              On the import screen keep <strong>Tab</strong> as the separator and check the preview. Map column 1 to{' '}
+              <strong>Front</strong>, column 2 to <strong>Back</strong> and column 3 to <strong>Tags</strong>. Map{' '}
+              <strong>Source</strong> and <strong>Context</strong> to <em>Ignore</em> unless your note type has those
+              fields.
+            </li>
+            <li>
+              Confirm the import. Cards land in <Code>SkillMastery::&lt;short name&gt;</Code>; create that deck if
+              AnkiDroid asks.
+            </li>
+          </ol>
+          <p className="mt-2">
+            The CSV button produces the same rows with a comma separator if a tool prefers CSV. AnkiDroid's labels
+            move between versions — the preview is the source of truth.
+          </p>
+          <p className="mt-2">
+            <strong>JSON is different.</strong> It never goes into AnkiDroid. Use{' '}
+            <strong>Practice → Deck → Import JSON</strong> to bring generated cards back into SkillMastery; paste an
+            array of objects with <Code>front</Code> and <Code>back</Code>.
+          </p>
+        </Faq>
+
+        <Faq id="ai" title="How does the AI helper work?" icon={<Bot size={15} />}>
+          <p>
+            The AI helper is optional and off until you add a Velona key. It runs the prompt you are looking at
+            against a fixed model, {`deepseek/deepseek-v4.1-flash-1017`}, through this app's same-origin{' '}
+            <Code>/api/chat</Code> function.
+          </p>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-4">
+            <li>
+              Create a key at <a className="link" href="https://velona.in" target="_blank" rel="noreferrer">velona.in</a>.
+              Usage is billed by Velona, not by this app.
+            </li>
+            <li>
+              Open <strong>Settings → AI helper</strong>, paste the key and press <strong>Save key</strong>. The badge
+              changes to <em>Key saved</em>.
+            </li>
+            <li>
+              Open <strong>Practice → Prompts</strong>, pick a skill, choose the week to inject and press{' '}
+              <strong>Run prompt</strong>.
+            </li>
+            <li>
+              Read the answer, then copy what is worth keeping. Answers are not saved; only the prompt skill text is.
+            </li>
+          </ol>
+          <p className="mt-2">
+            Limits: a rendered prompt must stay under 24,000 characters and an answer under 1,200 tokens (600 by
+            default, chosen in the run bar). There is one request in flight at a time, a 55-second upstream timeout,
+            and no automatic retry. <strong>Cancel</strong> aborts the request you started.
+          </p>
+          <p className="mt-2">
+            The key lives in this browser's localStorage. Pressing <strong>Run</strong> sends it to this app's own{' '}
+            <Code>/api/chat</Code> proxy, which forwards it to Velona for that one request. It is never written into
+            AppData, JSON backups, Obsidian exports or logs. Use <strong>Forget key</strong> to remove it. A rejected
+            key shows an error; check the key in Settings.
+          </p>
+          <p className="mt-2">
+            AI answers can be confidently wrong. Treat them as a tutor to interrogate, not an authority — check the
+            claim against the docs before it becomes a card.
+          </p>
+        </Faq>
+
+        <Faq id="prompts" title="Can I edit the prompt skills?" icon={<Wand2 size={15} />}>
+          <p>
+            Yes. Open <strong>Practice → Prompts</strong>, pick a skill and press <strong>Edit skill</strong>. The
+            editor changes the instructions only; week context is still injected at copy or run time.
+          </p>
+          <p className="mt-2">
+            Keep these variables where you want live data: <Code>{'{{track}}'}</Code>, <Code>{'{{week}}'}</Code>,{' '}
+            <Code>{'{{weekNumber}}'}</Code>, <Code>{'{{anchor}}'}</Code>, <Code>{'{{kps}}'}</Code> and{' '}
+            <Code>{'{{mistakes}}'}</Code>. Removing one simply leaves that text out.
+          </p>
+          <p className="mt-2">
+            Edits are stored in AppData, so they are included in JSON backups, survive a reload and are undoable with{' '}
+            <Kbd>Ctrl</Kbd> + <Kbd>Z</Kbd>. When a backup is merged, this device's edited version wins;{' '}
+            <strong>Reset to original</strong> restores the authored template.
+          </p>
+        </Faq>
+
         <Faq id="data" title="Where is my data, and how do I back it up?" icon={<Database size={15} />}>
           <p>
             Everything is stored in your browser's IndexedDB. There is no account, no analytics and no server copy.
@@ -147,6 +252,10 @@ export function HelpView() {
             Open <strong>Settings → Data</strong> and export a JSON backup regularly. To move machines, import that
             file on the new device. An older schema is migrated automatically, with a raw pre-migration copy kept
             locally.
+          </p>
+          <p className="mt-2">
+            The backup includes your prompt-skill edits, resources, cards and progress. It explicitly excludes the
+            Velona key — that belongs to the device, not the data file. Export first if a browser reset is coming.
           </p>
         </Faq>
 
@@ -203,10 +312,20 @@ export function HelpView() {
 
         <Faq id="privacy" title="What leaves this device?" icon={<ShieldCheck size={15} />}>
           <p>
-            Curriculum and progress stay local. The optional AI features are designed to send only the prompt you
-            approve, through a server-side proxy — never your API key and never your full backup.
+            Curriculum, progress, notes, cards and prompt edits stay in this browser. There is no account, analytics,
+            cloud sync or time tracking, and this app makes no telemetry requests.
           </p>
-          <p className="mt-2">The current build makes no analytics or telemetry requests.</p>
+          <p className="mt-2">
+            There is exactly one outbound action, and it is optional: pressing <strong>Run prompt</strong> sends that
+            rendered prompt to Velona through this app's <Code>/api/chat</Code> function. The function forwards the
+            request with your key and returns the answer; it does not write the prompt or key to app storage and does
+            not log them. Vercel processes the request in transit like any HTTPS host.
+          </p>
+          <p className="mt-2">
+            Your Velona key is held in this browser only. It is not in AppData, JSON backups, Obsidian exports, the
+            service worker cache or this page's markup. Copying a prompt and importing a backup never touch the
+            network.
+          </p>
         </Faq>
       </div>
 

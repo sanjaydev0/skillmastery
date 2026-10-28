@@ -896,8 +896,10 @@ const resources: Resource[] = [
   seedResource('fl-doc-3b', 'Concurrency & async', 'https://dart.dev/language/concurrency', 'docs', W3, undefined, ['async', 'event-loop']),
   seedResource('fl-doc-4a', 'Material 3', 'https://m3.material.io/', 'docs', W4, 'Foundations, colour roles, type scale, elevation.', ['design', 'm3']),
   seedResource('fl-doc-4b', 'Apple Human Interface Guidelines', 'https://developer.apple.com/design/human-interface-guidelines/', 'docs', W4, 'The other half of adaptive craft.', ['design', 'ios']),
+  seedResource('fl-doc-4c', 'Adaptive & responsive design', 'https://docs.flutter.dev/ui/adaptive-responsive', 'docs', W4, 'Breakpoints, adaptive layouts, and the difference between the two.', ['design', 'responsive']),
   seedResource('fl-doc-5a', 'Flutter layout constraints', 'https://docs.flutter.dev/ui/layout/constraints', 'docs', W5, 'The single most important Flutter page.', ['flutter', 'layout']),
   seedResource('fl-doc-5b', 'Inside Flutter', 'https://docs.flutter.dev/resources/inside-flutter', 'docs', W5, 'Why the three trees exist.', ['flutter', 'engine']),
+  seedResource('fl-doc-5c', 'Flutter architectural overview', 'https://docs.flutter.dev/resources/architectural-overview', 'docs', W5, 'How widgets, elements and render objects fit together.', ['flutter', 'architecture']),
   seedResource('fl-doc-6a', 'Material design in Flutter', 'https://docs.flutter.dev/ui/design/material', 'docs', W6, undefined, ['m3', 'theming']),
   seedResource('fl-doc-6b', 'Flutter accessibility', 'https://docs.flutter.dev/ui/accessibility-and-internationalization/accessibility', 'docs', W6, undefined, ['a11y']),
 ]

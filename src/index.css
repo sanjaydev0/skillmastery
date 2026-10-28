@@ -15,6 +15,8 @@
   --color-t2: var(--text-2);
   --color-t3: var(--text-3);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-contrast: var(--accent-contrast);
   --color-accent-soft: var(--accent-soft);
   --color-good: var(--good);
   --color-good-soft: var(--good-soft);
@@ -67,6 +69,12 @@
 
   --shadow-card: 0 1px 0 rgb(23 27 21 / 0.04), 0 10px 24px -22px rgb(23 27 21 / 0.5);
   --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 26%, transparent);
+
+  /* Swatches preview the applied accent; the accent blocks below own the real values. */
+  --swatch-sky: #2c5675;
+  --swatch-emerald: #0f6b46;
+  --swatch-violet: #5b3fa8;
+  --swatch-amber: #8a5a12;
 }
 
 .dark {
@@ -96,6 +104,24 @@
   --info-soft: rgb(150 185 201 / 0.13);
 
   --shadow-card: none;
+
+  --swatch-sky: #96b9c9;
+  --swatch-emerald: #8fd0a8;
+  --swatch-violet: #c0a9f0;
+  --swatch-amber: #e9c06a;
+}
+
+[data-accent='sky'] {
+  --accent: #2c5675;
+  --accent-strong: #1f425c;
+  --accent-soft: #dbe7f0;
+  --accent-contrast: #fffdf6;
+}
+.dark[data-accent='sky'] {
+  --accent: #96b9c9;
+  --accent-strong: #b8d4df;
+  --accent-soft: rgb(150 185 201 / 0.12);
+  --accent-contrast: #0b1418;
 }
 
 [data-accent='emerald'] {
@@ -648,6 +674,11 @@ button:disabled {
   min-height: 84px;
   resize: vertical;
   line-height: 1.5;
+}
+
+.prompt-editor {
+  min-height: 220px;
+  resize: none;
 }
 
 .select {

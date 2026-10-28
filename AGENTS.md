@@ -23,9 +23,9 @@ Two 24-week tracks are bundled (Flutter and Full-Stack Web). The Flutter track i
 
 **Current state (October 2026):**
 
-- Phases 1–4 are shipped: local-first foundation, schema v2 + estimates, the seven-view shell, and the reviewed Weeks 1–2 curriculum.
+- Phases 1–5 are shipped: local-first foundation, schema v3 + estimates, the seven-view shell, the reviewed Weeks 1–2 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
 - The board-and-paper design pass is shipped (`53e8cab`).
-- **Phase 5 is next and not implemented:** Help expansion, resource-library completion, the AI proxy + prompt runner, and remaining legibility follow-ups.
+- Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy, exact AnkiDroid TSV guidance and the last sub-11px fixes.
 - The native Android/AnkiDroid companion is later. There is no Android project in this repo yet.
 
 ---
@@ -51,7 +51,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 91 tests across 16 files
+npm test           # Vitest, currently 98 tests across 16 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -64,14 +64,14 @@ Before every push:
 npx tsc -b && npm test && npm run lint && npm run build
 ```
 
-`npm run lint` currently reports 15 pre-existing warnings and zero errors. Do not add new warnings. Do not silence a warning with a blanket disable.
+`npm run lint` currently reports 14 pre-existing warnings and zero errors. Do not add new warnings. Do not silence a warning with a blanket disable.
 
 ---
 
 ## 4. Architecture map
 
 ```
-api/                     Vercel serverless functions (none yet; Phase 5 adds /api/chat)
+api/chat.ts              Stateless Velona proxy (not in the app tsconfig)
 src/
   App.tsx                Route switch, hydration gate, global sheets
   main.tsx               Boot, autosave start, PWA registration
@@ -86,9 +86,9 @@ src/
     books.ts, rhythm.ts  Shared canon and daily rhythm
   engine/                Pure logic: estimates, gating, SRS, FIRe, mastery, remediation
   features/              One folder per view: today, plan, map, practice, library, progress, help
-  hooks/                 History-depth hooks
+  hooks/                 History-depth and AI-key hooks
   lib/                   Router, dates, utilities (Anki export, downloads, cn/percent)
-  services/              Storage, migrations, seed upgrade, history, exports, validation, install
+  services/              Storage, migrations, seed upgrade, history, exports, validation, install, AI client
   store/                 Zustand AppStore and uiStore
   types/schema.ts        The single source of truth for persisted entities
   index.css              Design tokens and component classes
@@ -104,13 +104,14 @@ docs/source/             Long-form course source (not shipped)
 
 ## 5. Data model and invariants
 
-Schema: `SCHEMA_VERSION = 2`, `SEED_VERSION = 2` in `src/types/schema.ts`.
+Schema: `SCHEMA_VERSION = 3`, `SEED_VERSION = 3` in `src/types/schema.ts`.
 
 `AppData` contains:
 
 - `subjects[]` — each with phases, weeks, nodes, cards and resources.
 - `books[]` — the shared 30-minute canon.
 - `dailyLog`, `overrides`, `prefs`, `planner`.
+- `promptOverrides` — edited prompt skills keyed by authored prompt id. Included in backups.
 - `activeSubjectId`, `schemaVersion`, `seedVersion`, timestamps.
 
 Rules:
@@ -123,7 +124,7 @@ Rules:
 6. **Mastery** is earned through the gate or a node review, not by checking a box. `markNodeMastered` must keep validating the gate.
 7. **Cards** use the fixed ladder `1 / 3 / 6 / 10 / 7 days` (`SRS_INTERVALS`). `scheduleStep` indexes it; `dueAt` is epoch ms. Review grades map through `gradeCard`.
 8. **Resources** are `docs | curriculum | article`; books are separate. Do not merge them into one entity.
-9. **Prompt templates** are static today. If prompt overrides become user data, put them in `AppData` or a separately documented local store; never put the API key there.
+9. **Prompt skills** are authored in `src/data/prompts.ts`; learner edits live in `AppData.promptOverrides` and win a backup merge. The Velona key is not AppData: it lives only under `skillmastery:ai-key` in localStorage and never enters a backup or export.
 10. **Day plans are read-only derivations.** `summariseWeek`/`summariseSubject` are the only places that compute day rollups.
 
 ### Persistence
@@ -132,15 +133,16 @@ Rules:
 - localStorage mirror: `skillmastery:data`, plus `skillmastery:theme` for the pre-paint boot script.
 - Boot: `loadPersisted()` chooses the newest valid copy; invalid data is quarantined and a fresh seed opens with an explicit warning.
 - Autosave debounces 500ms, flushes on `pagehide` and visibility change, and mirrors immediately.
-- Export is schema-validated on import. Replace and merge are different operations; merge keeps the higher book chapter and unions daily log items.
-- Undo history is **session-only**, 50 entries, and excludes preferences and navigation. Persisted reset checkpoints are a future feature; do not claim they exist.
-- Seed upgrades are non-destructive: `refreshSeedContent()` preserves checks, gate attempts, notes, overrides and user-added weeks/items. Authored seed ids ending in `-cN` are replaced by matching day + active/passive task.
+- Export is schema-validated on import. Replace and merge are different operations; merge keeps the higher book chapter, unions daily log items, and lets this device's prompt-skill edits win while incoming files only fill gaps.
+- Undo history is **session-only**, 50 entries, and excludes preferences and navigation. It includes prompt-skill edits. Persisted reset checkpoints are a future feature; do not claim they exist.
+- Seed upgrades are non-destructive: `refreshSeedContent()` refreshes authored weeks, preserves checks, gate attempts, notes, overrides and user-added weeks/items, and appends new seed resources without touching reading status or user-added links. Authored seed ids ending in `-cN` are replaced by matching day + active/passive task. Removed seed resources are never deleted.
 
 ### Migrations
 
 - Schema change → bump `SCHEMA_VERSION`, add a `migrateAppData` step, keep a raw pre-migration backup, add tests, and verify an old export still imports.
-- Authored content change → bump `SEED_VERSION` and update `refreshSeedContent` + `seedUpgrade.test.ts`. Do not wipe checks to refresh copy.
-- Never reuse an old seed id for a different task.
+- Schema v2 predates `promptOverrides`; migration adds `{}` without touching the rest of the payload. A v1 backup still gets estimates and planner defaults in the same pass.
+- Authored content change → bump `SEED_VERSION` and update `refreshSeedContent` + `seedUpgrade.test.ts`. Do not wipe checks to refresh copy. New resources are additive; do not replace the resource array.
+- Never reuse an old seed id for a different task or resource.
 
 ---
 
@@ -177,7 +179,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **91 tests / 16 files**.
+- Baseline: **98 tests / 16 files**.
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
@@ -198,22 +200,23 @@ When adding a view, update the router, the shell navigation, the command palette
 - After a push, verify:
   1. the deployment state is `READY`;
   2. the production alias points at that deployment;
-  3. the live HTML references the same `assets/index-*.js` hash as `dist/index.html`.
+  3. the live HTML references the same `assets/index-*.js` hash as `dist/index.html`;
+  4. `POST /api/chat` with no key returns `401`, not the SPA HTML.
 - `vercel.json` sets the SPA rewrite and no-cache headers for the shell, service worker and manifest. Fingerprinted assets are immutable.
 - The build uses the relative base `./`; do not change it to `/` without testing a subpath deploy.
-- There are no environment variables today. When the AI proxy lands, the key still must not become a server env var: the browser sends the device-local key to `/api/chat` per request, and the function forwards it without logging or storing it.
+- There are no environment variables. The key must not become a server env var: the browser sends the device-local key to `/api/chat` per request, and the function forwards it without logging or storing it.
 - Do not add GitHub Pages back. Do not add a second hosting provider.
 
-### Adding the AI proxy (Phase 5 guardrails)
+### The AI proxy contract
 
-- Put the function at `api/chat.ts` (outside `src`; the app tsconfig does not include it). Exclude `/api/` from the SPA rewrite in `vercel.json` so the function is reachable.
-- Fix the upstream to `https://velona.in/v1/chat/completions` and the model to `deepseek/deepseek-v4.1-flash-1017`. Do not accept a model or base URL from the browser.
-- Validate the body: messages array, total prompt ≤ 24k characters, `max_tokens` ≤ 1200, temperature within 0–1, request timeout ~60s.
-- Read the key from an `Authorization` header, never a query string. Do not log it, echo it in an error, or include it in a response.
-- Return normalized errors: `401` invalid key, `429` rate limited, `5xx` upstream unavailable. The UI shows a plain sentence, not raw upstream JSON.
-- The client stores the key under a dedicated local key (for example `skillmastery:ai-key`), not in `AppData`. It is never exported, never merged, and has a visible “Forget key” action.
-- Prompt skills are editable; show the exact rendered prompt, character count and token cap before the first run. One in-flight request per tab; no automatic retries that can multiply spend.
-- No streaming in the first version. Add it only if the abort path and token cap remain enforced.
+- `api/chat.ts` is a stateless Vercel Node function. Exclude `/api/` from the SPA rewrite in `vercel.json` or the browser receives `index.html` instead of JSON. Verify a keyless `POST /api/chat` returns `401` after deployment.
+- Fixed upstream `https://velona.in/v1/chat/completions`; fixed model `deepseek/deepseek-v4.1-flash-1017`. The browser cannot choose either. Changing either means changing `api/chat.ts`, `src/services/ai.ts` and the Help copy together.
+- Validate the body: 1–20 non-empty messages, total prompt ≤ 24,000 characters, `max_tokens` ≤ 1,200, temperature within 0–1. Upstream timeout is 55s under `maxDuration = 60`.
+- Read the key from `Authorization: Bearer`, never a query string. Do not log it, echo it in an error, or include it in a response. Return normalized errors: `401` invalid key, `429` rate limited, `502` upstream unavailable, `504` timeout.
+- The client stores the key under `skillmastery:ai-key` only. It is never exported, merged or backed up, and Settings has a visible **Forget key** action.
+- Prompt skills are editable in `AppData.promptOverrides` (template cap 20,000 characters). The PromptHub shows the exact rendered prompt, character count and output cap; Run is disabled past 24,000 rendered characters.
+- One in-flight request per tab, an explicit Cancel via `AbortController`, and no automatic retries that can multiply spend. Answers are not stored.
+- No streaming. Add it only if the abort path and the 1,200-token cap remain enforced.
 
 ---
 
@@ -234,6 +237,9 @@ When adding a view, update the router, the shell navigation, the command palette
 13. **Do not edit `dist/`.** It is generated. Rebuild instead.
 14. **Local preview port.** `npm run preview` uses `4173`; the dev server uses `5173`. Do not confuse them when testing the service worker.
 15. **Two different “weeks”.** The learner's course week and the course's Week 17 release-signing lesson are not the same thing. Do not hard-code calendar dates.
+16. **The AI key is not data.** It lives in localStorage under `skillmastery:ai-key`. Never put it in `AppData`, a seed, a test fixture, a screenshot or an export; never log it in the proxy.
+17. **`/api/chat` must stay outside the SPA rewrite.** A rewrite of `/(.*)` makes the function unreachable. Keep `/((?!api/).*)` and test the 401 after every deployment.
+18. **AnkiDroid takes TSV/CSV, not JSON.** JSON is only for re-importing generated cards into SkillMastery. Help and empty states must keep that distinction.
 
 ---
 
@@ -246,7 +252,7 @@ When adding a view, update the router, the shell navigation, the command palette
 | 3 | Seven-view IA, command palette, mobile shell | Shipped |
 | 4 | Authored Weeks 1–2, 24-week blueprint, Vercel-only hosting | Shipped |
 | — | Board-and-paper design pass | Shipped (`53e8cab`) |
-| 5 | Help expansion, resource library, AI proxy + prompt runner, legibility | Next |
+| 5 | Help expansion, resource library, AI proxy + prompt runner, legibility | Shipped |
 | 6 | Android/AnkiDroid companion and exact device setup | Later |
 | — | Release signing and store delivery | Course content, Week 17; not app infrastructure |
 

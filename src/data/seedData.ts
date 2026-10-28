@@ -32,5 +32,6 @@ export function createSeedData(): AppData {
       sidebarCollapsed: false,
     },
     planner: { ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] },
+    promptOverrides: {},
   }
 }

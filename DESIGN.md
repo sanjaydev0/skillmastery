@@ -2,7 +2,7 @@
 
 This is the visual and interaction contract for the SkillMastery web app. Read it before adding a screen, a component, or a new colour. The executable source of truth is `src/index.css`; this document explains the intent and the rules behind those tokens.
 
-**Last reviewed:** October 2026 (board-and-paper pass, commit `53e8cab`).
+**Last reviewed:** October 2026 (Phase 5: AI helper, editable prompt skills, AnkiDroid guidance).
 
 ---
 
@@ -138,7 +138,9 @@ Each has a matching `-soft` fill. On dark, soft fills are 12–13% alpha of the 
 
 ### Accent variants
 
-The learner can choose `emerald`, `violet` or `amber` in Settings. The default is the highlighter yellow. Variants exist in both themes and are declared next to the core tokens. A variant changes the highlighter only; semantic colours stay fixed.
+The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a track. The default highlighter is the mustard yellow. Variants exist in both themes and are declared next to the core tokens. A variant changes the highlighter only; semantic colours stay fixed.
+
+`--swatch-sky`, `--swatch-emerald`, `--swatch-violet` and `--swatch-amber` preview each option in the create-track sheet. They are the only colour values a component may reference for a subject accent; never hard-code a variant hex in a component.
 
 ### Rules
 
@@ -338,8 +340,11 @@ These are product rules as much as visual ones.
 - “Answer from memory.” not “Study session”.
 - The SRS ladder is a ruled scale (`1d 3d 6d 10d ∞`), not five fake buttons.
 - Queue stats use `.mini-ledger`.
-- Prompt presets are selected from the library; the rendered prompt and injected week context are visible before it is copied. Editable prompt skills arrive with the AI runner.
-- Deck export is TSV/CSV for AnkiDroid. JSON is for importing generated cards back into SkillMastery.
+- Prompt skills are selected from the library. **Edit skill** opens a sheet with the full template, the available `{{variables}}` and a character count; the rendered prompt and injected week context are always visible before it is copied or run.
+- Without a key, the run area is one info panel with **Add key**, never a dead **Run** button. With a key, the model, answer-size select, **Run prompt** and **Cancel** share one row; **Run prompt** is the only accent-filled action, so **Copy prompt** becomes outline.
+- One request at a time, no automatic retries, no streaming. Show the prompt cap beside the rendered prompt and disable Run when it is exceeded.
+- An AI answer is a plain transcript below the prompt, labelled **Not saved**, with **Copy answer** and a “check the docs” line. Do not mimic a chat thread or persist an answer.
+- Deck export is TSV/CSV for AnkiDroid. JSON is for importing generated cards back into SkillMastery, never for AnkiDroid.
 
 ### Library
 
@@ -359,7 +364,8 @@ These are product rules as much as visual ones.
 - Short answers, no lectures. One `.card` per question, two columns on desktop.
 - Every answer must name the actual screen path (`Settings → Data`) and the safe action.
 - The setup answer must stay truthful to Zed + Flutter CLI + physical phone + 8 GB RAM.
-- Add an AI answer only when the AI feature ships; describe exactly what leaves the device and what does not.
+- The AI answer names the model, the prompt and output caps, the one-in-flight rule, exactly what leaves the device, and how to forget the key. Never imply the app stores answers or spends silently.
+- The AnkiDroid answer gives exact TSV steps: clear filters, export, move the file, import, map Front/Back/Tags, ignore Source/Context. Keep JSON re-import as a separate answer.
 
 ---
 
@@ -402,7 +408,7 @@ Before calling a UI change done:
 - The boot screen, browser chrome and PWA splash use duplicated colours: inline styles in `index.html`, the theme-colour update in `AppShell`, and `theme_color` / `background_color` in `vite.config.ts`. They are aligned with the board palette now, but must be changed together with the tokens.
 - The Help FAQ is still a two-column card grid. It is acceptable for disclosure rows, but a ruled index is the preferred direction if it grows.
 - Map and Library node cards keep a small number of rounded item surfaces. Do not add more without a reason.
-- No AI UI exists yet. When it lands, the design must show: the exact prompt, the model, the token cap, and a “this leaves your device” sentence before the first run.
+- The AI runner has no streaming and no conversation history. Adding either means re-verifying the abort path and the 1,200-token cap; do not fake a chat UI in the meantime.
 
 ---
 

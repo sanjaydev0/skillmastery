@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { AppData, PlannerSettings, Weekday } from '../types/schema'
-import { DEFAULT_PLANNER, SCHEMA_VERSION } from '../types/schema'
+import { DEFAULT_PLANNER, PROMPT_TEMPLATE_MAX_CHARS, SCHEMA_VERSION } from '../types/schema'
 import { estimateForMinutes } from '../engine/estimates'
 
 const knowledgePointSchema = z.object({
@@ -201,6 +201,7 @@ export const appDataSchema = z.object({
   overrides: overridesSchema.default({ weeks: {}, nodes: {} }),
   prefs: prefsSchema.default({ theme: 'dark', mode: 'active', sidebarCollapsed: false }),
   planner: plannerSchema.default(() => ({ ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] })),
+  promptOverrides: z.record(z.string(), z.string().max(PROMPT_TEMPLATE_MAX_CHARS)).default({}),
 })
 
 export interface ParsedBackup {
@@ -216,8 +217,14 @@ export function parseBackupJson(raw: string): ParsedBackup {
   return { data: migrateAppData(parsed as AppData), exportedAt: envelope?.exportedAt }
 }
 
-/** Schema v1 predates `planner`; migrating accepts payloads that omit it. */
-export type MigratableAppData = Omit<AppData, 'planner'> & { planner?: PlannerSettings }
+/**
+ * Schema v1 predates `planner`; v2 predates `promptOverrides`. Migrating
+ * accepts payloads that omit either field.
+ */
+export type MigratableAppData = Omit<AppData, 'planner' | 'promptOverrides'> & {
+  planner?: PlannerSettings
+  promptOverrides?: Record<string, string>
+}
 
 /**
  * Future schema upgrades land here. Each step must be additive and defensive:
@@ -227,13 +234,21 @@ export function migrateAppData(input: MigratableAppData): AppData {
   const planner: PlannerSettings = input.planner
     ? { ...input.planner, studyDays: [...input.planner.studyDays] }
     : { ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] }
+  // A blank or oversized override is not worth rejecting a whole backup over;
+  // drop the blank one so it falls back to the authored template.
+  const promptOverrides = Object.fromEntries(
+    Object.entries(input.promptOverrides ?? {})
+      .filter(([, value]) => value.trim().length > 0)
+      .map(([id, value]) => [id, value.slice(0, PROMPT_TEMPLATE_MAX_CHARS)]),
+  )
 
-  if (input.schemaVersion >= SCHEMA_VERSION) return { ...input, planner }
+  if (input.schemaVersion >= SCHEMA_VERSION) return { ...input, planner, promptOverrides }
 
   return {
     ...input,
     schemaVersion: SCHEMA_VERSION,
     planner,
+    promptOverrides,
     subjects: input.subjects.map((subject) => ({
       ...subject,
       weeks: subject.weeks.map((week) => ({

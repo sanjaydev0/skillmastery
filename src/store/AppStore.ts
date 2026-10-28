@@ -17,6 +17,7 @@ import type {
   Week,
   Weekday,
 } from '../types/schema'
+import { PROMPT_TEMPLATE_MAX_CHARS } from '../types/schema'
 import { createSeedData } from '../data/seedData'
 import { activeWeek } from '../engine/gating'
 import { isNodeOpen } from '../engine/gating'
@@ -128,6 +129,8 @@ interface AppStore extends AppData {
   markExported: () => void
   updatePrefs: (patch: Partial<AppData['prefs']>) => void
   updatePlanner: (patch: Partial<PlannerSettings>) => void
+  savePromptOverride: (promptId: string, template: string) => void
+  resetPromptOverride: (promptId: string) => void
 }
 
 export type ResetScope = 'week' | 'subject' | 'all'
@@ -855,6 +858,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         weeks: { ...incoming.overrides.weeks, ...state.overrides.weeks },
         nodes: { ...incoming.overrides.nodes, ...state.overrides.nodes },
       },
+      // Local prompt edits win a merge; an incoming file only fills gaps.
+      promptOverrides: { ...incoming.promptOverrides, ...state.promptOverrides },
       seedVersion: Math.max(state.seedVersion, incoming.seedVersion),
       updatedAt: now(),
     })
@@ -1002,6 +1007,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         updatedAt: now(),
       }
     }),
+
+  savePromptOverride: (promptId, template) => {
+    const trimmed = template.trim().slice(0, PROMPT_TEMPLATE_MAX_CHARS)
+    if (!trimmed) return
+    set((state) => ({
+      promptOverrides: {
+        ...state.promptOverrides,
+        [promptId]: trimmed,
+      },
+      updatedAt: now(),
+    }))
+  },
+
+  resetPromptOverride: (promptId) =>
+    set((state) => {
+      const promptOverrides = { ...state.promptOverrides }
+      delete promptOverrides[promptId]
+      return { promptOverrides, updatedAt: now() }
+    }),
 }))
 
 export function useActiveSubject(): Subject {
@@ -1028,6 +1052,7 @@ export function getStoredAppData(): AppData {
     overrides: state.overrides,
     prefs: state.prefs,
     planner: state.planner,
+    promptOverrides: state.promptOverrides,
   }
 }
 
@@ -1127,6 +1152,8 @@ const UNDOABLE_ACTIONS: Record<string, string> = {
   resetToSeed: 'Reset to seed',
   resetChecklistItem: 'Uncheck task',
   resetProgress: 'Reset progress',
+  savePromptOverride: 'Edit prompt skill',
+  resetPromptOverride: 'Reset prompt skill',
 }
 
 function installUndo(): void {

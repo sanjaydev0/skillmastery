@@ -6,12 +6,15 @@ import {
   FileJson,
   FileText,
   HardDrive,
+  KeyRound,
   Laptop,
   Moon,
   RotateCcw,
   ShieldCheck,
   Smartphone,
+  Sparkles,
   Sun,
+  Trash2,
   Upload,
   Wifi,
   WifiOff,
@@ -29,8 +32,16 @@ import { exportBackupJson, exportObsidianMarkdown } from '../../services/exports
 import { formatBytes } from '../../lib/utils'
 import { formatDateTime } from '../../lib/dates'
 import { getInstallState, promptInstall, subscribeInstall } from '../../services/install'
+import {
+  AI_MAX_OUTPUT_TOKENS,
+  AI_MAX_PROMPT_CHARS,
+  AI_MODEL_LABEL,
+  clearAiKey,
+  setAiKey,
+} from '../../services/ai'
+import { useAiKey } from '../../hooks/useAiKey'
 import { Sheet } from '../../components/ui/Sheet'
-import { Alert, Badge, Button, ProgressBar, SectionHead, Spinner } from '../../components/ui/primitives'
+import { Alert, Badge, Button, InlineError, ProgressBar, SectionHead, Spinner } from '../../components/ui/primitives'
 
 const THEMES: { id: Theme; label: string; icon: typeof Sun; detail: string }[] = [
   { id: 'light', label: 'Light', icon: Sun, detail: 'Paper daylight' },
@@ -80,6 +91,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [installing, setInstalling] = useState(false)
   const [online, setOnline] = useState(() => navigator.onLine)
+  const [aiDraft, setAiDraft] = useState('')
+  const [aiError, setAiError] = useState('')
+  const aiKey = useAiKey()
   const install = useSyncExternalStore(subscribeInstall, getInstallState)
 
   useEffect(() => {
@@ -142,6 +156,25 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     } else {
       toast('The install prompt is not ready yet. Use the browser menu → Add to Home screen.', 'info', 6500)
     }
+  }
+
+  const saveAiKey = () => {
+    const key = aiDraft.trim()
+    if (key.length < 8) {
+      setAiError('Paste the full Velona key. It is usually longer than eight characters.')
+      return
+    }
+    setAiKey(key)
+    setAiDraft('')
+    setAiError('')
+    toast('Velona key saved in this browser only. It is not part of your backups.', 'success', 6000)
+  }
+
+  const forgetAiKey = () => {
+    clearAiKey()
+    setAiDraft('')
+    setAiError('')
+    toast('Velona key removed from this browser.', 'info', 4500)
   }
 
   const readFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -254,6 +287,73 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <p className="faint mt-1.5 text-[11.5px]">
             Mode filters the daily rhythm and the week checklist. It does not change stored mastery.
           </p>
+        </section>
+
+        <section>
+          <SectionHead
+            title="AI helper"
+            eyebrow="Velona · optional"
+            action={
+              <Badge tone={aiKey ? 'good' : 'neutral'}>{aiKey ? 'Key saved' : 'Not configured'}</Badge>
+            }
+          />
+          <div className="rounded-xl border border-line bg-s2 p-3">
+            <div className="flex items-start gap-2.5">
+              <span className="grid h-9 w-9 flex-none place-items-center rounded-xl border border-accent/25 bg-accent-soft text-accent">
+                <Sparkles size={17} aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <KeyRound size={13} className="text-t3" aria-hidden />
+                  <p className="text-[12px] font-semibold">Prompt runner</p>
+                </div>
+                <p className="muted mt-1 text-[11.5px] leading-relaxed">
+                  Optional. Run a rendered prompt against {AI_MODEL_LABEL} from the Practice → Prompts tab. The key
+                  is stored in this browser and sent to Velona only when you press Run.
+                </p>
+                <label className="label mt-2.5" htmlFor="ai-key">
+                  Velona API key
+                </label>
+                <input
+                  id="ai-key"
+                  className="input"
+                  type="password"
+                  value={aiDraft}
+                  onChange={(event) => {
+                    setAiDraft(event.target.value)
+                    setAiError('')
+                  }}
+                  placeholder={aiKey ? 'Saved key — paste a new one to replace it' : 'Paste your key from velona.in'}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {aiError ? <InlineError>{aiError}</InlineError> : null}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Button size="sm" variant="primary" onClick={saveAiKey} disabled={!aiDraft.trim()}>
+                    Save key
+                  </Button>
+                  {aiKey ? (
+                    <Button size="sm" variant="outline" icon={<Trash2 size={13} />} onClick={forgetAiKey}>
+                      Forget key
+                    </Button>
+                  ) : null}
+                  <a
+                    className="link text-[11px]"
+                    href="https://velona.in"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Get a Velona key
+                  </a>
+                </div>
+                <p className="faint mt-1.5 text-[11px] leading-relaxed">
+                  Prompt cap {AI_MAX_PROMPT_CHARS.toLocaleString()} characters · output cap{' '}
+                  {AI_MAX_OUTPUT_TOKENS.toLocaleString()} tokens. The same-origin proxy forwards the key per request
+                  and does not store or log it. Keys never enter JSON backups or Obsidian exports.
+                </p>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section>

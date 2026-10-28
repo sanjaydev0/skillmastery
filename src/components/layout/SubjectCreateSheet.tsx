@@ -9,11 +9,11 @@ import { Button, Field, InlineError } from '../ui/primitives'
 import { cn } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 
-const ACCENTS: { id: SubjectAccent; label: string; colour: string }[] = [
-  { id: 'sky', label: 'Sky', colour: '#38bdf8' },
-  { id: 'emerald', label: 'Emerald', colour: '#34d399' },
-  { id: 'violet', label: 'Violet', colour: '#a78bfa' },
-  { id: 'amber', label: 'Amber', colour: '#fbbf24' },
+const ACCENTS: { id: SubjectAccent; label: string }[] = [
+  { id: 'sky', label: 'Sky' },
+  { id: 'emerald', label: 'Emerald' },
+  { id: 'violet', label: 'Violet' },
+  { id: 'amber', label: 'Amber' },
 ]
 
 const PHASES = [
@@ -107,7 +107,11 @@ export function SubjectCreateSheet({ onClose }: { onClose: () => void }) {
                     accent === option.id ? 'border-t1 scale-105' : 'border-transparent hover:scale-105',
                   )}
                 >
-                  <span className="h-5 w-5 rounded-full" style={{ background: option.colour }} aria-hidden />
+                  <span
+                    className="h-5 w-5 rounded-full"
+                    style={{ background: `var(--swatch-${option.id})` }}
+                    aria-hidden
+                  />
                 </button>
               ))}
             </div>
@@ -149,7 +153,7 @@ export function SubjectCreateSheet({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-2.5">
             <span
               className="grid h-8 w-8 flex-none place-items-center rounded-lg text-[11px] font-bold text-white"
-              style={{ background: ACCENTS.find((option) => option.id === accent)?.colour }}
+              style={{ background: `var(--swatch-${accent})` }}
               aria-hidden
             >
               {(shortName || name || 'New').slice(0, 2).toUpperCase()}

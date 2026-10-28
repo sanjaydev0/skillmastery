@@ -562,6 +562,7 @@ const cards: Flashcard[] = [
 const resources: Resource[] = [
   seedResource('fl-doc-7a', 'Riverpod: getting started', 'https://riverpod.dev/docs/introduction/getting_started', 'docs', W7, undefined, ['riverpod']),
   seedResource('fl-doc-7b', 'Dart classes & interfaces', 'https://dart.dev/language/classes', 'docs', W7, undefined, ['dart']),
+  seedResource('fl-doc-7c', 'State management: overview', 'https://docs.flutter.dev/data-and-backend/state-mgmt/intro', 'docs', W7, 'Compare local state, inherited widgets and packages before choosing one.', ['state']),
   seedResource('fl-doc-8a', 'Riverpod providers & AsyncValue', 'https://riverpod.dev/docs/concepts2/providers', 'docs', W8, undefined, ['riverpod', 'async']),
   seedResource('fl-doc-9a', 'go_router package', 'https://pub.dev/packages/go_router', 'docs', W9, undefined, ['navigation']),
   seedResource('fl-doc-9b', 'Flutter navigation & routing', 'https://docs.flutter.dev/ui/navigation', 'docs', W9, undefined, ['navigation']),
@@ -569,6 +570,7 @@ const resources: Resource[] = [
   seedResource('fl-doc-10b', 'Flutter networking cookbook', 'https://docs.flutter.dev/cookbook/networking/fetch-data', 'docs', W10, undefined, ['networking']),
   seedResource('fl-doc-11a', 'JWT introduction', 'https://jwt.io/introduction', 'docs', W11, undefined, ['auth', 'jwt']),
   seedResource('fl-doc-11b', 'flutter_secure_storage', 'https://pub.dev/packages/flutter_secure_storage', 'docs', W11, undefined, ['security']),
+  seedResource('fl-doc-11c', 'OWASP Mobile Application Security', 'https://mas.owasp.org/', 'docs', W11, 'The threat model behind secure storage, transport and auth.', ['security', 'owasp']),
   seedResource('fl-doc-12a', 'Flutter web sockets cookbook', 'https://docs.flutter.dev/cookbook/networking/web-sockets', 'docs', W12, undefined, ['realtime']),
   seedResource('fl-cur-12', 'Full Stack Open', 'https://fullstackopen.com/en/', 'curriculum', undefined, 'Deep full-stack curriculum, useful for the cloud boundaries in Phase 3.', ['curriculum']),
 ]

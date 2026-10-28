@@ -281,7 +281,7 @@ export function VaultView() {
                     }}
                     aria-hidden
                   >
-                    <span className="text-[8px] font-semibold text-t3">Canon</span>
+                    <span className="text-[11px] font-semibold text-t3">Canon</span>
                     <span className="text-[17px] font-bold leading-none text-accent-strong">
                       {book.title
                         .split(/\s+/)
@@ -290,7 +290,7 @@ export function VaultView() {
                         .map((word) => word[0])
                         .join('')}
                     </span>
-                    <span className="truncate text-[7.5px] text-t3">{book.author}</span>
+                    <span className="truncate text-[11px] text-t3">{book.author}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-1">

@@ -59,6 +59,29 @@ describe('seed content refresh', () => {
     expect(upgraded.checklist.find((item) => item.id === `${week.id}-d4b`)?.done).toBe(true)
   })
 
+  it('adds new seed resources without losing reading status or user links', () => {
+    const data = createSeedData()
+    data.seedVersion = 2
+    const subject = data.subjects[0]!
+    const reading = subject.resources.find((resource) => resource.id === 'fl-doc-1a')!
+    reading.status = 'done'
+    subject.resources = subject.resources.filter((resource) => resource.id !== 'fl-doc-4c')
+    subject.resources.push({
+      id: 'user-resource',
+      title: 'A link I added',
+      url: 'https://example.com/notes',
+      kind: 'article',
+      tags: [],
+      status: 'reading',
+    })
+
+    const { data: refreshed } = refreshSeedContent(data)
+    const next = refreshed.subjects[0]!
+    expect(next.resources.filter((resource) => resource.id === 'fl-doc-4c')).toHaveLength(1)
+    expect(next.resources.find((resource) => resource.id === 'fl-doc-1a')?.status).toBe('done')
+    expect(next.resources.find((resource) => resource.id === 'user-resource')?.status).toBe('reading')
+  })
+
   it('is a no-op once the seed version is current', () => {
     const data = createSeedData()
     const { data: same, changed } = refreshSeedContent(data)

@@ -146,6 +146,30 @@ describe('track lifecycle and backup import', () => {
     expect(replaced.prefs.theme).toBe('light')
   })
 
+  it('saves and resets a prompt skill in persisted data', () => {
+    useAppStore.getState().savePromptOverride('socratic-tutor', 'My edited Socratic skill')
+    expect(getStoredAppData().promptOverrides['socratic-tutor']).toBe('My edited Socratic skill')
+    useAppStore.getState().savePromptOverride('socratic-tutor', '   ')
+    expect(getStoredAppData().promptOverrides['socratic-tutor']).toBe('My edited Socratic skill')
+    useAppStore.getState().resetPromptOverride('socratic-tutor')
+    expect(getStoredAppData().promptOverrides['socratic-tutor']).toBeUndefined()
+  })
+
+  it('keeps local prompt skills when an incoming backup is merged', () => {
+    const base = structuredClone(getStoredAppData())
+    useAppStore.getState().savePromptOverride('socratic-tutor', 'Local skill')
+    const incoming = structuredClone(base)
+    incoming.promptOverrides = {
+      'socratic-tutor': 'Incoming skill',
+      'anki-generator': 'Incoming card skill',
+    }
+
+    useAppStore.getState().importData(incoming, 'merge')
+    const merged = useAppStore.getState()
+    expect(merged.promptOverrides['socratic-tutor']).toBe('Local skill')
+    expect(merged.promptOverrides['anki-generator']).toBe('Incoming card skill')
+  })
+
   it('merges subjects by id and keeps higher reading progress', () => {
     const base = structuredClone(getStoredAppData())
     const incoming = structuredClone(base)

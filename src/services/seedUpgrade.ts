@@ -49,9 +49,20 @@ function refreshWeek(week: Week, template: Week): Week {
 }
 
 /**
+ * New seed resources are additive. A resource the learner already has keeps
+ * its status and edited text; a resource they added themselves is untouched.
+ * Removed seed resources are never deleted — they may hold reading progress.
+ */
+function mergeResources(current: Subject['resources'], fresh: Subject['resources']): Subject['resources'] {
+  const known = new Set(current.map((resource) => resource.id))
+  const additions = fresh.filter((resource) => !known.has(resource.id))
+  return additions.length ? [...current, ...additions] : current
+}
+
+/**
  * Seed content is curriculum, progress is user data. A version bump refreshes
  * authored text and day plans while preserving checks, checkpoint history,
- * notes, cards and any week the learner added themselves.
+ * notes, cards, resources and any week the learner added themselves.
  */
 export function refreshSeedContent(data: AppData): SeedRefreshResult {
   if (data.seedVersion >= SEED_VERSION) return { data, changed: false }
@@ -66,6 +77,7 @@ export function refreshSeedContent(data: AppData): SeedRefreshResult {
         const template = fresh.weeks.find((entry) => entry.id === week.id)
         return template ? refreshWeek(week, template) : week
       }),
+      resources: mergeResources(subject.resources, fresh.resources),
     }
   })
 

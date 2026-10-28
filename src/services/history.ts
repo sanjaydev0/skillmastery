@@ -12,6 +12,7 @@ export interface HistorySnapshot {
   overrides: AppData['overrides']
   prefs: AppData['prefs']
   planner: AppData['planner']
+  promptOverrides: AppData['promptOverrides']
   activeSubjectId: string
   seedVersion: number
 }
@@ -43,6 +44,7 @@ export function snapshotOf(data: AppData): HistorySnapshot {
     overrides: data.overrides,
     prefs: data.prefs,
     planner: data.planner,
+    promptOverrides: data.promptOverrides,
     activeSubjectId: data.activeSubjectId,
     seedVersion: data.seedVersion,
   }
@@ -56,6 +58,7 @@ export function snapshotsEqual(a: HistorySnapshot, b: HistorySnapshot): boolean 
     a.overrides === b.overrides &&
     a.prefs === b.prefs &&
     a.planner === b.planner &&
+    a.promptOverrides === b.promptOverrides &&
     a.activeSubjectId === b.activeSubjectId &&
     a.seedVersion === b.seedVersion
   )
