@@ -29,6 +29,11 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 - A week opens only after the previous week's blind checkpoint passes, or an audited override is recorded.
 - A checkpoint passes at an average of **≥ 4.0** with no category below **3**.
 
+## Project docs
+
+- [`DESIGN.md`](DESIGN.md) — the visual and copy contract: board-and-paper palette, typography, components, data-display rules and review checklist.
+- [`AGENTS.md`](AGENTS.md) — engineering contract for contributors and AI agents: architecture, data invariants, migrations, testing, deployment and Phase 5 AI guardrails.
+
 ## Stack
 
 React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS 4 · Zustand 5 · IndexedDB (`idb-keyval`) with a localStorage mirror · Zod backup validation · `vite-plugin-pwa` · Vitest + Testing Library.

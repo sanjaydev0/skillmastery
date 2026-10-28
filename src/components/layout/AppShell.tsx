@@ -93,7 +93,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
       root.dataset.accent = subject.accent
       persistTheme(prefs.theme, dark)
       const meta = document.querySelector('meta[name="theme-color"]')
-      if (meta) meta.setAttribute('content', dark ? '#080b10' : '#f5f7fa')
+      if (meta) meta.setAttribute('content', dark ? '#0e1411' : '#f4f1e7')
     }
     apply()
     if (prefs.theme !== 'system') return
