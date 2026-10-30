@@ -76,7 +76,7 @@ export const FLUTTER_BLUEPRINT: readonly WeekBlueprint[] = [
         failureMode: 'Building an arrow-shaped if pyramid that nobody can read six weeks later',
       },
     ],
-    termsIntroduced: ['binding', 'reference', 'heap', 'final', 'const', 'null safety', 'type promotion', 'guard clause'],
+    termsIntroduced: ['binding', 'reference', 'heap', 'final', 'const', 'null safety', 'type promotion', 'guard clause', 'github', 'padright', 'tostring', 'padleft', 'parsePaise', 'isNull'],
     prerequisites: [],
     days: ['Read variables', 'First Dart file', 'Safe parsing', 'Build the ledger', 'Nasty inputs', 'Receipt + push', 'Blind rebuild'],
   },

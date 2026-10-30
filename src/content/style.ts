@@ -12,6 +12,8 @@ export type ProseCode =
   | 'filler'
   | 'long-sentence'
   | 'long-paragraph'
+  | 'readability-avg'
+  | 'readability-terms'
   | 'title-long'
   | 'summary-length'
   | 'task-count'
@@ -66,6 +68,8 @@ export const TASK_MAX = 4
 export const DIRECTION_MAX_WORDS = 40
 export const DESIGN_NOTE_MIN_WORDS = 25
 export const DESIGN_NOTE_MAX_WORDS = 100
+export const READABILITY_AVG_SENTENCE_WORDS = 18
+export const READABILITY_MAX_UNFAMILIAR_TERMS = 3
 
 export function wordCount(text: string): number {
   const trimmed = text.trim()
@@ -166,7 +170,87 @@ export function checkExplanation(field: string, text: string): ProseIssue[] {
   ]
 }
 
-export function checkDayPlan(plan: DayPlan): ProseIssue[] {
+/**
+ * Check average sentence length across all sentences in text.
+ * Returns issues if average exceeds threshold.
+ */
+export function checkReadabilityAvg(field: string, text: string): ProseIssue[] {
+  const allSentences = sentences(text)
+  if (allSentences.length === 0) return []
+
+  const totalWords = allSentences.reduce((sum, sentence) => sum + wordCount(sentence), 0)
+  const avgWords = totalWords / allSentences.length
+
+  if (avgWords > READABILITY_AVG_SENTENCE_WORDS) {
+    return [
+      {
+        field,
+        code: 'readability-avg' as const,
+        message: `Average sentence length is ${avgWords.toFixed(1)} words. Target is ≤${READABILITY_AVG_SENTENCE_WORDS}. Simplify long sentences.`,
+        excerpt: excerpt(text),
+      },
+    ]
+  }
+  return []
+}
+
+/**
+ * Check for terms not in the glossary.
+ * Returns issues if more than max unfamiliar terms are found.
+ */
+export function checkReadabilityTerms(
+  field: string,
+  text: string,
+  glossary: string[]
+): ProseIssue[] {
+  if (glossary.length === 0) return []
+
+  // Extract potential technical terms using precise heuristics
+  // Technical terms in programming contexts typically:
+  // - Are camelCase (e.g., "useState", "forEach", "parsePaise")
+  // - Are PascalCase (e.g., "Widget", "StatelessWidget")
+  
+  const allWords = text.match(/\b[a-zA-Z][a-zA-Z0-9]*\b/g) || []
+  const uniqueWords = new Set(allWords)
+  
+  const likelyTechnicalTerms: string[] = []
+  for (const word of uniqueWords) {
+    const lowerWord = word.toLowerCase()
+    
+    // Skip if in glossary (case-insensitive)
+    const inGlossary = glossary.some((term) => term.toLowerCase() === lowerWord)
+    if (inGlossary) continue
+    
+    // Check if word looks like a technical term
+    // camelCase: lowercase letter followed by uppercase (e.g., "useState", "parsePaise")
+    const isCamelCase = /[a-z][A-Z]/.test(word)
+    
+    // PascalCase: starts with uppercase, has another uppercase after lowercase
+    // (e.g., "StatelessWidget", "BuildContext")
+    const isPascalCase = /^[A-Z][a-z]+[A-Z]/.test(word)
+    
+    // Flag words that clearly look like technical terms
+    if (isCamelCase || isPascalCase) {
+      likelyTechnicalTerms.push(word)
+    }
+  }
+
+  if (likelyTechnicalTerms.length > READABILITY_MAX_UNFAMILIAR_TERMS) {
+    const shown = likelyTechnicalTerms.slice(0, 5).join(', ')
+    const more = likelyTechnicalTerms.length > 5 ? ` and ${likelyTechnicalTerms.length - 5} more` : ''
+    return [
+      {
+        field,
+        code: 'readability-terms' as const,
+        message: `Found ${likelyTechnicalTerms.length} unfamiliar technical terms (${shown}${more}). Define them or use glossary terms.`,
+        excerpt: excerpt(text),
+      },
+    ]
+  }
+  return []
+}
+
+export function checkDayPlan(plan: DayPlan, glossary: string[] = []): ProseIssue[] {
   const issues: ProseIssue[] = []
 
   const titleWords = wordCount(plan.title)
@@ -188,6 +272,10 @@ export function checkDayPlan(plan: DayPlan): ProseIssue[] {
     })
   }
   issues.push(...checkExplanation('summary', plan.summary))
+  issues.push(...checkReadabilityAvg('summary', plan.summary))
+  if (glossary.length > 0) {
+    issues.push(...checkReadabilityTerms('summary', plan.summary, glossary))
+  }
 
   if (plan.tasks.length < TASK_MIN || plan.tasks.length > TASK_MAX) {
     issues.push({
@@ -235,7 +323,7 @@ export function checkDayPlan(plan: DayPlan): ProseIssue[] {
 }
 
 /** One week must carry exactly one card per slot, in order. */
-export function checkDayPlans(plans: DayPlan[]): ProseIssue[] {
+export function checkDayPlans(plans: DayPlan[], glossary: string[] = []): ProseIssue[] {
   if (plans.length !== 7) {
     return [
       {
@@ -255,7 +343,7 @@ export function checkDayPlans(plans: DayPlan[]): ProseIssue[] {
       },
     ]
   }
-  return plans.flatMap((plan) => checkDayPlan(plan))
+  return plans.flatMap((plan) => checkDayPlan(plan, glossary))
 }
 
 /**

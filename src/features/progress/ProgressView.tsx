@@ -4,7 +4,10 @@ import {
   CheckCircle2,
   ChevronRight,
   Circle,
+  Crown,
+  Swords,
   Target,
+  Trophy,
 } from 'lucide-react'
 import type { Week } from '../../types/schema'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
@@ -12,6 +15,7 @@ import { overallMastery, weekStatus } from '../../engine/gating'
 import { formatTotal, summariseSubject, summariseWeek } from '../../engine/estimates'
 import { dueCards } from '../../engine/srs'
 import { milestonesFor } from '../../engine/milestones'
+import { gameStatsFor } from '../../engine/gamification'
 import { formatShortDate } from '../../lib/dates'
 import { percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
@@ -21,8 +25,9 @@ export function ProgressView() {
   const subject = useActiveSubject()
   const overrides = useAppStore((state) => state.overrides)
   const planner = useAppStore((state) => state.planner)
-  const startWeekday = useAppStore((state) => state.journey.startWeekday)
-  const gameLayer = useAppStore((state) => state.journey.gameLayer)
+  const journey = useAppStore((state) => state.journey)
+  const startWeekday = journey.startWeekday
+  const gameLayer = journey.gameLayer
 
   const course = useMemo(() => summariseSubject(subject), [subject])
   const mastered = subject.nodes.filter((node) => node.status === 'mastered').length
@@ -40,6 +45,7 @@ export function ProgressView() {
   )
   const marks = useMemo(() => milestonesFor(subject), [subject])
   const earned = marks.filter((mark) => mark.earned).length
+  const gameStats = useMemo(() => gameStatsFor(subject, journey), [subject, journey])
 
   return (
     <div>
@@ -105,6 +111,130 @@ export function ProgressView() {
           meta={`${percent(overallMastery(subject.nodes))}% mastered`}
         />
       </section>
+
+      {gameLayer && gameStats.xp > 0 && (
+        <section className="card mt-4 p-4" aria-labelledby="game-stats-heading">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="eyebrow">Your journey</p>
+              <h2 id="game-stats-heading" className="h2 mt-0.5">
+                Level {gameStats.level}: {gameStats.title}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Trophy size={20} className="text-accent" />
+              <span className="text-2xl font-bold num">{gameStats.xp}</span>
+              <span className="faint text-sm">XP</span>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="faint">
+                {gameStats.nextLevelAt !== null
+                  ? `${gameStats.xp} / ${gameStats.nextLevelAt} XP`
+                  : 'Max level reached'}
+              </span>
+              <span className="faint num">{percent(gameStats.levelProgress)}%</span>
+            </div>
+            <ProgressBar
+              value={gameStats.levelProgress}
+              className="mt-2 !h-2"
+              label="Progress to next level"
+            />
+          </div>
+
+          {gameStats.quests.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Swords size={16} className="text-accent" />
+                <p className="text-sm font-semibold">Active quests</p>
+              </div>
+              <div className="space-y-2">
+                {gameStats.quests.map((quest) => (
+                  <div
+                    key={quest.id}
+                    className={`rounded-lg border p-3 ${
+                      quest.earned ? 'border-good/30 bg-good-soft' : 'border-line bg-s1'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium uppercase tracking-wide text-t3">
+                            {quest.window}
+                          </span>
+                          {quest.earned && (
+                            <Badge tone="good">
+                              Complete
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm font-medium">{quest.title}</p>
+                        <p className="mt-0.5 text-xs text-t3">{quest.detail}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="num text-sm font-semibold">+{quest.xp} XP</span>
+                        {quest.progress.total > 0 && (
+                          <span className="text-xs text-t3">
+                            {quest.progress.done}/{quest.progress.total}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {gameStats.boss && (
+            <div className="mt-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown size={16} className="text-accent" />
+                <p className="text-sm font-semibold">Boss fight</p>
+              </div>
+              <div
+                className={`rounded-lg border p-3 ${
+                  gameStats.boss.defeated
+                    ? 'border-good/30 bg-good-soft'
+                    : 'border-accent/30 bg-accent-soft'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{gameStats.boss.title}</p>
+                    <p className="mt-0.5 text-xs text-t3">{gameStats.boss.detail}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="num text-sm font-semibold">+{gameStats.boss.xp} XP</span>
+                    {gameStats.boss.defeated && (
+                      <Badge tone="good">
+                        Defeated
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                {!gameStats.boss.defeated && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="faint">Progress</span>
+                      <span className="faint num">
+                        {gameStats.boss.progress.done}/{gameStats.boss.progress.total}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={gameStats.boss.progress.done / gameStats.boss.progress.total}
+                      className="!h-1.5"
+                      label="Boss progress"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {gameLayer ? (
         <section className="card mt-4 p-3.5" aria-labelledby="marks-heading">

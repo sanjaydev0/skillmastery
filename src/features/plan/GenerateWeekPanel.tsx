@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react'
 import type { Subject, Week } from '../../types/schema'
 import { useAppStore } from '../../store/AppStore'
@@ -33,23 +33,67 @@ export function GenerateWeekPanel({
   const openSettings = useUiStore((state) => state.openSettings)
   const aiKey = useAiKey()
 
-  const [phase, setPhase] = useState<'idle' | 'confirm' | 'running' | 'review'>('idle')
+  const [phase, setPhase] = useState<'idle' | 'confirm' | 'preview' | 'running' | 'review'>('idle')
   const [result, setResult] = useState<GenerateWeekResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [previewBrief, setPreviewBrief] = useState<ReturnType<typeof buildWeekBrief> | null>(null)
 
   const blueprint = blueprintFor(subject.id, week.weekNumber)
   if (!blueprint) return null
 
   const blocked = result !== null && result.issues.length > 0
 
+  // Wake lock for mobile resilience during generation
+  useEffect(() => {
+    if (phase !== 'running') return
+
+    let wakeLock: WakeLockSentinel | null = null
+    let released = false
+
+    const requestWakeLock = async () => {
+      if (!('wakeLock' in navigator)) return
+      try {
+        wakeLock = await navigator.wakeLock.request('screen')
+        wakeLock.addEventListener('release', () => {
+          // Lock was released (e.g., by system)
+        })
+      } catch {
+        // Wake lock request failed (e.g., low battery, not supported)
+      }
+    }
+
+    const handleVisibilityChange = async () => {
+      if (document.hidden || released) return
+      // Reacquire lock if it was released
+      if (wakeLock === null || wakeLock.released) {
+        await requestWakeLock()
+      }
+    }
+
+    requestWakeLock()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      released = true
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (wakeLock !== null && !wakeLock.released) {
+        wakeLock.release()
+      }
+    }
+  }, [phase])
+
+  const buildBrief = () => {
+    return buildWeekBrief(subject, week, journey, {
+      active: planner.weeklyActiveMinutes,
+      passive: planner.weeklyPassiveMinutes,
+    })
+  }
+
   const run = async () => {
     setError(null)
     setPhase('running')
     try {
-      const brief = buildWeekBrief(subject, week, journey, {
-        active: planner.weeklyActiveMinutes,
-        passive: planner.weeklyPassiveMinutes,
-      })
+      const brief = previewBrief ?? buildBrief()
       setResult(await generateWeekFor(brief))
       setPhase('review')
     } catch (caught) {
@@ -59,7 +103,14 @@ export function GenerateWeekPanel({
       }
       setError(caught instanceof Error ? caught.message : 'The week could not be written.')
       setPhase('idle')
+    } finally {
+      setPreviewBrief(null)
     }
+  }
+
+  const showPreview = () => {
+    setPreviewBrief(buildBrief())
+    setPhase('preview')
   }
 
   const cancel = () => {
@@ -125,7 +176,7 @@ export function GenerateWeekPanel({
                   size="sm"
                   icon={<Sparkles size={13} />}
                   disabled={!aiKey}
-                  onClick={() => void run()}
+                  onClick={showPreview}
                 >
                   Write the seven cards
                 </Button>
@@ -145,11 +196,61 @@ export function GenerateWeekPanel({
                 The checklists and your checked tasks stay. Only the seven day cards change, after you save.
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Button variant="primary" size="sm" onClick={() => void run()}>
-                  Write a new draft
+                <Button variant="primary" size="sm" onClick={showPreview}>
+                  Preview what will be sent
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setPhase('idle')}>
                   Keep the current cards
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {phase === 'preview' && previewBrief ? (
+            <div className="mt-2 rounded-lg border border-line bg-s2 p-2.5">
+              <p className="text-[12px] font-medium">This is what will be sent to the AI:</p>
+              <div className="mt-2 space-y-2 text-[11px]">
+                <div>
+                  <p className="font-semibold text-t2">Week {previewBrief.week.weekNumber} blueprint:</p>
+                  <p className="faint mt-0.5">{previewBrief.week.theme}</p>
+                  <p className="faint mt-0.5">Project: {previewBrief.week.project}</p>
+                  <p className="faint mt-0.5">Checkpoint: {previewBrief.week.checkpoint}</p>
+                </div>
+                {previewBrief.history.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-t2">Previous weeks:</p>
+                    <ul className="faint mt-0.5 list-disc pl-4">
+                      {previewBrief.history.map((w) => (
+                        <li key={w.weekNumber}>
+                          Week {w.weekNumber}: {w.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {previewBrief.mastered.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-t2">Mastered concepts ({previewBrief.mastered.length}):</p>
+                    <p className="faint mt-0.5">{previewBrief.mastered.join(', ')}</p>
+                  </div>
+                )}
+                {previewBrief.failures.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-t2">Failure patterns to address:</p>
+                    <ul className="faint mt-0.5 list-disc pl-4">
+                      {previewBrief.failures.slice(0, 5).map((pattern, i) => (
+                        <li key={i}>{pattern}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Button variant="primary" size="sm" onClick={() => void run()}>
+                  Generate the week
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setPhase('idle')}>
+                  Cancel
                 </Button>
               </div>
             </div>

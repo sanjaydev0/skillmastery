@@ -85,6 +85,24 @@ export function TodayView() {
   const paused = isPaused(journey)
   const openPause = journey.pauses.find((entry) => entry.to === null)
 
+  const daysSinceActivity = useMemo(() => {
+    // Find the most recent doneAt timestamp from checklist items
+    const allDoneAts = subject.weeks
+      .flatMap((w) => w.checklist)
+      .filter((item) => item.done && item.doneAt)
+      .map((item) => item.doneAt!)
+      .sort((a, b) => b - a)
+
+    if (allDoneAts.length === 0) return null
+
+    const lastActivity = allDoneAts[0]!
+    const now = Date.now()
+    const daysDiff = Math.floor((now - lastActivity) / (1000 * 60 * 60 * 24))
+    return daysDiff
+  }, [subject])
+
+  const showPauseNudge = !paused && daysSinceActivity !== null && daysSinceActivity >= 2
+
   const setPause = () => {
     const result = paused ? resumeCourse() : pauseCourse()
     toast(result.message, result.ok ? 'success' : 'error', 3200)
@@ -212,6 +230,25 @@ export function TodayView() {
           </Button>
         </div>
       </header>
+
+      {showPauseNudge && (
+        <section
+          className="mt-4 flex flex-col gap-2 rounded-xl border border-line bg-s2 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+          aria-label="Pause suggestion"
+        >
+          <div>
+            <p className="text-[12.5px] font-semibold">
+              Day {clockDay} · {daysSinceActivity} days off
+            </p>
+            <p className="faint mt-0.5 text-[11.5px]">
+              If you need a break, pausing freezes the course day until you're ready.
+            </p>
+          </div>
+          <Button variant="primary" size="sm" icon={<Pause size={14} />} onClick={setPause} className="flex-none">
+            Pause until I'm back
+          </Button>
+        </section>
+      )}
 
       {paused ? (
         <section
@@ -366,6 +403,37 @@ export function TodayView() {
             Work from the checklist. The blueprint still names the week's idea, project and checkpoint, so the day is
             not empty.
           </p>
+        </section>
+      )}
+
+      {slot === 5 && week.weekNumber < 24 && !dayPlans[subject.weeks.find(w => w.weekNumber === week.weekNumber + 1)?.id || ''] && (
+        <section className="card mt-4 border-l-[3px] border-accent p-3.5 sm:p-4" aria-label="Prepare next week">
+          <div className="flex items-start gap-3">
+            <div className="flex-none grid h-10 w-10 place-items-center rounded-lg bg-accent-soft text-accent">
+              <CalendarDays size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="eyebrow">Day {slot} checkpoint</p>
+              <h3 className="mt-0.5 text-[13px] font-semibold">Prepare Week {week.weekNumber + 1}</h3>
+              <p className="faint mt-1 text-[12px] leading-relaxed">
+                You're on Day 5. Next week starts in two days, but it has no day cards yet. Write them now so you're ready when Monday arrives.
+              </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<ArrowRight size={13} />}
+                  onClick={() => {
+                    const nextWeek = subject.weeks.find(w => w.weekNumber === week.weekNumber + 1)
+                    if (nextWeek) navigate(`#/plan/${nextWeek.id}`)
+                  }}
+                >
+                  Write next week
+                </Button>
+                <span className="faint text-[11px]">Takes about 2 minutes</span>
+              </div>
+            </div>
+          </div>
         </section>
       )}
 

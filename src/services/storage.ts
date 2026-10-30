@@ -182,7 +182,7 @@ export async function savePersisted(data: AppData): Promise<'indexeddb' | 'local
 
 function mirror(serialised: string): boolean {
   try {
-    if (serialised.length < 4_500_000) {
+    if (serialised.length < 3_000_000) {
       localStorage.setItem(LOCAL_DATA_KEY, serialised)
       return true
     }
@@ -274,4 +274,16 @@ export async function storageEstimate(): Promise<StorageEstimate> {
     // ignore
   }
   return { usage, quota, persisted }
+}
+
+/** Check if localStorage mirror is enabled based on current data size. */
+export async function isLocalStorageMirrorEnabled(): Promise<boolean> {
+  try {
+    const data = await get<AppData>(DATA_KEY, DB_STORE)
+    if (!data) return true
+    const serialised = JSON.stringify(data)
+    return serialised.length < 3_000_000
+  } catch {
+    return true
+  }
 }

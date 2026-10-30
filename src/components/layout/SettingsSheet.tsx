@@ -26,6 +26,7 @@ import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { migrateAppData, parseBackupJson } from '../../services/validation'
 import {
+  isLocalStorageMirrorEnabled,
   requestPersistentStorage,
   storageEstimate,
   type StorageEstimate,
@@ -112,6 +113,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [installing, setInstalling] = useState(false)
   const [online, setOnline] = useState(() => navigator.onLine)
+  const [mirrorEnabled, setMirrorEnabled] = useState(true)
   const [aiDraft, setAiDraft] = useState('')
   const [aiError, setAiError] = useState('')
   const aiKey = useAiKey()
@@ -123,6 +125,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       if (!alive) return
       setEstimate(value)
       setEstimateLoading(false)
+    })
+    void isLocalStorageMirrorEnabled().then((enabled) => {
+      if (!alive) return
+      setMirrorEnabled(enabled)
     })
     const onOnline = () => setOnline(true)
     const onOffline = () => setOnline(false)
@@ -579,6 +585,11 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                     Protection asks the browser to keep this origin from automatic eviction.
                   </span>
                 </div>
+                {!mirrorEnabled && (
+                  <p className="mt-2.5 text-[11px] text-t3">
+                    localStorage mirror disabled · data exceeds 3MB threshold · IndexedDB remains the source of truth
+                  </p>
+                )}
               </>
             )}
           </div>

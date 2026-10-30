@@ -63,7 +63,7 @@ export async function generateWeekFor(brief: WeekBrief): Promise<GenerateWeekRes
     const plans = parseWeekGeneration(content, { model: AI_MODEL, generatedAt })
     return {
       plans,
-      issues: checkDayPlans(plans),
+      issues: checkDayPlans(plans, brief.week.terms),
       flags: driftFlags(brief, plans),
       gaps: coverageGaps(brief, plans),
       model: AI_MODEL,

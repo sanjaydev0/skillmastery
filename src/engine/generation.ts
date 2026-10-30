@@ -357,7 +357,7 @@ export function parseWeekGeneration(text: string, options: ParsedGenerationOptio
   }
 
   const seen = new Set<number>()
-  const plans: DayPlan[] = rawDays.map((entry, index) => {
+  const plans = rawDays.map((entry, index) => {
     if (!entry || typeof entry !== 'object') {
       throw new GenerationError('shape', `Day card ${index + 1} is not an object.`)
     }
@@ -394,6 +394,10 @@ export function parseWeekGeneration(text: string, options: ParsedGenerationOptio
           .slice(0, 4)
       : []
 
+    if (resources.length === 0) {
+      throw new GenerationError('shape', `Day ${day} has no resources. Each card needs at least one resource.`)
+    }
+
     const estMinutes =
       typeof raw.estMinutes === 'number' && Number.isFinite(raw.estMinutes)
         ? Math.max(5, Math.min(240, Math.round(raw.estMinutes)))
@@ -408,13 +412,29 @@ export function parseWeekGeneration(text: string, options: ParsedGenerationOptio
       designNote,
       resources,
       estMinutes,
-      origin: 'ai',
+      origin: 'ai' as const,
       ...(options.model ? { model: options.model } : {}),
       ...(options.generatedAt ? { generatedAt: options.generatedAt } : {}),
     }
   })
 
+  // Check for duplicate titles across all cards
+  if (hasDuplicateTitles(plans)) {
+    throw new GenerationError('shape', 'Two or more day cards have the same title. Each card needs a unique title.')
+  }
+
   return plans.sort((a, b) => a.day - b.day)
+}
+
+function hasDuplicateTitles(plans: DayPlan[]): boolean {
+  const titles = new Set<string>()
+  for (const plan of plans) {
+    if (titles.has(plan.title.toLowerCase())) {
+      return true
+    }
+    titles.add(plan.title.toLowerCase())
+  }
+  return false
 }
 
 const TIME_PRESSURE = /\b(timer|stopwatch|streak|behind schedule|time remaining|countdown)\b/i

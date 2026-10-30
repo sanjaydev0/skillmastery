@@ -39,7 +39,13 @@ describe('week generation panel', () => {
 
     render(<PlanWeekPage weekId="fl-w2" />)
     expect(screen.getByRole('heading', { name: 'Write this week' })).toBeInTheDocument()
+    
+    // Click "Write the seven cards" to show preview
     fireEvent.click(screen.getByRole('button', { name: /Write the seven cards/ }))
+    
+    // Click "Generate the week" in the preview to actually run generation
+    expect(await screen.findByText('This is what will be sent to the AI:')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Generate the week' }))
 
     expect(await screen.findByText(/Draft ready: 7 cards/)).toBeInTheDocument()
     expect(screen.getByText(/All seven cards meet the prose standard/)).toBeInTheDocument()
@@ -60,7 +66,13 @@ describe('week generation panel', () => {
     )
 
     render(<PlanWeekPage weekId="fl-w2" />)
+    
+    // Click "Write the seven cards" to show preview
     fireEvent.click(screen.getByRole('button', { name: /Write the seven cards/ }))
+    
+    // Click "Generate the week" in the preview to actually run generation
+    expect(await screen.findByText('This is what will be sent to the AI:')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Generate the week' }))
 
     expect(await screen.findByText('Fix these before saving')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save the seven cards' })).toBeDisabled()

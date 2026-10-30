@@ -11,6 +11,9 @@ describe('application smoke tests', () => {
     ).toBeInTheDocument()
     expect(screen.getByText(/One hundred and sixty-eight days/i)).toBeInTheDocument()
 
+    // Check all 9 initialization items before Start button becomes enabled
+    const checkboxes = screen.getAllByRole('checkbox')
+    checkboxes.forEach((checkbox) => fireEvent.click(checkbox))
     fireEvent.click(screen.getByRole('button', { name: /Start Day 1/ }))
 
     expect(await screen.findByRole('heading', { name: /Day 1 of 168/ })).toBeInTheDocument()

@@ -3,12 +3,10 @@ import type { ReactNode } from 'react'
 import {
   ArrowRight,
   CheckCircle2,
-  Clock3,
   GitBranch,
   Laptop,
   Pause,
   Play,
-  RotateCcw,
   ShieldCheck,
   Smartphone,
 } from 'lucide-react'
@@ -37,6 +35,18 @@ const WEEK_ONE_PREVIEW = [
   'Rebuild the ledger from an empty file, no notes.',
 ]
 
+const CHECKLIST_ITEMS = [
+  { id: 'laptop', text: 'A laptop with Zed and Flutter SDK installed' },
+  { id: 'phone', text: 'A physical Android phone with USB debugging on' },
+  { id: 'github', text: 'A GitHub account signed in on the laptop' },
+  { id: 'flutter-doctor', text: 'Ran flutter doctor and it passes' },
+  { id: 'git-config', text: 'Set git config user.name and user.email' },
+  { id: 'course-folder', text: 'Created a course folder on the laptop' },
+  { id: 'capacity', text: 'Set realistic weekly hours below' },
+  { id: 'schedule', text: 'Picked 5-7 study days that work for me' },
+  { id: 'commitment', text: 'Ready to commit 168 days to this course' },
+]
+
 export function StartView() {
   const subject = useActiveSubject()
   const journey = useAppStore((state) => state.journey)
@@ -47,7 +57,10 @@ export function StartView() {
   const resumeCourse = useAppStore((state) => state.resumeCourse)
   const completeOnboarding = useAppStore((state) => state.completeOnboarding)
   const toast = useUiStore((state) => state.toast)
-  const [restartArmed, setRestartArmed] = useState(false)
+  const [restartInput, setRestartInput] = useState('')
+  const restartConfirmed = restartInput.toLowerCase() === 'restart'
+  const [checklistComplete, setChecklistComplete] = useState(false)
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
 
   const started = journey.startedAt !== null
   const paused = isPaused(journey)
@@ -74,10 +87,21 @@ export function StartView() {
     toast(result.message, result.ok ? 'success' : 'error', 3200)
   }
 
+  const toggleChecklistItem = (id: string) => {
+    const newChecked = new Set(checkedItems)
+    if (newChecked.has(id)) {
+      newChecked.delete(id)
+    } else {
+      newChecked.add(id)
+    }
+    setCheckedItems(newChecked)
+    setChecklistComplete(newChecked.size === CHECKLIST_ITEMS.length)
+  }
+
   const restart = () => {
     const result = restartCourse()
     toast(result.message, result.ok ? 'success' : 'error', 5000)
-    setRestartArmed(false)
+    setRestartInput('')
   }
 
   return (
@@ -138,20 +162,26 @@ export function StartView() {
             >
               {paused ? 'Resume' : 'Pause'} the course
             </Button>
-            {restartArmed ? (
-              <span className="flex flex-wrap items-center gap-1.5 rounded-lg border border-bad/30 bg-bad-soft px-2 py-1.5">
-                <span className="text-[11.5px] text-bad">Start the clock again today?</span>
-                <Button variant="danger" size="sm" onClick={restart}>
-                  Yes, restart
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setRestartArmed(false)}>
-                  Cancel
-                </Button>
-              </span>
+            {!restartConfirmed ? (
+              <div className="flex flex-col gap-2 rounded-lg border border-bad/30 bg-bad-soft px-3 py-2">
+                <p className="text-[11.5px] text-bad">
+                  Type "restart" to confirm. This moves Day 1 to today.
+                </p>
+                <input
+                  type="text"
+                  value={restartInput}
+                  onChange={(e) => setRestartInput(e.target.value)}
+                  placeholder="restart"
+                  className="w-full rounded border border-line bg-s1 px-2 py-1 text-[12px] placeholder:text-t3 focus:border-accent focus:outline-none"
+                />
+              </div>
             ) : (
-              <Button variant="ghost" size="sm" icon={<RotateCcw size={13} />} onClick={() => setRestartArmed(true)}>
-                Restart the clock
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="danger" size="sm" onClick={restart}>
+                  Restart the clock
+                </Button>
+                <span className="text-[11px] text-t3">Day 1 moves to today</span>
+              </div>
             )}
           </div>
           <p className="faint mt-2 text-[11px]">
@@ -174,12 +204,40 @@ export function StartView() {
             <Promise>Progress stays in this browser.</Promise>
             <Promise>Pausing never moves the course day backwards.</Promise>
           </ul>
+
+          <div className="mt-4 rounded-lg border border-line bg-s2 p-3">
+            <p className="text-[12px] font-semibold">Before you start, make sure:</p>
+            <ul className="mt-2 space-y-1.5">
+              {CHECKLIST_ITEMS.map((item) => (
+                <li key={item.id}>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checkedItems.has(item.id)}
+                      onChange={() => toggleChecklistItem(item.id)}
+                      className="mt-0.5 h-4 w-4 rounded border-line"
+                    />
+                    <span className="text-[11.5px] leading-snug">{item.text}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button variant="primary" size="lg" icon={<Play size={16} />} onClick={begin}>
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<Play size={16} />}
+              onClick={begin}
+              disabled={!checklistComplete}
+            >
               Start Day 1
             </Button>
             <span className="faint max-w-[42ch] text-[11.5px] leading-snug">
-              You can pause, resume or restart the clock later. Nothing is sent anywhere.
+              {checklistComplete
+                ? 'You can pause, resume or restart the clock later. Nothing is sent anywhere.'
+                : `Complete the checklist above (${checkedItems.size}/${CHECKLIST_ITEMS.length})`}
             </span>
           </div>
         </section>
@@ -207,27 +265,116 @@ export function StartView() {
           </ol>
         </section>
 
-        <section className="card p-4" aria-labelledby="ready-heading">
-          <p className="eyebrow">Before you press Start</p>
-          <h2 id="ready-heading" className="h2 mt-0.5">
-            The kit
+        <section className="card p-4" aria-labelledby="surfaces-heading">
+          <p className="eyebrow">Where you will work</p>
+          <h2 id="surfaces-heading" className="h2 mt-0.5">
+            Three surfaces, one course
           </h2>
           <ul className="mt-2.5 space-y-2">
-            <Kit icon={<Laptop size={14} />} title="A laptop with Zed and the Flutter SDK">
-              flutter doctor should pass before Day 1. No Android Studio and no emulator.
+            <Kit icon={<Laptop size={14} />} title="Laptop with Zed">
+              Where you write code, run tests, and build apps. This is the main work surface.
             </Kit>
-            <Kit icon={<Smartphone size={14} />} title="A physical Android phone">
-              USB debugging on, and the cable you will actually use.
+            <Kit icon={<Smartphone size={14} />} title="Physical Android phone">
+              Where you test and use the apps you build. A real device, not an emulator.
             </Kit>
-            <Kit icon={<GitBranch size={14} />} title="A GitHub account">
-              Signed in on the laptop. Week 1 ends with a first push.
-            </Kit>
-            <Kit icon={<Clock3 size={14} />} title={`About ${minutesLabel(daily.active + daily.passive)} a day`}>
-              That is the default promise. Lower it below if it is not honest.
+            <Kit icon={<GitBranch size={14} />} title="Paper notebook">
+              Where you sketch ideas, take notes, and think through problems before coding.
             </Kit>
           </ul>
         </section>
       </div>
+
+      <section className="card mt-3 p-4" aria-labelledby="learning-heading">
+        <p className="eyebrow">How to learn</p>
+        <h2 id="learning-heading" className="h2 mt-0.5">
+          Learning to learn
+        </h2>
+        <p className="muted mt-1.5 max-w-[64ch] text-[13px] leading-relaxed">
+          This course teaches you to build real apps, not just follow tutorials. You will read documentation, write
+          code, test it on your phone, and fix what breaks. Every week has a checkpoint where you prove you can rebuild
+          the week's work without notes.
+        </p>
+        <p className="muted mt-2 text-[12px] leading-relaxed">
+          The app shows you what to do today. The day card explains the concept. The checklist tracks your progress.
+          When you check every task, you have done the work. When you pass the checkpoint, you have learned it.
+        </p>
+      </section>
+
+      <section className="card mt-3 p-4" aria-labelledby="tutorial-hell-heading">
+        <p className="eyebrow">What to avoid</p>
+        <h2 id="tutorial-hell-heading" className="h2 mt-0.5">
+          Tutorial hell
+        </h2>
+        <p className="muted mt-1.5 max-w-[64ch] text-[13px] leading-relaxed">
+          Tutorial hell is when you watch videos and read articles but never build anything yourself. You feel like
+          you're learning, but you can't write code without help.
+        </p>
+        <div className="mt-3 rounded-lg border border-line bg-s2 p-3">
+          <p className="text-[12px] font-semibold">This course prevents tutorial hell by:</p>
+          <ul className="mt-2 space-y-1.5">
+            <li className="flex items-start gap-2 text-[11.5px] leading-snug">
+              <CheckCircle2 size={13} className="mt-0.5 flex-none text-good" aria-hidden />
+              <span>Every day has active tasks where you write code</span>
+            </li>
+            <li className="flex items-start gap-2 text-[11.5px] leading-snug">
+              <CheckCircle2 size={13} className="mt-0.5 flex-none text-good" aria-hidden />
+              <span>Every week ends with a checkpoint where you rebuild the work</span>
+            </li>
+            <li className="flex items-start gap-2 text-[11.5px] leading-snug">
+              <CheckCircle2 size={13} className="mt-0.5 flex-none text-good" aria-hidden />
+              <span>The checkpoint is closed-book — no notes, no tutorials</span>
+            </li>
+            <li className="flex items-start gap-2 text-[11.5px] leading-snug">
+              <CheckCircle2 size={13} className="mt-0.5 flex-none text-good" aria-hidden />
+              <span>You only move forward when you prove you can do it yourself</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="card mt-3 p-4" aria-labelledby="dunning-heading">
+        <p className="eyebrow">What to expect</p>
+        <h2 id="dunning-heading" className="h2 mt-0.5">
+          The Dunning-Kruger curve
+        </h2>
+        <p className="muted mt-1.5 max-w-[64ch] text-[13px] leading-relaxed">
+          When you start, you don't know what you don't know. After a few weeks, you learn enough to realize how much
+          there is to learn. This feels like you're getting worse, but you're actually getting better — your standards
+          are rising.
+        </p>
+        <p className="muted mt-2 text-[12px] leading-relaxed">
+          This is normal. Every programmer goes through it. The course is designed to carry you through this dip. The
+          checkpoints prove you're making progress even when it doesn't feel like it.
+        </p>
+      </section>
+
+      <section className="card mt-3 p-4" aria-labelledby="session-heading">
+        <p className="eyebrow">How a day works</p>
+        <h2 id="session-heading" className="h2 mt-0.5">
+          How a session runs
+        </h2>
+        <p className="muted mt-1.5 max-w-[64ch] text-[13px] leading-relaxed">
+          Each day has a card that explains the concept in plain language. Below it is a checklist of tasks. Work
+          through them in order. When you finish a task, check it off. When you finish every task, the day is done.
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-lg border border-line bg-s2 p-2.5">
+            <p className="eyebrow">Passive work</p>
+            <p className="mt-1 text-[12px] leading-relaxed">
+              Reading docs, watching videos, studying examples. This builds understanding.
+            </p>
+          </div>
+          <div className="rounded-lg border border-accent/20 bg-accent-soft/60 p-2.5">
+            <p className="eyebrow">Active work</p>
+            <p className="mt-1 text-[12px] leading-relaxed">
+              Writing code, running tests, fixing bugs. This builds skill. Every day has both.
+            </p>
+          </div>
+        </div>
+        <p className="muted mt-2 text-[11.5px]">
+          The app estimates how long each day takes. These are ranges, not timers. Finish the work, not the clock.
+        </p>
+      </section>
 
       <section className="card mt-3 p-4" aria-labelledby="capacity-heading">
         <div className="flex flex-wrap items-end justify-between gap-2">
