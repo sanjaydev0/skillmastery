@@ -7,8 +7,12 @@
 export const AI_MODEL = 'deepseek/deepseek-v4.1-flash-1017'
 export const AI_MODEL_LABEL = 'DeepSeek V4.1 Flash'
 export const AI_KEY_STORAGE = 'skillmastery:ai-key'
+/** The prompt runner's own ceiling. Week generation passes its own limit. */
 export const AI_MAX_PROMPT_CHARS = 24_000
 export const AI_MAX_OUTPUT_TOKENS = 1_200
+/** The proxy's hard ceiling, mirrored so the client never sends a doomed body. */
+export const AI_HARD_PROMPT_CHARS = 120_000
+export const AI_HARD_OUTPUT_TOKENS = 8_000
 export const AI_DEFAULT_OUTPUT_TOKENS = 600
 
 const listeners = new Set<() => void>()
@@ -63,6 +67,7 @@ export type AiErrorCode =
   | 'upstream'
   | 'bad-response'
   | 'network'
+  | 'busy'
   | 'aborted'
 
 export class AiError extends Error {
@@ -91,11 +96,18 @@ export interface AiResult {
 interface RunAiOptions {
   maxTokens?: number
   signal?: AbortSignal
+  /** A caller with a justified larger prompt, such as week generation. */
+  maxPromptChars?: number
 }
 
 function clampMaxTokens(value: number | undefined): number {
   if (!Number.isFinite(value)) return AI_DEFAULT_OUTPUT_TOKENS
-  return Math.max(64, Math.min(AI_MAX_OUTPUT_TOKENS, Math.round(value!)))
+  return Math.max(64, Math.min(AI_HARD_OUTPUT_TOKENS, Math.round(value!)))
+}
+
+function promptCeiling(requested: number | undefined): number {
+  if (!Number.isFinite(requested)) return AI_MAX_PROMPT_CHARS
+  return Math.max(1_000, Math.min(AI_HARD_PROMPT_CHARS, Math.round(requested!)))
 }
 
 function errorForStatus(status: number): AiError {
@@ -116,10 +128,11 @@ export async function runAi(prompt: string, options: RunAiOptions = {}): Promise
   if (!key) {
     throw new AiError('missing-key', 'Add a Velona key in Settings → AI helper before running a prompt.')
   }
-  if (prompt.length > AI_MAX_PROMPT_CHARS) {
+  const promptLimit = promptCeiling(options.maxPromptChars)
+  if (prompt.length > promptLimit) {
     throw new AiError(
       'prompt-too-long',
-      `This prompt is ${prompt.length.toLocaleString()} characters. The limit is ${AI_MAX_PROMPT_CHARS.toLocaleString()}.`,
+      `This prompt is ${prompt.length.toLocaleString()} characters. The limit is ${promptLimit.toLocaleString()}.`,
     )
   }
 

@@ -37,6 +37,7 @@ import {
   WeekBadge,
 } from '../../components/ui/primitives'
 import { WeekSheet } from '../curriculum/WeekSheet'
+import { GenerateWeekPanel } from './GenerateWeekPanel'
 import { DAY_SLOTS, dayName, modeLabel } from './dayPlan'
 
 export function PlanWeekPage({ weekId }: { weekId: string }) {
@@ -182,6 +183,8 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
               : 'All days fit your capacity'}
           </span>
         </div>
+
+        <GenerateWeekPanel subject={subject} week={week} hasCards={(dayPlans[week.id]?.length ?? 0) > 0} />
 
         <div className="mt-2.5 grid gap-2.5 lg:grid-cols-2">
           {DAY_SLOTS.map((slot) => {

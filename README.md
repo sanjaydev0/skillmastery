@@ -71,7 +71,7 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 - Upgrading from the pre-rename build? The old namespace is detected and migrated on first boot.
 - Obsidian export writes Markdown frontmatter, phases, weeks, knowledge nodes, recall cards, canon progress and resources.
 
-The optional AI key is stored separately under `skillmastery:ai-key` in this browser. It is sent only to the same-origin `/api/chat` proxy when you press **Run prompt**, and **Forget key** removes it.
+The optional AI key is stored separately under `skillmastery:ai-key` in this browser. It is sent only to the same-origin `/api/chat` proxy when you press **Run prompt** or, on a later week, **Write the seven cards**; **Forget key** removes it.
 
 Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy.
 

@@ -8,13 +8,13 @@
  * ceiling.
  */
 
-export const maxDuration = 60
+export const maxDuration = 300
 
 const UPSTREAM = 'https://velona.in/v1/chat/completions'
 const MODEL = 'deepseek/deepseek-v4.1-flash-1017'
-const MAX_PROMPT_CHARS = 24_000
-const MAX_OUTPUT_TOKENS = 1_200
-const REQUEST_TIMEOUT_MS = 55_000
+const MAX_PROMPT_CHARS = 120_000
+const MAX_OUTPUT_TOKENS = 8_000
+const REQUEST_TIMEOUT_MS = 280_000
 
 type Role = 'system' | 'user' | 'assistant'
 
@@ -127,7 +127,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   const messages = parseMessages(body.messages)
   if (!messages) {
-    fail(response, 400, 'bad-messages', 'Send 1–20 non-empty messages under 24,000 characters total.')
+    fail(response, 400, 'bad-messages', 'Send 1–20 non-empty messages under 120,000 characters total.')
     return
   }
 

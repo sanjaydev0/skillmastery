@@ -21,7 +21,7 @@ It is **not** a course player, code editor, terminal, or cloud account. It store
 
 Two 24-week tracks are bundled (Flutter and Full-Stack Web). The Flutter track is the active teaching track. Week 1 is fully authored as seven day cards written for a 13-year-old. Week 2 keeps its authored task list. Weeks 2–24 draw their weekly brief from the blueprint; only Week 1 has authored day cards.
 
-The current guided-course work adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v4.
+The guided course adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v5.
 
 **Current state (October 2026):**
 
@@ -53,7 +53,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 141 tests across 19 files
+npm test           # Vitest, currently 177 tests across 23 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -107,7 +107,7 @@ docs/source/             Long-form course source (not shipped)
 
 ## 5. Data model and invariants
 
-Schema: `SCHEMA_VERSION = 4`, `SEED_VERSION = 4` in `src/types/schema.ts`.
+Schema: `SCHEMA_VERSION = 5`, `SEED_VERSION = 5` in `src/types/schema.ts`.
 
 `AppData` contains:
 
@@ -124,7 +124,7 @@ Rules:
 
 1. **Estimates** live on `ChecklistItem.estimate` (`{ min, max }`). A legacy `minutes` field is a fallback only. `estimateOf()` handles the fallback; `formatEstimate()` renders a task range; `formatTotal()` renders any aggregate.
 2. **Completion credit.** Checking a task adds its full estimate range to the completed total for the day, week and course. The planned total stays fixed; unchecking removes the credit. Do not add a separate “actual time” field.
-3. **Weekdays.** `Weekday` is `0 = Sunday … 6 = Saturday`, matching `Date.getDay()`. Use `schemaWeekday()` when writing checklist/planner data. Display strips are Monday-first; use `weekdayOf()` / the ordered helpers. Do not flip these by hand.
+3. **Weekdays and day slots.** `Weekday` is `0 = Sunday … 6 = Saturday`, matching `Date.getDay()`, and is used by the planner. `ChecklistItem.day` and `DayPlan.day` are day slots 1–7 inside the course week, so Day 1 stays Day 1 even when it is a Wednesday. Derive the real weekday with `weekdayOfSlot(journey.startWeekday, slot)`. Display strips are Monday-first; use `weekdayOf()` / the ordered helpers. Do not flip these by hand.
 4. **Capacity** lives in `planner` and is device-local. It is two weekly totals (`weeklyActiveMinutes`, `weeklyPassiveMinutes`) split across `studyDays`; `dailyCapacity()` is the only divisor. Importing a backup must not replace it. `resetToSeed` keeps the current planner and theme. The default is 720 active / 420 passive over seven days: 103 / 60 per day.
 5. **Gating.** A week opens when the previous week's gate passed, or when an audited override exists. A gate passes at average ≥ 4.0 with no category below 3. Never add a silent bypass.
 6. **Mastery** is earned through the gate or a node review, not by checking a box. `markNodeMastered` must keep validating the gate.
@@ -150,6 +150,7 @@ Rules:
 - Schema change → bump `SCHEMA_VERSION`, add a `migrateAppData` step, keep a raw pre-migration backup, add tests, and verify an old export still imports.
 - Schema v2 predates `promptOverrides`; migration adds `{}` without touching the rest of the payload. A v1 backup still gets estimates and planner defaults in the same pass.
 - Schema v4 folds the four per-day capacity fields into two weekly totals, and adds `journey`, `dayPlans` and `trash`. A v3 payload keeps its real capacity; a payload with no planner gets today's defaults, not a conversion of old defaults. Seven study days force `bufferDay: null`.
+- Schema v5 turns `ChecklistItem.day` into a day slot 1–7. A v4 payload stored Sunday as weekday `0`, so the migration maps `0 → 7`; a v5 payload keeps a missing day missing, and does not invent one.
 - Authored content change → bump `SEED_VERSION` and update `refreshSeedContent` + `seedUpgrade.test.ts`. Do not wipe checks to refresh copy. New resources are additive; do not replace the resource array.
 - Never reuse an old seed id for a different task or resource.
 
@@ -189,7 +190,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **141 tests / 19 files** (October 2026).
+- Baseline: **177 tests / 23 files** (October 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
@@ -221,12 +222,13 @@ When adding a view, update the router, the shell navigation, the command palette
 
 - `api/chat.ts` is a stateless Vercel Node function. Exclude `/api/` from the SPA rewrite in `vercel.json` or the browser receives `index.html` instead of JSON. Verify a keyless `POST /api/chat` returns `401` after deployment.
 - Fixed upstream `https://velona.in/v1/chat/completions`; fixed model `deepseek/deepseek-v4.1-flash-1017`. The browser cannot choose either. Changing either means changing `api/chat.ts`, `src/services/ai.ts` and the Help copy together.
-- Validate the body: 1–20 non-empty messages, total prompt ≤ 24,000 characters, `max_tokens` ≤ 1,200, temperature within 0–1. Upstream timeout is 55s under `maxDuration = 60`.
+- Validate the body: 1–20 non-empty messages, total prompt ≤ 120,000 characters, `max_tokens` ≤ 8,000, temperature within 0–1. Upstream timeout is 280s under `maxDuration = 300` (Hobby with Fluid compute allows it). The two request shapes share one proxy: a prompt skill is still capped at 24,000 characters and 1,200 tokens by the client, and the week writer at 120,000 and 8,000.
 - Read the key from `Authorization: Bearer`, never a query string. Do not log it, echo it in an error, or include it in a response. Return normalized errors: `401` invalid key, `429` rate limited, `502` upstream unavailable, `504` timeout.
 - The client stores the key under `skillmastery:ai-key` only. It is never exported, merged or backed up, and Settings has a visible **Forget key** action.
-- Prompt skills are editable in `AppData.promptOverrides` (template cap 20,000 characters). The PromptHub shows the exact rendered prompt, character count and output cap; Run is disabled past 24,000 rendered characters.
+- Prompt skills are editable in `AppData.promptOverrides` (template cap 20,000 characters). The PromptHub shows the exact rendered prompt, character count and output cap; Run is disabled past 24,000 rendered characters. `runAi` takes `maxPromptChars` only for week generation; do not raise the prompt-skill ceiling without changing Help.
+- Week generation is one call per week: `buildWeekBrief` → `buildGenerationPrompt` → `runAi` → `parseWeekGeneration` → `checkDayPlans` → explicit Save. `src/services/generateWeek.ts` owns the single in-flight request and the `AbortController`. A draft never enters the store on its own, Week 1 is never generated, and `driftFlags`/`coverageGaps` are advisory while `checkDayPlans` issues block Save.
 - One in-flight request per tab, an explicit Cancel via `AbortController`, and no automatic retries that can multiply spend. Answers are not stored.
-- No streaming. Add it only if the abort path and the 1,200-token cap remain enforced.
+- No streaming. Add it only if the abort path and the token caps remain enforced.
 
 ---
 

@@ -414,7 +414,7 @@ Before calling a UI change done:
 - The boot screen, browser chrome and PWA splash use duplicated colours: inline styles in `index.html`, the theme-colour update in `AppShell`, and `theme_color` / `background_color` in `vite.config.ts`. They are aligned with the board palette now, but must be changed together with the tokens.
 - The Help FAQ is still a two-column card grid. It is acceptable for disclosure rows, but a ruled index is the preferred direction if it grows.
 - Map and Library node cards keep a small number of rounded item surfaces. Do not add more without a reason.
-- The AI runner has no streaming and no conversation history. Adding either means re-verifying the abort path and the 1,200-token cap; do not fake a chat UI in the meantime.
+- The AI runner has no streaming and no conversation history. Adding either means re-verifying the abort path and the token caps (1,200 for a prompt skill, 8,000 for the week writer); do not fake a chat UI in the meantime.
 
 ---
 

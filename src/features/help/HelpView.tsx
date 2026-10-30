@@ -9,6 +9,7 @@ import {
   Keyboard,
   Layers,
   Lock,
+  PenLine,
   RotateCcw,
   ShieldCheck,
   Smartphone,
@@ -210,9 +211,9 @@ export function HelpView() {
             </li>
           </ol>
           <p className="mt-2">
-            Limits: a rendered prompt must stay under 24,000 characters and an answer under 1,200 tokens (600 by
-            default, chosen in the run bar). There is one request in flight at a time, a 55-second upstream timeout,
-            and no automatic retry. <strong>Cancel</strong> aborts the request you started.
+            Limits for a prompt skill: a rendered prompt must stay under 24,000 characters and an answer under 1,200
+            tokens (600 by default, chosen in the run bar). There is one request in flight at a time, a 55-second
+            upstream timeout, and no automatic retry. <strong>Cancel</strong> aborts the request you started.
           </p>
           <p className="mt-2">
             The key lives in this browser's localStorage. Pressing <strong>Run</strong> sends it to this app's own{' '}
@@ -223,6 +224,29 @@ export function HelpView() {
           <p className="mt-2">
             AI answers can be confidently wrong. Treat them as a tutor to interrogate, not an authority — check the
             claim against the docs before it becomes a card.
+          </p>
+        </Faq>
+
+        <Faq id="week-cards" title="How is a week written?" icon={<PenLine size={15} />}>
+          <p>
+            Week 1 is written by hand. Seven cards explain the first Dart program, the money rule and the first push.
+            They are not generated, and the app does not offer to replace them.
+          </p>
+          <p className="mt-2">
+            For a later week, open <strong>Plan</strong>, then the week. Press <strong>Write the seven cards</strong>.
+            The writer reads this week's blueprint, your earlier checkpoints and the failure modes you already met, so
+            the week continues your course instead of starting a new one.
+          </p>
+          <p className="mt-2">
+            A generated week is a draft. You see seven titles, the plan in minutes and anything the checker found. If a
+            card breaks the prose standard, Save stays off until you discard the draft. Warnings about a timer, a
+            forward reference or a missing artefact are advice, so read them before you save.
+          </p>
+          <p className="mt-2">
+            The draft costs one request. Up to 120,000 characters go in, up to 8,000 tokens come back, and the upstream
+            call stops at 280 seconds inside a 300-second function. Nothing is saved until you press{' '}
+            <strong>Save the seven cards</strong>. <strong>Cancel</strong> or <strong>Discard</strong> writes nothing.
+            Generated cards never earn credit; only a checked task does.
           </p>
         </Faq>
 
