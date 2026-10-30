@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   BookOpen,
   Check,
   ExternalLink,
   FileText,
+  GitBranch,
   GraduationCap,
   Library,
   Minus,
@@ -365,6 +367,75 @@ export function VaultView() {
         )}
       </section>
 
+      <section className="mt-5">
+        <SectionHead title="Publish your work openly" eyebrow="Open-source pathway" />
+        <details className="card overflow-hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3.5 [&::-webkit-details-marker]:hidden">
+            <div>
+              <p className="text-[13px] font-semibold">From a local folder to a public repository</p>
+              <p className="faint mt-0.5 text-[11px]">
+                Six steps. Publishing is optional; the course work stays yours.
+              </p>
+            </div>
+            <GitBranch size={16} className="flex-none text-t3" aria-hidden />
+          </summary>
+          <div className="border-t border-line p-3.5">
+            <ol className="list-decimal space-y-2 pl-4 text-[12.5px] leading-relaxed">
+              <li>
+                Make the repository public only when the week's artefact runs. A broken first impression is harder to
+                fix than a late one.
+              </li>
+              <li>
+                Write a README with three parts: what it does, how to run it, and one example output. Add a screenshot
+                when the artefact has a screen.
+              </li>
+              <li>
+                Choose a licence. MIT is the simple default for a learning project. Read the text before you use it;
+                it is a real grant of rights.
+              </li>
+              <li>
+                Check <InlineCode>.gitignore</InlineCode> before the first push. A key, a token or a{' '}
+                <InlineCode>.env</InlineCode> file must never enter the history.
+              </li>
+              <li>
+                Open an issue for the next change, then close it from a commit: <InlineCode>Closes #4</InlineCode>.
+                The history then shows the reason, not only the diff.
+              </li>
+              <li>
+                Tag the last artefact <InlineCode>v1.0.0</InlineCode> and write release notes: what works, what is
+                missing, what you learned.
+              </li>
+            </ol>
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-line pt-2.5">
+              <a
+                className="link inline-flex items-center gap-1 text-[11.5px]"
+                href="https://opensource.guide/how-to-contribute/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open source guide <ExternalLink size={11} aria-hidden />
+              </a>
+              <a
+                className="link inline-flex items-center gap-1 text-[11.5px]"
+                href="https://choosealicense.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Choose a licence <ExternalLink size={11} aria-hidden />
+              </a>
+              <a
+                className="link inline-flex items-center gap-1 text-[11.5px]"
+                href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Write a README <ExternalLink size={11} aria-hidden />
+              </a>
+            </div>
+          </div>
+        </details>
+      </section>
+
       <div className="mt-6 rounded-xl border border-line bg-s2 p-3">
         <div className="flex items-start gap-2">
           <Badge tone="neutral">Offline first</Badge>
@@ -389,6 +460,10 @@ export function VaultView() {
       ) : null}
     </div>
   )
+}
+
+function InlineCode({ children }: { children: ReactNode }) {
+  return <code className="rounded bg-s2 px-1 py-0.5 font-mono text-[11.5px] break-words text-t1">{children}</code>
 }
 
 function VaultStat({

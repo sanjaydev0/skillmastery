@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  ArchiveRestore,
   ArrowRight,
   BookOpen,
   BrainCircuit,
@@ -66,6 +67,13 @@ const VIEW_ICONS: Record<string, typeof LayoutDashboard> = {
   help: HelpCircle,
 }
 
+/** Extra words that should find a view, beyond its label. */
+const VIEW_KEYWORDS: Record<string, string> = {
+  plan: 'syllabus roadmap weeks threads dart flutter design',
+  library: 'open source publish github readme licence license repository docs',
+  progress: 'marks milestones evidence records',
+}
+
 export function CommandPalette() {
   const subjects = useAppStore((state) => state.subjects)
   const books = useAppStore((state) => state.books)
@@ -75,6 +83,7 @@ export function CommandPalette() {
   const setTheme = useAppStore((state) => state.setTheme)
   const setMode = useAppStore((state) => state.setMode)
   const closePalette = useUiStore((state) => state.closePalette)
+  const openTrash = useUiStore((state) => state.openTrash)
   const openSettings = useUiStore((state) => state.openSettings)
   const openSubjectSheet = useUiStore((state) => state.openSubjectSheet)
   const toast = useUiStore((state) => state.toast)
@@ -118,6 +127,18 @@ export function CommandPalette() {
         run: () => {
           closePalette()
           navigate('#/start')
+        },
+      },
+      {
+        id: 'action-trash',
+        group: 'Actions',
+        label: 'Open recently deleted',
+        subtitle: 'Restore a deleted week or track',
+        icon: <ArchiveRestore size={15} />,
+        keywords: 'trash delete restore recover week track undo',
+        run: () => {
+          closePalette()
+          openTrash()
         },
       },
       {
@@ -173,7 +194,7 @@ export function CommandPalette() {
         },
       },
     ]
-  }, [prefs.theme, prefs.mode, closePalette, openSettings, openSubjectSheet, setTheme, setMode, toast])
+  }, [prefs.theme, prefs.mode, closePalette, openSettings, openSubjectSheet, openTrash, setTheme, setMode, toast])
 
   const goEntries: PaletteEntry[] = useMemo(
     () =>
@@ -185,7 +206,7 @@ export function CommandPalette() {
           label: view.label,
           subtitle: `#/${view.id}`,
           icon: <Icon size={15} />,
-          keywords: view.label,
+          keywords: `${view.label} ${VIEW_KEYWORDS[view.id] ?? ''}`,
           run: () => {
             closePalette()
             navigate(view.hash)

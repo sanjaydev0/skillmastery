@@ -14,12 +14,15 @@ interface UiStore {
   settingsOpen: boolean
   subjectSheetOpen: boolean
   moreOpen: boolean
+  trashOpen: boolean
   toasts: ToastItem[]
   openPalette: () => void
   closePalette: () => void
   togglePalette: () => void
   openSettings: () => void
   closeSettings: () => void
+  openTrash: () => void
+  closeTrash: () => void
   openSubjectSheet: () => void
   closeSubjectSheet: () => void
   openMore: () => void
@@ -35,12 +38,15 @@ export const useUiStore = create<UiStore>()((set, get) => ({
   settingsOpen: false,
   subjectSheetOpen: false,
   moreOpen: false,
+  trashOpen: false,
   toasts: [],
   openPalette: () => set({ paletteOpen: true }),
   closePalette: () => set({ paletteOpen: false }),
   togglePalette: () => set((state) => ({ paletteOpen: !state.paletteOpen })),
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+  openTrash: () => set({ trashOpen: true }),
+  closeTrash: () => set({ trashOpen: false }),
   openSubjectSheet: () => set({ subjectSheetOpen: true }),
   closeSubjectSheet: () => set({ subjectSheetOpen: false }),
   openMore: () => set({ moreOpen: true }),

@@ -58,6 +58,7 @@ function resetState(): void {
     settingsOpen: false,
     subjectSheetOpen: false,
     moreOpen: false,
+    trashOpen: false,
     toasts: [],
   })
   try {

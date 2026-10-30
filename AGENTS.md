@@ -28,6 +28,7 @@ The guided course adds a start-date clock, pausable progress, weekly capacity, r
 - Phases 1–5 are shipped: local-first foundation, estimates, the seven-view shell, the reviewed Week 1 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
 - The board-and-paper design pass is shipped (`53e8cab`).
 - Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy, exact AnkiDroid TSV guidance and the last sub-11px fixes.
+- Phase 6 (guided course) is built and covered by tests, pending one deployment: Day 0 and the start clock, pause and resume, schema v5 day slots, seven authored Week 1 cards, AI week generation with a reviewed draft, the three-thread syllabus, optional progress marks, and a restorable trash with a UI.
 - The native Android/AnkiDroid companion is later. There is no Android project in this repo yet.
 
 ---
@@ -53,7 +54,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 177 tests across 23 files
+npm test           # Vitest, currently 192 tests across 27 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -78,7 +79,7 @@ src/
   App.tsx                Route switch, hydration gate, global sheets
   main.tsx               Boot, autosave start, PWA registration
   components/
-    layout/              AppShell, command palette, settings, track switcher, mobile More
+    layout/              AppShell, command palette, settings, trash, track switcher, mobile More
     ui/                  Primitives, Sheet, Toaster
   content/               The day-card style standard and its executable checker
   data/
@@ -191,7 +192,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **177 tests / 23 files** (October 2026).
+- Baseline: **192 tests / 27 files** (October 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
@@ -266,7 +267,7 @@ When adding a view, update the router, the shell navigation, the command palette
 | 4 | Authored Weeks 1–2, 24-week blueprint, Vercel-only hosting | Shipped |
 | — | Board-and-paper design pass | Shipped (`53e8cab`) |
 | 5 | Help expansion, resource library, AI proxy + prompt runner, legibility | Shipped |
-| 6 | Guided course: start clock, pause, day cards, generation | In progress |
+| 6 | Guided course: start clock, pause, day cards, generation, syllabus, marks, trash | Built; deploy pending |
 | 7 | Android/AnkiDroid companion and exact device setup | Later |
 | — | Release signing and store delivery | Course content, Week 17; not app infrastructure |
 
@@ -283,6 +284,7 @@ A change is done when:
 - [ ] `npx tsc -b`, `npm test`, `npm run lint` and `npm run build` pass.
 - [ ] New engine or migration behaviour has a test.
 - [ ] Existing backups, checks/notes and planner settings survive.
+- [ ] A destructive action is recoverable from Recently deleted, with an explicit permanent delete.
 - [ ] It works at 390px and 1280px, light and dark, with reduced motion.
 - [ ] The service worker is cleared for the visual check.
 - [ ] The deployment is READY and the production alias serves the new bundle hash.

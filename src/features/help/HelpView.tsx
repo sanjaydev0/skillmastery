@@ -119,6 +119,10 @@ export function HelpView() {
             History is session-only and keeps the last 50 changes. Reloading the page clears it. Preferences and
             theme changes are not part of undo.
           </p>
+          <p className="mt-2">
+            A deleted week or track is also kept in <strong>Settings → Recently deleted</strong>, even after a reload.
+            Restore brings back its concepts, cards and graph edges. Removing it there is permanent.
+          </p>
         </Faq>
 
         <Faq id="locked" title="What does “locked” mean?" icon={<Lock size={15} />}>
@@ -228,7 +232,7 @@ export function HelpView() {
           </ol>
           <p className="mt-2">
             Limits for a prompt skill: a rendered prompt must stay under 24,000 characters and an answer under 1,200
-            tokens (600 by default, chosen in the run bar). There is one request in flight at a time, a 55-second
+            tokens (600 by default, chosen in the run bar). There is one request in flight at a time, a 280-second
             upstream timeout, and no automatic retry. <strong>Cancel</strong> aborts the request you started.
           </p>
           <p className="mt-2">
@@ -348,6 +352,11 @@ export function HelpView() {
             Every later week ends with a commit and push. Week 2 adds a branch and a pull request; Week 24 adds a
             signed release tag.
           </p>
+          <p className="mt-2">
+            The <a className="link" href="#/library">Library</a> has a six-step open-source pathway: make the repo
+            public when the artefact runs, write a README, choose a licence, check <Code>.gitignore</Code>, close an
+            issue from a commit, then tag the release.
+          </p>
         </Faq>
 
         <Faq id="privacy" title="What leaves this device?" icon={<ShieldCheck size={15} />}>
@@ -356,8 +365,8 @@ export function HelpView() {
             cloud sync or time tracking, and this app makes no telemetry requests.
           </p>
           <p className="mt-2">
-            There is exactly one outbound action, and it is optional: pressing <strong>Run prompt</strong> sends that
-            rendered prompt to Velona through this app's <Code>/api/chat</Code> function. The function forwards the
+            There is exactly one outbound action, and it is optional: pressing <strong>Run prompt</strong> or <strong>Write the
+            seven cards</strong> sends that prompt to Velona through this app's <Code>/api/chat</Code> function. The function forwards the
             request with your key and returns the answer; it does not write the prompt or key to app storage and does
             not log them. Vercel processes the request in transit like any HTTPS host.
           </p>

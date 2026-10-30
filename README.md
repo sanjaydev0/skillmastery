@@ -9,14 +9,14 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 ## What it does
 
 - **Today** — the current week, only today's tasks, one clear "up next" action, review count, and a seven-day completion strip.
-- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and editable weekday/weekend capacity for active and passive work.
-- **Week pages** — seven day cards derived from each task's day, a plain-language "you build" brief, the git habit, outcomes, and the checkpoint.
+- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, editable weekly capacity for active and passive work, and a syllabus that names the Dart, Flutter and design thread of every week.
+- **Week pages** — seven day cards for every day slot, a plain-language "you build" brief, the three threads, the git habit, outcomes, and the checkpoint. Week 1 is authored; a later week can be written from its blueprint, reviewed and then saved.
 - **Map** — a prerequisite knowledge graph with Primitive → Concept → Failure Mode points, freshness and repair drills.
 - **Practice** — the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
-- **Library** — docs, the shared 30-minute canon, reading progress and saved links.
-- **Progress** — completed estimate ranges, phase rollups, checkpoints and concept mastery.
-- **Syllabus** — the whole 24-week route with the Dart, Flutter and design thread for every week, inside Plan.
+- **Library** — docs, the shared 30-minute canon, reading progress, saved links and a six-step open-source pathway from a public repository to a v1.0.0 release.
+- **Progress** — completed estimate ranges, phase rollups, checkpoints, concept mastery, and optional evidence marks.
 - **Progress marks** — optional evidence marks (first checkpoint, ten tasks, ten concepts) that never count days or streaks. Turn them off in Settings.
+- **Recently deleted** — every week or track you delete waits in a 20-item trash. Restore brings back its concepts, cards and graph edges; removal there is permanent.
 - **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups, undo, exact AnkiDroid TSV import steps and the optional AI helper.
 - **Command palette** — `Cmd/Ctrl+K` searches weeks, nodes, cards, resources and books across every track.
 - **Installable PWA** — offline app shell, cached routes, maskable icons and explicit Android install steps.
@@ -31,6 +31,7 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 - Every passive block is paired with an active output; the active share rises from roughly 45/55 to 70/30 over six months.
 - A week opens only after the previous week's blind checkpoint passes, or an audited override is recorded.
 - A checkpoint passes at an average of **≥ 4.0** with no category below **3**.
+- Deleting is recoverable. A week or track goes to Recently deleted, and restoring it reconnects the prerequisite graph. Only an explicit permanent delete removes it.
 
 ## Project docs
 

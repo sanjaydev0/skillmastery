@@ -38,6 +38,10 @@ describe('application smoke tests', () => {
     fireEvent.click(marks)
     expect(useAppStore.getState().journey.gameLayer).toBe(false)
 
+    fireEvent.click(within(dialog).getByRole('button', { name: /Open recently deleted/ }))
+    const trash = await screen.findByRole('dialog', { name: 'Recently deleted' })
+    expect(within(trash).getByText('Nothing in the trash')).toBeInTheDocument()
+
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close panel' }))
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Settings' })).not.toBeInTheDocument())
   })
@@ -53,6 +57,16 @@ describe('application smoke tests', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument())
+  })
+
+  it('finds the library when searching for an open-source pathway', async () => {
+    render(<App />)
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+    const palette = await screen.findByRole('dialog', { name: 'Command palette' })
+    fireEvent.change(within(palette).getByLabelText('Search everything'), { target: { value: 'open source' } })
+    await waitFor(() =>
+      expect(within(palette).getByRole('option', { name: /Library/ })).toBeInTheDocument(),
+    )
   })
 
   it('navigates with the hash router', async () => {

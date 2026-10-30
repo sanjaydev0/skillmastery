@@ -1,7 +1,7 @@
 /**
  * Device-local Velona client. The key lives in localStorage, never in AppData,
  * a backup, a log or the server. The browser sends it to the same-origin
- * /api/chat proxy only when the learner explicitly runs a prompt.
+ * /api/chat proxy only when the learner runs a prompt or writes one week.
  */
 
 export const AI_MODEL = 'deepseek/deepseek-v4.1-flash-1017'

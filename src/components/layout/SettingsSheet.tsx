@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ChangeEvent } from 'react'
 import {
+  ArchiveRestore,
   Database,
   Download,
   FileJson,
@@ -97,8 +98,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const gameLayer = useAppStore((state) => state.journey.gameLayer)
   const setGameLayer = useAppStore((state) => state.setGameLayer)
   const importData = useAppStore((state) => state.importData)
+  const trash = useAppStore((state) => state.trash)
   const resetToSeed = useAppStore((state) => state.resetToSeed)
   const toast = useUiStore((state) => state.toast)
+  const openTrash = useUiStore((state) => state.openTrash)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [estimate, setEstimate] = useState<StorageEstimate | null>(null)
@@ -682,6 +685,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
             ) : null}
+          </div>
+        </section>
+
+        <section>
+          <SectionHead
+            title="Recently deleted"
+            eyebrow="Restore a week or a track"
+            action={<Badge tone={trash.length > 0 ? 'warn' : 'neutral'}>{trash.length} saved</Badge>}
+          />
+          <div className="rounded-xl border border-line bg-s2 p-3">
+            <p className="text-[12px] font-semibold">Deleting is recoverable</p>
+            <p className="faint mt-0.5 text-[11.5px] leading-relaxed">
+              A deleted week keeps its concepts, cards and graph edges. A deleted track keeps its weeks. The last 20
+              deletions wait here on this device.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" icon={<ArchiveRestore size={13} />} onClick={openTrash}>
+                {trash.length > 0 ? `Open recently deleted (${trash.length})` : 'Open recently deleted'}
+              </Button>
+              <span className="faint text-[11px]">Nothing is sent anywhere.</span>
+            </div>
           </div>
         </section>
 

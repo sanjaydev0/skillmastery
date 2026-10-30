@@ -708,9 +708,13 @@ function WeekEditForm({ week, onClose }: { week: Week; onClose: () => void }) {
           size="sm"
           icon={<Trash2 size={13} />}
           onClick={() => {
-            if (window.confirm(`Delete Week ${week.weekNumber} and all of its nodes and cards? This cannot be undone.`)) {
+            if (
+              window.confirm(
+                `Delete Week ${week.weekNumber} and its concepts and cards? It moves to Recently deleted, where you can restore it.`,
+              )
+            ) {
               deleteWeek(week.id)
-              toast(`Week ${week.weekNumber} deleted.`, 'info')
+              toast(`Week ${week.weekNumber} moved to Recently deleted. Restore it from Settings.`, 'info', 7000)
               onClose()
             }
           }}
