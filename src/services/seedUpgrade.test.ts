@@ -96,14 +96,14 @@ describe('seed content refresh', () => {
       'fl-w1': [
         {
           day: 1,
-          title: 'Read variables',
+          title: 'My own day one',
           summary: 'A binding points at an object.',
           resources: [],
           tasks: ['Write three bindings'],
           direction: 'Name the type before the value.',
           designNote: 'One number owns the screen.',
           estMinutes: 45,
-          origin: 'authored',
+          origin: 'user',
         },
       ],
     }
@@ -130,9 +130,31 @@ describe('seed content refresh', () => {
     const { data: refreshed } = refreshSeedContent(data)
     expect(refreshed.seedVersion).toBe(SEED_VERSION)
     expect(refreshed.journey).toEqual(data.journey)
-    expect(refreshed.dayPlans).toEqual(data.dayPlans)
     expect(refreshed.trash).toEqual(data.trash)
     expect(refreshed.planner).toEqual(data.planner)
+    // The learner's own card wins on day 1, and the six authored cards arrive.
+    expect(refreshed.dayPlans['fl-w1']).toHaveLength(7)
+    expect(refreshed.dayPlans['fl-w1']![0]!.title).toBe('My own day one')
+    expect(refreshed.dayPlans['fl-w1']![0]!.origin).toBe('user')
+    expect(refreshed.dayPlans['fl-w1']!.slice(1).every((plan) => plan.origin === 'authored')).toBe(true)
+  })
+
+  it('replaces a stale authored card but keeps a generated one', () => {
+    const data = createSeedData()
+    data.seedVersion = 1
+    const freshWeekOne = createSeedData().dayPlans['fl-w1']!
+    data.dayPlans = {
+      'fl-w1': [
+        { ...freshWeekOne[0]!, title: 'Old authored title' },
+        { ...freshWeekOne[1]!, origin: 'ai', title: 'Generated day two' },
+      ],
+    }
+    const { data: refreshed } = refreshSeedContent(data)
+    const cards = refreshed.dayPlans['fl-w1']!
+    expect(cards).toHaveLength(7)
+    expect(cards[0]!.title).toBe(freshWeekOne[0]!.title)
+    expect(cards[1]!.title).toBe('Generated day two')
+    expect(cards[1]!.origin).toBe('ai')
   })
 
   it('is a no-op once the seed version is current', () => {

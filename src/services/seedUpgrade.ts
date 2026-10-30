@@ -60,9 +60,30 @@ function mergeResources(current: Subject['resources'], fresh: Subject['resources
 }
 
 /**
+ * Authored day cards are content, so a seed bump replaces a stale authored card
+ * with the corrected one. A learner edit or a generated card is progress-adjacent
+ * work and always wins. A week with no cards gains the authored seven.
+ */
+function mergeDayPlans(
+  current: AppData['dayPlans'],
+  fresh: AppData['dayPlans'],
+): AppData['dayPlans'] {
+  const result: AppData['dayPlans'] = { ...current }
+  for (const [weekId, plans] of Object.entries(fresh)) {
+    const byDay = new Map((result[weekId] ?? []).map((plan) => [plan.day, plan]))
+    for (const plan of plans) {
+      const found = byDay.get(plan.day)
+      if (!found || found.origin === 'authored') byDay.set(plan.day, plan)
+    }
+    result[weekId] = [...byDay.values()].sort((a, b) => a.day - b.day)
+  }
+  return result
+}
+
+/**
  * Seed content is curriculum, progress is user data. A version bump refreshes
- * authored text and day plans while preserving checks, checkpoint history,
- * notes, cards, resources and any week the learner added themselves.
+ * authored text and authored day plans while preserving checks, checkpoint
+ * history, notes, cards, resources and any week the learner added themselves.
  */
 export function refreshSeedContent(data: AppData): SeedRefreshResult {
   if (data.seedVersion >= SEED_VERSION) return { data, changed: false }
@@ -82,7 +103,13 @@ export function refreshSeedContent(data: AppData): SeedRefreshResult {
   })
 
   return {
-    data: { ...data, subjects, seedVersion: SEED_VERSION, updatedAt: Date.now() },
+    data: {
+      ...data,
+      subjects,
+      dayPlans: mergeDayPlans(data.dayPlans, seed.dayPlans),
+      seedVersion: SEED_VERSION,
+      updatedAt: Date.now(),
+    },
     changed: true,
   }
 }
