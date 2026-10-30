@@ -94,6 +94,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const setMode = useAppStore((state) => state.setMode)
   const planner = useAppStore((state) => state.planner)
   const updatePlanner = useAppStore((state) => state.updatePlanner)
+  const gameLayer = useAppStore((state) => state.journey.gameLayer)
+  const setGameLayer = useAppStore((state) => state.setGameLayer)
   const importData = useAppStore((state) => state.importData)
   const resetToSeed = useAppStore((state) => state.resetToSeed)
   const toast = useUiStore((state) => state.toast)
@@ -311,6 +313,42 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <p className="faint mt-1.5 text-[11.5px]">
             Mode filters the daily rhythm and the week checklist. It does not change stored mastery.
           </p>
+        </section>
+
+        <section>
+          <SectionHead
+            title="Progress marks"
+            eyebrow="Optional · evidence, not a streak"
+            action={<Badge tone={gameLayer ? 'good' : 'neutral'}>{gameLayer ? 'On' : 'Off'}</Badge>}
+          />
+          <div className="rounded-xl border border-line bg-s2 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[12px] font-medium">Show marks on Progress</p>
+                <p className="faint mt-0.5 text-[11.5px] leading-relaxed">
+                  A mark records work you finished, such as the first checkpoint or ten checked tasks. No mark counts
+                  days or streaks, so a pause never takes one away.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={gameLayer}
+                aria-label="Show progress marks"
+                onClick={() => setGameLayer(!gameLayer)}
+                className={`relative h-6 w-11 flex-none rounded-full border transition ${
+                  gameLayer ? 'border-accent/50 bg-accent' : 'border-line bg-s3'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-4.5 w-4.5 rounded-full bg-s1 transition ${
+                    gameLayer ? 'left-[22px]' : 'left-0.5'
+                  }`}
+                  aria-hidden
+                />
+              </button>
+            </div>
+          </div>
         </section>
 
         <section>

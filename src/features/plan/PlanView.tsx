@@ -78,6 +78,8 @@ export function PlanView() {
 
       <CapacityEditor />
 
+      <Syllabus subject={subject} />
+
       {orderedWeeks.length === 0 ? (
         <div className="card mt-4 p-6 text-center">
           <p className="text-[13.5px] font-semibold">This track has no weeks yet</p>
@@ -221,6 +223,71 @@ function WeekPlanCard({
         </span>
       </div>
     </a>
+  )
+}
+
+function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> }) {
+  const lessons = subject.weeks.length
+  return (
+    <details className="card mt-4 overflow-hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3.5 [&::-webkit-details-marker]:hidden">
+        <div>
+          <p className="eyebrow">Syllabus</p>
+          <p className="mt-0.5 text-[13px] font-semibold">Every week across Dart, Flutter and design</p>
+          <p className="faint mt-0.5 text-[11px]">
+            {lessons} weeks. Each row names the three threads, so design never drops out of a coding week.
+          </p>
+        </div>
+        <ChevronRight size={16} className="flex-none text-t3" aria-hidden />
+      </summary>
+      <div className="space-y-4 border-t border-line p-3.5">
+        {subject.phases.map((phase) => {
+          const weeks = subject.weeks
+            .filter((week) => week.phaseId === phase.id)
+            .sort((a, b) => a.weekNumber - b.weekNumber)
+          if (weeks.length === 0) return null
+          return (
+            <section key={phase.id} aria-label={`Syllabus: ${phase.name}`}>
+              <p className="text-[12px] font-semibold">{phase.name.replace(/^Phase \d+ · /, '')}</p>
+              <ul className="mt-1.5 divide-y divide-line rounded-xl border border-line">
+                {weeks.map((week) => {
+                  const blueprint = blueprintFor(subject.id, week.weekNumber)
+                  return (
+                    <li key={week.id}>
+                      <a
+                        href={`#/plan/${week.id}`}
+                        className="block px-2.5 py-2 transition hover:bg-s2"
+                        aria-label={`Open Week ${week.weekNumber}: ${week.title}`}
+                      >
+                        <span className="flex items-baseline gap-2">
+                          <span className="num flex-none text-[11px] font-semibold text-t3">
+                            W{String(week.weekNumber).padStart(2, '0')}
+                          </span>
+                          <span className="min-w-0 text-[12.5px] font-medium">{week.title}</span>
+                        </span>
+                        {blueprint ? (
+                          <span className="mt-1 block space-y-0.5 pl-[30px]">
+                            <span className="faint block text-[11px] leading-snug">
+                              <span className="font-medium text-t2">Dart</span> {blueprint.dart}
+                            </span>
+                            <span className="faint block text-[11px] leading-snug">
+                              <span className="font-medium text-t2">Flutter</span> {blueprint.flutter}
+                            </span>
+                            <span className="faint block text-[11px] leading-snug">
+                              <span className="font-medium text-t2">Design</span> {blueprint.design}
+                            </span>
+                          </span>
+                        ) : null}
+                      </a>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )
+        })}
+      </div>
+    </details>
   )
 }
 

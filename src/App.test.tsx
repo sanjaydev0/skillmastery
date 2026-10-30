@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import App from './App'
+import { useAppStore } from './store/AppStore'
 
 describe('application smoke tests', () => {
   it('opens Day 0, starts the clock, then shows Today', async () => {
@@ -31,6 +32,11 @@ describe('application smoke tests', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: /Light/ }))
     expect(localStorage.getItem('skillmastery:theme')).toBe('light')
     expect(within(dialog).getByRole('button', { name: /Light/ })).toHaveAttribute('aria-pressed', 'true')
+
+    const marks = within(dialog).getByRole('switch', { name: 'Show progress marks' })
+    expect(marks).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(marks)
+    expect(useAppStore.getState().journey.gameLayer).toBe(false)
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close panel' }))
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Settings' })).not.toBeInTheDocument())

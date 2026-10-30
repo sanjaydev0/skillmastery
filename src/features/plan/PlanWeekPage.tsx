@@ -130,6 +130,39 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
         </div>
       ) : null}
 
+      {blueprint ? (
+        <section className="card mt-2 p-3" aria-labelledby="threads-heading">
+          <p className="eyebrow">Three threads, one week</p>
+          <h2 id="threads-heading" className="mt-0.5 text-[13px] font-semibold">
+            Dart, Flutter and design
+          </h2>
+          <dl className="mt-2 space-y-1.5">
+            <div className="flex gap-2">
+              <dt className="w-14 flex-none text-[11px] font-medium text-t3">Dart</dt>
+              <dd className="min-w-0 text-[12px] leading-snug">{blueprint.dart}</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-14 flex-none text-[11px] font-medium text-t3">Flutter</dt>
+              <dd className="min-w-0 text-[12px] leading-snug">{blueprint.flutter}</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-14 flex-none text-[11px] font-medium text-t3">Design</dt>
+              <dd className="min-w-0 text-[12px] leading-snug">{blueprint.design}</dd>
+            </div>
+          </dl>
+          {blueprint.termsIntroduced.length > 0 ? (
+            <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-line pt-2">
+              <span className="faint mr-1 text-[11px]">New terms</span>
+              {blueprint.termsIntroduced.map((term) => (
+                <Badge key={term} tone="neutral">
+                  {term}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="ledger mt-3" aria-label="Week totals">
         <WeekStat label="Planned" value={formatTotal(summary.planned)} meta={`${week.checklist.length} tasks`} />
         <WeekStat label="Done" value={formatTotal(summary.done)} meta={`${doneTasks} checked`} />

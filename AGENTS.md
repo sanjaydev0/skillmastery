@@ -133,6 +133,7 @@ Rules:
 9. **Prompt skills** are authored in `src/data/prompts.ts`; learner edits live in `AppData.promptOverrides` and win a backup merge. The Velona key is not AppData: it lives only under `skillmastery:ai-key` in localStorage and never enters a backup or export.
 10. **Day cards are stored, rollups are derived.** `dayPlans[weekId]` holds the editorial layer; `summariseWeek`/`summariseSubject` are the only places that compute capacity, totals and overload. Never store a computed total.
 11. **The clock is derived, the start date is stored.** `courseDay()`, `courseWeek()` and `consistency()` in `src/lib/courseClock.ts` read `journey`. A pause starts the next calendar day, so pausing never moves the course day backwards. Consistency is a ratio, never a streak.
+12. **Marks are derived, never stored.** `milestonesFor()` in `src/engine/milestones.ts` reads checked tasks, passed gates and mastered nodes. A mark never counts days, sessions or streaks, so a pause cannot remove one. `journey.gameLayer` only hides the surface.
 
 ### Persistence
 
@@ -161,7 +162,7 @@ Rules:
 - Flutter Week 1: 15 tasks spread across all seven days, with seven authored day cards, written for a 13-year-old. Each day pairs passive input with active output.
 - Every day card follows `docs/CONTENT-STYLE.md`: one idea, a five-minute start, one concrete example, a named failure and an observable check. `checkDayPlans()` in `src/content/style.ts` enforces the mechanical rules in tests.
 - Week shape: Days 1–2 orient, 3–4 build/debug, 5 test, 6 apply, 7 buffer + checkpoint.
-- Every week names an artefact (“You build”), a git habit, a one-sentence anchor, outcomes, rabbit holes, and a blind checkpoint.
+- Every week names an artefact (“You build”), a git habit, a one-sentence anchor, outcomes, rabbit holes, and a blind checkpoint. The blueprint carries three threads (Dart, Flutter, design) for all 24 weeks; a week page shows all three, and the Plan syllabus lists them together. A coding week without a design thread is a content bug.
 - Git is threaded through the whole course: Week 1 first push, Week 2 branch + PR, every later week commit + push, Week 24 signed release tag.
 - Estimates must fit the default capacity: 720 active / 420 passive per week across seven days, which is 103 / 60 per day. A week that cannot fit is a content bug, not a UI warning.
 - Technical terms are defined on first use. “Go deeper” carries the compiler/runtime detail.

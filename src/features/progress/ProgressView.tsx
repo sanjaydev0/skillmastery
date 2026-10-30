@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import {
   BrainCircuit,
+  CheckCircle2,
   ChevronRight,
+  Circle,
   Target,
 } from 'lucide-react'
 import type { Week } from '../../types/schema'
@@ -9,6 +11,8 @@ import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { overallMastery, weekStatus } from '../../engine/gating'
 import { formatTotal, summariseSubject, summariseWeek } from '../../engine/estimates'
 import { dueCards } from '../../engine/srs'
+import { milestonesFor } from '../../engine/milestones'
+import { formatShortDate } from '../../lib/dates'
 import { percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 import { Badge, Button, ProgressBar, ProgressRing, WeekBadge } from '../../components/ui/primitives'
@@ -18,6 +22,7 @@ export function ProgressView() {
   const overrides = useAppStore((state) => state.overrides)
   const planner = useAppStore((state) => state.planner)
   const startWeekday = useAppStore((state) => state.journey.startWeekday)
+  const gameLayer = useAppStore((state) => state.journey.gameLayer)
 
   const course = useMemo(() => summariseSubject(subject), [subject])
   const mastered = subject.nodes.filter((node) => node.status === 'mastered').length
@@ -33,6 +38,8 @@ export function ProgressView() {
     () => new Map(orderedWeeks.map((week) => [week.id, summariseWeek(week, planner, startWeekday)])),
     [orderedWeeks, planner, startWeekday],
   )
+  const marks = useMemo(() => milestonesFor(subject), [subject])
+  const earned = marks.filter((mark) => mark.earned).length
 
   return (
     <div>
@@ -98,6 +105,53 @@ export function ProgressView() {
           meta={`${percent(overallMastery(subject.nodes))}% mastered`}
         />
       </section>
+
+      {gameLayer ? (
+        <section className="card mt-4 p-3.5" aria-labelledby="marks-heading">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="eyebrow">Evidence you already earned</p>
+              <h2 id="marks-heading" className="h2 mt-0.5">
+                Marks
+              </h2>
+              <p className="faint mt-0.5 text-[11px]">
+                A mark records work you finished. No mark counts days, so a pause never takes one away.
+              </p>
+            </div>
+            <span className="faint num text-[11.5px]">
+              {earned} of {marks.length}
+            </span>
+          </div>
+          <ul className="mt-2.5 grid gap-1.5 sm:grid-cols-2">
+            {marks.map((mark) => (
+              <li
+                key={mark.id}
+                className={`flex items-start gap-2 rounded-xl border px-2.5 py-2 ${
+                  mark.earned ? 'border-good/30 bg-good-soft' : 'border-line bg-s1'
+                }`}
+              >
+                {mark.earned ? (
+                  <CheckCircle2 size={14} className="mt-0.5 flex-none text-good" aria-hidden />
+                ) : (
+                  <Circle size={14} className="mt-0.5 flex-none text-t3" aria-hidden />
+                )}
+                <span className="min-w-0">
+                  <span className="block text-[12px] font-medium">{mark.title}</span>
+                  <span className="faint block text-[11px] leading-snug">
+                    {mark.earned
+                      ? mark.earnedAt
+                        ? `Earned ${formatShortDate(mark.earnedAt)}`
+                        : 'Earned'
+                      : mark.progress && mark.progress.total > 1
+                        ? `${mark.detail} ${mark.progress.done} of ${mark.progress.total}.`
+                        : mark.detail}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="mt-4" aria-labelledby="phase-progress-heading">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b border-line pb-2">

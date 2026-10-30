@@ -15,6 +15,8 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 - **Practice** — the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
 - **Library** — docs, the shared 30-minute canon, reading progress and saved links.
 - **Progress** — completed estimate ranges, phase rollups, checkpoints and concept mastery.
+- **Syllabus** — the whole 24-week route with the Dart, Flutter and design thread for every week, inside Plan.
+- **Progress marks** — optional evidence marks (first checkpoint, ten tasks, ten concepts) that never count days or streaks. Turn them off in Settings.
 - **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups, undo, exact AnkiDroid TSV import steps and the optional AI helper.
 - **Command palette** — `Cmd/Ctrl+K` searches weeks, nodes, cards, resources and books across every track.
 - **Installable PWA** — offline app shell, cached routes, maskable icons and explicit Android install steps.

@@ -15,6 +15,7 @@ import {
   Smartphone,
   Sparkles,
   Timer,
+  Trophy,
   Wand2,
 } from 'lucide-react'
 import { useUiStore } from '../../store/uiStore'
@@ -139,6 +140,21 @@ export function HelpView() {
           <p className="mt-2">
             It passes when the average is at least 4.0 and no area is below 3. Attempts are logged with the date and
             average, so you can see progress instead of guessing.
+          </p>
+        </Faq>
+
+        <Faq id="marks" title="What are progress marks?" icon={<Trophy size={15} />}>
+          <p>
+            Marks are optional. Turn them on in <strong>Settings → Progress marks</strong>. They appear on the Progress
+            page.
+          </p>
+          <p className="mt-2">
+            A mark records a fact about work you finished: one task checked, the first checkpoint cleared, ten concepts
+            mastered. It never counts days, streaks, sessions or time in the app.
+          </p>
+          <p className="mt-2">
+            A missed day cannot take a mark away, and a pause does not reset one. The checklist stays the evidence; a
+            mark is only a second way to read it.
           </p>
         </Faq>
 
