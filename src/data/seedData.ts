@@ -31,6 +31,7 @@ export function createSeedData(): AppData {
       theme: 'dark',
       mode: 'active',
       sidebarCollapsed: false,
+      localStorageThresholdMB: 4,
     },
     planner: { ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] },
     promptOverrides: {},

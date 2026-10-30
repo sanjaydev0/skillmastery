@@ -186,6 +186,7 @@ const prefsSchema = z.object({
   sidebarCollapsed: z.boolean().default(false),
   lastExportAt: z.number().optional(),
   lastBackupReminderAt: z.number().optional(),
+  localStorageThresholdMB: z.number().min(1).max(5).default(4),
 })
 
 const overridesSchema = z.object({
@@ -282,7 +283,7 @@ export const appDataSchema = z.object({
   books: z.array(bookSchema).default([]),
   dailyLog: z.record(z.string(), dayLogSchema).default({}),
   overrides: overridesSchema.default({ weeks: {}, nodes: {} }),
-  prefs: prefsSchema.default({ theme: 'dark', mode: 'active', sidebarCollapsed: false }),
+  prefs: prefsSchema.default({ theme: 'dark', mode: 'active', sidebarCollapsed: false, localStorageThresholdMB: 4 }),
   planner: plannerSchema.default(() => ({ ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] })),
   promptOverrides: z.record(z.string(), z.string().max(PROMPT_TEMPLATE_MAX_CHARS)).default({}),
   journey: journeySchema.default(() => ({ ...DEFAULT_JOURNEY, pauses: [] })),

@@ -96,6 +96,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const setMode = useAppStore((state) => state.setMode)
   const planner = useAppStore((state) => state.planner)
   const updatePlanner = useAppStore((state) => state.updatePlanner)
+  const updatePrefs = useAppStore((state) => state.updatePrefs)
   const gameLayer = useAppStore((state) => state.journey.gameLayer)
   const setGameLayer = useAppStore((state) => state.setGameLayer)
   const importData = useAppStore((state) => state.importData)
@@ -585,9 +586,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                     Protection asks the browser to keep this origin from automatic eviction.
                   </span>
                 </div>
+                <div className="mt-3">
+                  <label className="flex items-center justify-between gap-2">
+                    <span className="text-[11.5px] font-medium">localStorage mirror threshold</span>
+                    <span className="num text-[11px] text-t3">{prefs.localStorageThresholdMB ?? 4} MB</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="1"
+                    value={prefs.localStorageThresholdMB ?? 4}
+                    onChange={(e) => updatePrefs({ localStorageThresholdMB: Number(e.target.value) })}
+                    className="mt-1.5 w-full accent-accent"
+                  />
+                  <p className="mt-1 text-[11px] text-t3">
+                    Data above this size uses IndexedDB only. localStorage mirror provides faster reads but is limited to ~5MB.
+                  </p>
+                </div>
                 {!mirrorEnabled && (
                   <p className="mt-2.5 text-[11px] text-t3">
-                    localStorage mirror disabled · data exceeds 3MB threshold · IndexedDB remains the source of truth
+                    localStorage mirror disabled · data exceeds {prefs.localStorageThresholdMB ?? 4}MB threshold · IndexedDB remains the source of truth
                   </p>
                 )}
               </>

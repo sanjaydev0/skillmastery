@@ -344,6 +344,8 @@ export interface AppPrefs {
   sidebarCollapsed: boolean
   lastExportAt?: number
   lastBackupReminderAt?: number
+  /** localStorage mirror threshold in MB (1-5, default 4). IndexedDB is always primary. */
+  localStorageThresholdMB?: number
 }
 
 export interface Overrides {

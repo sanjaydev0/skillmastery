@@ -109,6 +109,7 @@ async function removeLegacyCopies(): Promise<void> {
  */
 async function migrateLegacy(data: AppData): Promise<void> {
   const serialised = JSON.stringify(data)
+  const thresholdMB = data.prefs?.localStorageThresholdMB ?? 4
   let written = false
   try {
     await set(DATA_KEY, serialised, DB_STORE)
@@ -116,7 +117,7 @@ async function migrateLegacy(data: AppData): Promise<void> {
   } catch {
     // Try the localStorage mirror below.
   }
-  if (mirror(serialised)) written = true
+  if (mirror(serialised, thresholdMB)) written = true
   if (!written) return
   await removeLegacyCopies()
 }
@@ -169,9 +170,10 @@ export async function loadPersisted(): Promise<LoadResult> {
 
 export async function savePersisted(data: AppData): Promise<'indexeddb' | 'localstorage'> {
   const serialised = JSON.stringify(data)
+  const thresholdMB = data.prefs?.localStorageThresholdMB ?? 4
   try {
     await set(DATA_KEY, serialised, DB_STORE)
-    mirror(serialised)
+    mirror(serialised, thresholdMB)
     return 'indexeddb'
   } catch {
     // Fall back to localStorage so a save is never silently lost.
@@ -180,9 +182,10 @@ export async function savePersisted(data: AppData): Promise<'indexeddb' | 'local
   }
 }
 
-function mirror(serialised: string): boolean {
+function mirror(serialised: string, thresholdMB: number = 4): boolean {
   try {
-    if (serialised.length < 3_000_000) {
+    const thresholdBytes = thresholdMB * 1_000_000
+    if (serialised.length < thresholdBytes) {
       localStorage.setItem(LOCAL_DATA_KEY, serialised)
       return true
     }
@@ -282,7 +285,9 @@ export async function isLocalStorageMirrorEnabled(): Promise<boolean> {
     const data = await get<AppData>(DATA_KEY, DB_STORE)
     if (!data) return true
     const serialised = JSON.stringify(data)
-    return serialised.length < 3_000_000
+    const thresholdMB = data.prefs?.localStorageThresholdMB ?? 4
+    const thresholdBytes = thresholdMB * 1_000_000
+    return serialised.length < thresholdBytes
   } catch {
     return true
   }
