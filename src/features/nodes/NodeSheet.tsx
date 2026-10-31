@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
   ArrowRight,
@@ -59,13 +59,6 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
   const [notes, setNotes] = useState(node?.notes ?? '')
   const [confirmKp, setConfirmKp] = useState<string | null>(null)
   const [confirmUnlock, setConfirmUnlock] = useState(false)
-
-  useEffect(() => {
-    setEditing(false)
-    setNotes(node?.notes ?? '')
-    setConfirmKp(null)
-    setConfirmUnlock(false)
-  }, [node?.id])
 
   const missingPrereqs = useMemo(
     () => (node ? missingNodePrereqs(node, subject.nodes) : []),

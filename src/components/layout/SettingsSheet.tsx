@@ -26,7 +26,9 @@ import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { migrateAppData, parseBackupJson } from '../../services/validation'
 import {
+  DEFAULT_STORAGE_GUARD_MB,
   isLocalStorageMirrorEnabled,
+  isOverStorageGuard,
   requestPersistentStorage,
   storageEstimate,
   type StorageEstimate,
@@ -144,6 +146,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   }, [])
 
   const backupStale = !prefs.lastExportAt || Date.now() - prefs.lastExportAt > WEEK_MS
+  const overGuard = isOverStorageGuard(estimate?.usage ?? 0, prefs.storageGuardMB)
   const daily = dailyCapacity(planner)
 
   const toggleStudyDay = (day: Weekday) => {
@@ -607,25 +610,35 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="mt-3">
                   <label className="flex items-center justify-between gap-2">
-                    <span className="text-[11.5px] font-medium">localStorage mirror threshold</span>
-                    <span className="num text-[11px] text-t3">{prefs.localStorageThresholdMB ?? 4} MB</span>
+                    <span className="text-[11.5px] font-medium">Storage guard</span>
+                    <span className="num text-[11px] text-t3">{prefs.storageGuardMB ?? DEFAULT_STORAGE_GUARD_MB} MB</span>
                   </label>
                   <input
                     type="range"
-                    min="1"
-                    max="5"
-                    step="1"
-                    value={prefs.localStorageThresholdMB ?? 4}
-                    onChange={(e) => updatePrefs({ localStorageThresholdMB: Number(e.target.value) })}
+                    min="5"
+                    max="200"
+                    step="5"
+                    value={prefs.storageGuardMB ?? DEFAULT_STORAGE_GUARD_MB}
+                    onChange={(e) => updatePrefs({ storageGuardMB: Number(e.target.value) })}
+                    aria-label="Storage guard in megabytes"
+                    aria-valuetext={`${prefs.storageGuardMB ?? DEFAULT_STORAGE_GUARD_MB} megabytes`}
                     className="mt-1.5 w-full accent-accent"
                   />
                   <p className="mt-1 text-[11px] text-t3">
-                    Data above this size uses IndexedDB only. localStorage mirror provides faster reads but is limited to ~5MB.
+                    You are warned when this device's saved data passes the guard, up to 200 MB. The data lives in
+                    IndexedDB, so the guard is a reminder to export a backup, never a write limit.
                   </p>
+                  {overGuard ? (
+                    <p className="mt-2 rounded-lg border border-warn/30 bg-warn-soft px-2 py-1.5 text-[11px] text-t1">
+                      Saved data is above the guard. Export a JSON backup, then delete a track or a week you no longer
+                      need.
+                    </p>
+                  ) : null}
                 </div>
                 {!mirrorEnabled && (
                   <p className="mt-2.5 text-[11px] text-t3">
-                    localStorage mirror disabled · data exceeds {prefs.localStorageThresholdMB ?? 4}MB threshold · IndexedDB remains the source of truth
+                    localStorage mirror off · saved data is past the 5 MB mirror ceiling · IndexedDB remains the source
+                    of truth
                   </p>
                 )}
               </>

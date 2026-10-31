@@ -4,13 +4,17 @@ import { createSeedData } from '../data/seedData'
 import type { AppData, Subject } from '../types/schema'
 import { SCHEMA_VERSION } from '../types/schema'
 import {
+  DEFAULT_STORAGE_GUARD_MB,
   LOCAL_DATA_KEY,
+  LOCAL_MIRROR_CAP_MB,
   LOCAL_THEME_KEY,
   MIGRATION_BACKUP_KEY,
   MIGRATION_BACKUP_META_KEY,
   clearPersisted,
+  isOverStorageGuard,
   loadPersisted,
   readThemePreference,
+  savePersisted,
 } from './storage'
 
 const DATA_KEY = 'app-data-v1'
@@ -105,5 +109,32 @@ describe('SkillMastery storage namespace', () => {
     expect(readThemePreference()).toBe('light')
     expect(localStorage.getItem(LOCAL_THEME_KEY)).toBe('light')
     expect(localStorage.getItem('mh:theme')).toBeNull()
+  })
+})
+
+describe('storage guard', () => {
+  it('is advisory and configurable up to 200 MB', () => {
+    expect(isOverStorageGuard(19_000_000, 20)).toBe(false)
+    expect(isOverStorageGuard(21_000_000, 20)).toBe(true)
+    expect(isOverStorageGuard(150_000_000, 200)).toBe(false)
+    expect(isOverStorageGuard(201_000_000, 200)).toBe(true)
+    expect(isOverStorageGuard(25_000_000)).toBe(true)
+  })
+
+  it('keeps the guard default well under the 200 MB ceiling', () => {
+    expect(DEFAULT_STORAGE_GUARD_MB).toBe(20)
+    expect(LOCAL_MIRROR_CAP_MB).toBe(5)
+  })
+
+  it('never writes a mirror larger than the browser ceiling', async () => {
+    const big = fixture('Big track', 900)
+    big.prefs.localStorageThresholdMB = 5
+    big.prefs.storageGuardMB = 200
+    big.subjects[0]!.weeks[0]!.anchor = 'x'.repeat(6_000_000)
+
+    const target = await savePersisted(big)
+    expect(target).toBe('indexeddb')
+    expect(await get(DATA_KEY, NEW_STORE)).toBeTruthy()
+    expect(localStorage.getItem(LOCAL_DATA_KEY)).toBeNull()
   })
 })

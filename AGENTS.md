@@ -54,7 +54,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 192 tests across 27 files
+npm test           # Vitest, currently 216 tests across 29 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -139,7 +139,8 @@ Rules:
 ### Persistence
 
 - IndexedDB database `skillmastery`, object store `state`, key `app-data-v1`. The legacy database `masteryharness` is migrated once.
-- localStorage mirror: `skillmastery:data`, plus `skillmastery:theme` for the pre-paint boot script.
+- localStorage mirror: `skillmastery:data`, plus `skillmastery:theme` for the pre-paint boot script. The mirror never exceeds 5 MB (`LOCAL_MIRROR_CAP_MB`), whatever the stored threshold says.
+- `prefs.storageGuardMB` (5–200 MB, default 20) warns in Settings when saved data passes the guard. It is advisory, because IndexedDB has no such ceiling; it never blocks a write.
 - Boot: `loadPersisted()` chooses the newest valid copy; invalid data is quarantined and a fresh seed opens with an explicit warning.
 - Autosave debounces 500ms, flushes on `pagehide` and visibility change, and mirrors immediately.
 - Export is schema-validated on import. Replace and merge are different operations; merge keeps the higher book chapter, unions daily log items, and lets this device's prompt-skill edits win while incoming files only fill gaps.
@@ -192,7 +193,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **192 tests / 27 files** (October 2026).
+- Baseline: **216 tests / 29 files** (October 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;

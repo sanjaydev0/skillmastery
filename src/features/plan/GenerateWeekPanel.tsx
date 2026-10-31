@@ -43,22 +43,18 @@ export function GenerateWeekPanel({
   const [result, setResult] = useState<GenerateWeekResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [previewBrief, setPreviewBrief] = useState<ReturnType<typeof buildWeekBrief> | null>(null)
-  const [interruptedWeekId, setInterruptedWeekId] = useState<string | null>(null)
+  const [interruptedWeekId, setInterruptedWeekId] = useState<string | null>(() => {
+    const id = checkInterruptedGeneration()
+    return id === `${subject.id}:${week.weekNumber}` ? id : null
+  })
 
   const blueprint = blueprintFor(subject.id, week.weekNumber)
-  if (!blueprint) return null
 
-  // Check for interrupted generation on mount
+  // A marker left by a different week is stale, so clear it without a render pass.
   useEffect(() => {
     const interruptedId = checkInterruptedGeneration()
-    if (interruptedId) {
-      const expectedWeekId = `${subject.id}:${week.weekNumber}`
-      if (interruptedId === expectedWeekId) {
-        setInterruptedWeekId(interruptedId)
-      } else {
-        // Different week was interrupted, clear it
-        clearInterruptedGeneration()
-      }
+    if (interruptedId && interruptedId !== `${subject.id}:${week.weekNumber}`) {
+      clearInterruptedGeneration()
     }
   }, [subject.id, week.weekNumber])
 
@@ -107,6 +103,8 @@ export function GenerateWeekPanel({
       }
     }
   }, [phase])
+
+  if (!blueprint) return null
 
   const buildBrief = () => {
     return buildWeekBrief(subject, week, journey, {

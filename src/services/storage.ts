@@ -14,6 +14,13 @@ const QUARANTINE_PREFIX = 'skillmastery:corrupt:'
 /** Kept until the next successful manual export, so a bad migration is recoverable. */
 export const MIGRATION_BACKUP_KEY = 'skillmastery:pre-migration-backup'
 export const MIGRATION_BACKUP_META_KEY = 'skillmastery:pre-migration-meta'
+/**
+ * localStorage is physically capped by the browser (usually 5–10 MB per origin),
+ * so the mirror never writes more than this even if the stored threshold is larger.
+ */
+export const LOCAL_MIRROR_CAP_MB = 5
+/** Default total-data guard. IndexedDB has no such ceiling, so the guard is advisory. */
+export const DEFAULT_STORAGE_GUARD_MB = 20
 
 export interface LoadResult {
   data: AppData | null
@@ -184,7 +191,8 @@ export async function savePersisted(data: AppData): Promise<'indexeddb' | 'local
 
 function mirror(serialised: string, thresholdMB: number = 4): boolean {
   try {
-    const thresholdBytes = thresholdMB * 1_000_000
+    const effectiveMB = Math.min(thresholdMB, LOCAL_MIRROR_CAP_MB)
+    const thresholdBytes = effectiveMB * 1_000_000
     if (serialised.length < thresholdBytes) {
       localStorage.setItem(LOCAL_DATA_KEY, serialised)
       return true
@@ -285,10 +293,16 @@ export async function isLocalStorageMirrorEnabled(): Promise<boolean> {
     const data = await get<AppData>(DATA_KEY, DB_STORE)
     if (!data) return true
     const serialised = JSON.stringify(data)
-    const thresholdMB = data.prefs?.localStorageThresholdMB ?? 4
+    const thresholdMB = Math.min(data.prefs?.localStorageThresholdMB ?? 4, LOCAL_MIRROR_CAP_MB)
     const thresholdBytes = thresholdMB * 1_000_000
     return serialised.length < thresholdBytes
   } catch {
     return true
   }
+}
+
+/** True when the stored data has grown past the learner's guard. Advisory only. */
+export function isOverStorageGuard(sizeBytes: number, guardMB?: number): boolean {
+  const guard = guardMB ?? DEFAULT_STORAGE_GUARD_MB
+  return sizeBytes > guard * 1_000_000
 }

@@ -9,7 +9,7 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 ## What it does
 
 - **Today** — the current week, only today's tasks, one clear "up next" action, review count, and a seven-day completion strip.
-- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, editable weekly capacity for active and passive work, and a syllabus that names the Dart, Flutter and design thread of every week.
+- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and a syllabus that names the Dart, Flutter and design thread of every week. Weekly capacity lives in Settings, under Study week.
 - **Week pages** — seven day cards for every day slot, a plain-language "you build" brief, the three threads, the git habit, outcomes, and the checkpoint. Week 1 is authored; a later week can be written from its blueprint, reviewed and then saved.
 - **Map** — a prerequisite knowledge graph with Primitive → Concept → Failure Mode points, freshness and repair drills.
 - **Practice** — the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
@@ -67,7 +67,8 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 
 ## Local-first data
 
-- IndexedDB is the primary store; localStorage is a second copy and a last-chance mirror on `pagehide`.
+- IndexedDB is the primary store; localStorage is a second copy and a last-chance mirror on `pagehide`, capped at 5 MB by the browser.
+- A **storage guard** in Settings (5–200 MB, default 20 MB) warns you when the saved data grows past it, so you can export before the device fills up. It is advice, not a write limit: data always goes to IndexedDB first.
 - On boot the newest valid copy wins. Invalid data is quarantined and a fresh seed opens with an explicit warning.
 - JSON backups are schema-validated before import and can replace all data or merge by id. They include prompt-skill edits; they never include the Velona key.
 - A seed-version upgrade refreshes authored curriculum text, day plans and new resources without wiping checks, checkpoint history, notes, reading status or user-added weeks and links.
