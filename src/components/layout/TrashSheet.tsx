@@ -21,6 +21,7 @@ function countsLine(entry: TrashEntry): string {
   if (entry.counts.nodes) parts.push(`${entry.counts.nodes} concept${entry.counts.nodes === 1 ? '' : 's'}`)
   if (entry.counts.cards) parts.push(`${entry.counts.cards} card${entry.counts.cards === 1 ? '' : 's'}`)
   if (entry.counts.days) parts.push(`${entry.counts.days} day card${entry.counts.days === 1 ? '' : 's'}`)
+  if (entry.counts.resources) parts.push(`${entry.counts.resources} resource${entry.counts.resources === 1 ? '' : 's'}`)
   return parts.length > 0 ? parts.join(', ') : 'No extra items'
 }
 

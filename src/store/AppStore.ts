@@ -17,6 +17,7 @@ import type {
   ResourceStatus,
   Subject,
   Theme,
+  TrashEdge,
   TrashEntry,
   Week,
   Weekday,
@@ -543,9 +544,19 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         ...subject.cards,
         ...(entry.cards ?? []).filter((card) => !knownCards.has(card.id)),
       ]
+      const inbound = new Map((entry.edges ?? []).map((edge) => [edge.nodeId, edge]))
+      const nodes = [...subject.nodes, node].map((candidate) => {
+        const edge = inbound.get(candidate.id)
+        if (!edge) return candidate
+        return {
+          ...candidate,
+          prerequisiteIds: Array.from(new Set([...candidate.prerequisiteIds, ...edge.prerequisiteIds])),
+          encompassedNodeIds: Array.from(new Set([...candidate.encompassedNodeIds, ...edge.encompassedNodeIds])),
+        }
+      })
       set({
         subjects: state.subjects.map((candidate) =>
-          candidate.id === subject.id ? { ...candidate, nodes: [...candidate.nodes, node], cards } : candidate,
+          candidate.id === subject.id ? { ...candidate, nodes, cards } : candidate,
         ),
         trash: state.trash.filter((candidate) => candidate.id !== entryId),
         updatedAt: now(),
@@ -986,6 +997,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const node = subject.nodes.find((entry) => entry.id === nodeId)
     if (!node) return null
     const removedCards = subject.cards.filter((card) => card.nodeId === nodeId)
+    const inboundEdges: TrashEdge[] = subject.nodes
+      .filter((n) => n.id !== nodeId && (n.prerequisiteIds.includes(nodeId) || n.encompassedNodeIds.includes(nodeId)))
+      .map((n) => ({
+        nodeId: n.id,
+        prerequisiteIds: n.prerequisiteIds,
+        encompassedNodeIds: n.encompassedNodeIds,
+      }))
     const entry: TrashEntry = {
       id: uniqueId('trash'),
       kind: 'node',
@@ -995,6 +1013,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       subjectName: subject.shortName,
       payload: node,
       cards: removedCards,
+      edges: inboundEdges,
       counts: {
         nodes: 1,
         cards: removedCards.length,

@@ -178,3 +178,32 @@ describe('trash round trip', () => {
     expect(trash.some((entry) => (entry.payload as Week).id === ids[0])).toBe(false)
   })
 })
+
+describe('single-item undo', () => {
+  it('restores a deleted concept and reconnects the nodes that pointed at it', () => {
+    const dependent = flutter().nodes.find((node) => node.prerequisiteIds.length > 0)!
+    const targetId = dependent.prerequisiteIds[0]!
+    const target = flutter().nodes.find((node) => node.id === targetId)!
+
+    const trashId = useAppStore.getState().deleteNode(targetId)
+    expect(trashId).toBeTruthy()
+    expect(flutter().nodes.some((node) => node.id === targetId)).toBe(false)
+    expect(flutter().nodes.find((node) => node.id === dependent.id)!.prerequisiteIds).not.toContain(targetId)
+
+    const result = useAppStore.getState().restoreTrash(trashId!)
+    expect(result.ok).toBe(true)
+    expect(flutter().nodes.some((node) => node.id === targetId)).toBe(true)
+    expect(flutter().nodes.find((node) => node.id === dependent.id)!.prerequisiteIds).toContain(targetId)
+    expect(target.title).toBeTruthy()
+  })
+
+  it('restores a deleted resource', () => {
+    const resource = flutter().resources[0]!
+    const trashId = useAppStore.getState().deleteResource(resource.id)
+    expect(trashId).toBeTruthy()
+    expect(flutter().resources.some((entry) => entry.id === resource.id)).toBe(false)
+
+    expect(useAppStore.getState().restoreTrash(trashId!).ok).toBe(true)
+    expect(flutter().resources.some((entry) => entry.id === resource.id)).toBe(true)
+  })
+})
