@@ -10,7 +10,6 @@ import { weekStatus } from '../../engine/gating'
 import { formatTotal, summariseSubject, summariseWeek } from '../../engine/estimates'
 import { blueprintFor } from '../../data/curriculum/blueprint'
 import { navigate } from '../../lib/router'
-import { CapacitySliders } from '../../components/ui/CapacitySliders'
 import { cn, percent } from '../../lib/utils'
 import { Badge, Button, ProgressBar, WeekBadge } from '../../components/ui/primitives'
 
@@ -75,8 +74,6 @@ export function PlanView() {
         />
         <PlanStat label="Remaining" value={formatTotal(course.remaining)} meta="Estimate range, not a countdown" />
       </section>
-
-      <CapacityEditor />
 
       <Syllabus subject={subject} />
 
@@ -288,28 +285,6 @@ function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> })
         })}
       </div>
     </details>
-  )
-}
-
-function CapacityEditor() {
-  return (
-    <section className="card mt-4 p-3.5" aria-labelledby="capacity-heading">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <p className="eyebrow">Your real week</p>
-          <h2 id="capacity-heading" className="h2 mt-0.5">
-            Weekly capacity
-          </h2>
-          <p className="faint mt-0.5 text-[11px]">
-            Hours you can actually protect. Plan warnings use these numbers.
-          </p>
-        </div>
-      </div>
-      <CapacitySliders className="mt-2.5" />
-      <p className="faint mt-2 border-t border-line pt-2 text-[11px]">
-        Capacity is stored on this device and is not overwritten by an imported backup.
-      </p>
-    </section>
   )
 }
 

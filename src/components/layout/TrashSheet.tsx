@@ -11,6 +11,8 @@ const KIND_LABEL: Record<TrashKind, string> = {
   week: 'Week',
   subject: 'Track',
   dayPlans: 'Day cards',
+  node: 'Concept',
+  resource: 'Resource',
 }
 
 function countsLine(entry: TrashEntry): string {

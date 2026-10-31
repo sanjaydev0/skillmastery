@@ -23,9 +23,11 @@ const ROWS: { key: CapacityField; label: string; hint: string }[] = [
 export function CapacitySliders({
   className,
   showSummary = true,
+  disabled = false,
 }: {
   className?: string
   showSummary?: boolean
+  disabled?: boolean
 }) {
   const planner = useAppStore((state) => state.planner)
   const updatePlanner = useAppStore((state) => state.updatePlanner)
@@ -51,13 +53,14 @@ export function CapacitySliders({
               max={2400}
               step={30}
               value={value}
+              disabled={disabled}
               onChange={(event) => {
                 const next = Number(event.target.value)
                 if (Number.isFinite(next)) updatePlanner({ [row.key]: next } as Partial<PlannerSettings>)
               }}
               aria-label={`${row.label} hours per week`}
               aria-valuetext={`${hoursLabel(value)} per week`}
-              className="mt-1.5"
+              className={cn('mt-1.5', disabled && 'opacity-50 cursor-not-allowed')}
             />
             <span className="faint mt-0.5 block text-[11px]">{row.hint}</span>
           </label>

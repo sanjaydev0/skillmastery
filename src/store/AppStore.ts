@@ -84,7 +84,7 @@ interface AppStore extends AppData {
   saveGate: (weekId: string, scores: Week['gate']['scores']) => ActionResult
   addWeek: (input: { phaseId: string; title: string; anchor: string }) => ActionResult
   updateWeek: (weekId: string, patch: Partial<Week>) => void
-  deleteWeek: (weekId: string) => void
+  deleteWeek: (weekId: string) => string | null
   startNode: (nodeId: string) => void
   markNodeMastered: (nodeId: string) => ActionResult
   logNodeReview: (nodeId: string) => ActionResult
@@ -102,7 +102,7 @@ interface AppStore extends AppData {
     notes?: string
   }) => ActionResult
   updateNode: (nodeId: string, patch: Partial<KnowledgeNode>) => void
-  deleteNode: (nodeId: string) => void
+  deleteNode: (nodeId: string) => string | null
   addCard: (input: {
     front: string
     back: string
@@ -124,7 +124,7 @@ interface AppStore extends AppData {
   }) => ActionResult
   cycleResource: (resourceId: string) => void
   updateResource: (resourceId: string, patch: Partial<Resource>) => void
-  deleteResource: (resourceId: string) => void
+  deleteResource: (resourceId: string) => string | null
   updateBook: (bookId: string, patch: Partial<Book>) => void
   addBook: (input: {
     title: string
@@ -528,7 +528,48 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         trash: state.trash.filter((candidate) => candidate.id !== entryId),
         updatedAt: now(),
       })
-      return { ok: true, message: `“${entry.label}” restored.` }
+      return { ok: true, message: `"${entry.label}" restored.` }
+    }
+
+    if (entry.kind === 'node') {
+      const node = entry.payload as KnowledgeNode
+      const subject = state.subjects.find((candidate) => candidate.id === entry.subjectId)
+      if (!subject) return { ok: false, message: 'The track that owned that node is gone.' }
+      if (subject.nodes.some((candidate) => candidate.id === node.id)) {
+        return { ok: false, message: 'That node is already back.' }
+      }
+      const knownCards = new Set(subject.cards.map((card) => card.id))
+      const cards = [
+        ...subject.cards,
+        ...(entry.cards ?? []).filter((card) => !knownCards.has(card.id)),
+      ]
+      set({
+        subjects: state.subjects.map((candidate) =>
+          candidate.id === subject.id ? { ...candidate, nodes: [...candidate.nodes, node], cards } : candidate,
+        ),
+        trash: state.trash.filter((candidate) => candidate.id !== entryId),
+        updatedAt: now(),
+      })
+      return { ok: true, message: `"${entry.label}" restored.` }
+    }
+
+    if (entry.kind === 'resource') {
+      const resource = entry.payload as Resource
+      const subject = state.subjects.find((candidate) => candidate.id === entry.subjectId)
+      if (!subject) return { ok: false, message: 'The track that owned that resource is gone.' }
+      if (subject.resources.some((candidate) => candidate.id === resource.id)) {
+        return { ok: false, message: 'That resource is already back.' }
+      }
+      set({
+        subjects: state.subjects.map((candidate) =>
+          candidate.id === subject.id
+            ? { ...candidate, resources: [...candidate.resources, resource] }
+            : candidate,
+        ),
+        trash: state.trash.filter((candidate) => candidate.id !== entryId),
+        updatedAt: now(),
+      })
+      return { ok: true, message: `"${entry.label}" restored.` }
     }
 
     const weekId = entry.subjectId
@@ -693,7 +734,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const state = get()
     const subject = activeSubjectOf(state)
     const week = subject?.weeks.find((entry) => entry.id === weekId)
-    if (!subject || !week) return
+    if (!subject || !week) return null
     const removedNodeIds = new Set(
       subject.nodes.filter((node) => node.weekId === weekId).map((node) => node.id),
     )
@@ -751,6 +792,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // Day cards stay keyed by week id so a restore brings them back with it.
       trash: [entry, ...current.trash].slice(0, TRASH_LIMIT),
     }))
+    return entry.id
   },
 
   startNode: (nodeId) =>
@@ -937,24 +979,47 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ),
     ),
 
-  deleteNode: (nodeId) =>
-    set((state) =>
-      patchSubject(
-        state,
-        (subject) => ({
-          ...subject,
-          nodes: subject.nodes
-            .filter((node) => node.id !== nodeId)
-            .map((node) => ({
-              ...node,
-              prerequisiteIds: node.prerequisiteIds.filter((id) => id !== nodeId),
-              encompassedNodeIds: node.encompassedNodeIds.filter((id) => id !== nodeId),
+  deleteNode: (nodeId) => {
+    const state = get()
+    const subject = activeSubjectOf(state)
+    if (!subject) return null
+    const node = subject.nodes.find((entry) => entry.id === nodeId)
+    if (!node) return null
+    const removedCards = subject.cards.filter((card) => card.nodeId === nodeId)
+    const entry: TrashEntry = {
+      id: uniqueId('trash'),
+      kind: 'node',
+      deletedAt: now(),
+      label: node.title,
+      subjectId: subject.id,
+      subjectName: subject.shortName,
+      payload: node,
+      cards: removedCards,
+      counts: {
+        nodes: 1,
+        cards: removedCards.length,
+      },
+    }
+    set((current) => ({
+      ...patchSubject(
+        current,
+        (subj) => ({
+          ...subj,
+          nodes: subj.nodes
+            .filter((n) => n.id !== nodeId)
+            .map((n) => ({
+              ...n,
+              prerequisiteIds: n.prerequisiteIds.filter((id) => id !== nodeId),
+              encompassedNodeIds: n.encompassedNodeIds.filter((id) => id !== nodeId),
             })),
-          cards: subject.cards.map((card) => (card.nodeId === nodeId ? { ...card, nodeId: undefined } : card)),
+          cards: subj.cards.map((card) => (card.nodeId === nodeId ? { ...card, nodeId: undefined } : card)),
         }),
         now(),
       ),
-    ),
+      trash: [entry, ...current.trash].slice(0, TRASH_LIMIT),
+    }))
+    return entry.id
+  },
 
   addCard: (input) => {
     const state = get()
@@ -1081,17 +1146,37 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ),
     ),
 
-  deleteResource: (resourceId) =>
-    set((state) =>
-      patchSubject(
-        state,
-        (subject) => ({
-          ...subject,
-          resources: subject.resources.filter((resource) => resource.id !== resourceId),
+  deleteResource: (resourceId) => {
+    const state = get()
+    const subject = activeSubjectOf(state)
+    if (!subject) return null
+    const resource = subject.resources.find((entry) => entry.id === resourceId)
+    if (!resource) return null
+    const entry: TrashEntry = {
+      id: uniqueId('trash'),
+      kind: 'resource',
+      deletedAt: now(),
+      label: resource.title,
+      subjectId: subject.id,
+      subjectName: subject.shortName,
+      payload: resource,
+      counts: {
+        resources: 1,
+      },
+    }
+    set((current) => ({
+      ...patchSubject(
+        current,
+        (subj) => ({
+          ...subj,
+          resources: subj.resources.filter((r) => r.id !== resourceId),
         }),
         now(),
       ),
-    ),
+      trash: [entry, ...current.trash].slice(0, TRASH_LIMIT),
+    }))
+    return entry.id
+  },
 
   updateBook: (bookId, patch) =>
     set((state) => ({

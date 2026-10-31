@@ -19,6 +19,8 @@ import { AI_MODEL, AiError, runAi } from './ai'
  * issues the prose checker found. Saving is a separate, explicit action.
  */
 
+const INTERRUPTED_KEY = 'skillmastery:generation:interrupted'
+
 export interface GenerateWeekResult {
   plans: DayPlan[]
   /** Blocking issues: the cards do not meet the style standard. */
@@ -38,9 +40,26 @@ export function isGenerating(weekId?: string): boolean {
   return weekId === undefined || active.weekId === weekId
 }
 
+export function checkInterruptedGeneration(): string | null {
+  try {
+    return sessionStorage.getItem(INTERRUPTED_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function clearInterruptedGeneration(): void {
+  try {
+    sessionStorage.removeItem(INTERRUPTED_KEY)
+  } catch {
+    // Ignore if sessionStorage is unavailable
+  }
+}
+
 export function cancelGeneration(): void {
   active?.controller.abort()
   active = null
+  clearInterruptedGeneration()
 }
 
 export async function generateWeekFor(brief: WeekBrief): Promise<GenerateWeekResult> {
@@ -51,6 +70,13 @@ export async function generateWeekFor(brief: WeekBrief): Promise<GenerateWeekRes
   const weekId = `${brief.subjectId}:${brief.week.weekNumber}`
   const controller = new AbortController()
   active = { weekId, controller }
+
+  // Persist interrupted state for mobile resilience
+  try {
+    sessionStorage.setItem(INTERRUPTED_KEY, weekId)
+  } catch {
+    // Ignore if sessionStorage is unavailable
+  }
 
   try {
     const prompt = buildGenerationPrompt(brief)
@@ -71,5 +97,6 @@ export async function generateWeekFor(brief: WeekBrief): Promise<GenerateWeekRes
     }
   } finally {
     if (active?.controller === controller) active = null
+    clearInterruptedGeneration()
   }
 }

@@ -7,7 +7,13 @@ import { useAiKey } from '../../hooks/useAiKey'
 import { blueprintFor } from '../../data/curriculum/blueprint'
 import { buildWeekBrief } from '../../engine/generation'
 import { AiError } from '../../services/ai'
-import { cancelGeneration, generateWeekFor, type GenerateWeekResult } from '../../services/generateWeek'
+import {
+  cancelGeneration,
+  checkInterruptedGeneration,
+  clearInterruptedGeneration,
+  generateWeekFor,
+  type GenerateWeekResult,
+} from '../../services/generateWeek'
 import { Alert, Badge, Button, InlineError, Spinner } from '../../components/ui/primitives'
 
 /**
@@ -37,9 +43,29 @@ export function GenerateWeekPanel({
   const [result, setResult] = useState<GenerateWeekResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [previewBrief, setPreviewBrief] = useState<ReturnType<typeof buildWeekBrief> | null>(null)
+  const [interruptedWeekId, setInterruptedWeekId] = useState<string | null>(null)
 
   const blueprint = blueprintFor(subject.id, week.weekNumber)
   if (!blueprint) return null
+
+  // Check for interrupted generation on mount
+  useEffect(() => {
+    const interruptedId = checkInterruptedGeneration()
+    if (interruptedId) {
+      const expectedWeekId = `${subject.id}:${week.weekNumber}`
+      if (interruptedId === expectedWeekId) {
+        setInterruptedWeekId(interruptedId)
+      } else {
+        // Different week was interrupted, clear it
+        clearInterruptedGeneration()
+      }
+    }
+  }, [subject.id, week.weekNumber])
+
+  const dismissInterrupted = () => {
+    clearInterruptedGeneration()
+    setInterruptedWeekId(null)
+  }
 
   const blocked = result !== null && result.issues.length > 0
 
@@ -158,6 +184,23 @@ export function GenerateWeekPanel({
           </p>
 
           {error ? <InlineError>{error}</InlineError> : null}
+          {interruptedWeekId ? (
+            <div className="mt-2">
+              <Alert tone="warn" title="Generation was interrupted">
+                <p className="text-[11.5px]">
+                  The previous generation didn't finish. Nothing was saved. You can try again or dismiss this message.
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <Button variant="outline" size="sm" onClick={dismissInterrupted}>
+                    Dismiss
+                  </Button>
+                  <Button variant="soft" size="sm" onClick={showPreview}>
+                    Try again
+                  </Button>
+                </div>
+              </Alert>
+            </div>
+          ) : null}
           {!aiKey && phase !== 'review' ? (
             <p className="faint mt-1.5 text-[11.5px]">
               Add a Velona key in Settings to write a week. The key stays on this device.

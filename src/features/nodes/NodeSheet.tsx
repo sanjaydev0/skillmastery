@@ -50,6 +50,7 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
   const clearOverride = useAppStore((state) => state.clearOverride)
   const updateNode = useAppStore((state) => state.updateNode)
   const deleteNode = useAppStore((state) => state.deleteNode)
+  const restoreTrash = useAppStore((state) => state.restoreTrash)
   const toast = useUiStore((state) => state.toast)
 
   const node = subject.nodes.find((entry) => entry.id === nodeId)
@@ -160,9 +161,21 @@ export function NodeSheet({ nodeId, onClose }: { nodeId: string; onClose: () => 
               className="mt-2"
               icon={<Trash2 size={13} />}
               onClick={() => {
-                if (window.confirm(`Delete “${node.title}”? This cannot be undone.`)) {
-                  deleteNode(node.id)
-                  toast('Node deleted.', 'info')
+                if (window.confirm(`Delete "${node.title}"? It moves to Recently deleted.`)) {
+                  const trashEntryId = deleteNode(node.id)
+                  if (trashEntryId) {
+                    toast(
+                      `Node "${node.title}" moved to Recently deleted.`,
+                      'info',
+                      8000,
+                      {
+                        label: 'Undo',
+                        onClick: () => {
+                          restoreTrash(trashEntryId)
+                        },
+                      }
+                    )
+                  }
                   onClose()
                 }
               }}

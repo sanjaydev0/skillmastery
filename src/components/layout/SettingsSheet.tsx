@@ -117,6 +117,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const [mirrorEnabled, setMirrorEnabled] = useState(true)
   const [aiDraft, setAiDraft] = useState('')
   const [aiError, setAiError] = useState('')
+  const [managingCapacity, setManagingCapacity] = useState(false)
   const aiKey = useAiKey()
   const install = useSyncExternalStore(subscribeInstall, getInstallState)
 
@@ -368,7 +369,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             action={<Badge tone="neutral">{planner.studyDays.length} of 7</Badge>}
           />
           <div className="rounded-xl border border-line bg-s2 p-3">
-            <CapacitySliders showSummary={false} />
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[12px] font-semibold">Weekly hours</p>
+                <p className="faint mt-0.5 text-[11.5px] leading-relaxed">
+                  {formatTotal({ min: daily.active, max: daily.active })} active +{' '}
+                  {formatTotal({ min: daily.passive, max: daily.passive })} passive per study day
+                </p>
+              </div>
+              {!managingCapacity ? (
+                <Button variant="outline" size="sm" onClick={() => setManagingCapacity(true)}>
+                  Manage
+                </Button>
+              ) : (
+                <Button variant="primary" size="sm" onClick={() => setManagingCapacity(false)}>
+                  OK
+                </Button>
+              )}
+            </div>
+            <div className="mt-3">
+              <CapacitySliders showSummary={false} disabled={!managingCapacity} />
+            </div>
             <div className="mt-3 border-t border-line pt-2.5">
               <p className="text-[12px] font-medium">Study days</p>
               <p className="faint mt-0.5 text-[11.5px] leading-relaxed">
@@ -384,34 +405,32 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                       key={entry.day}
                       type="button"
                       aria-pressed={active}
-                      disabled={lastOne}
-                      title={lastOne ? 'Keep at least one study day' : undefined}
+                      disabled={lastOne || !managingCapacity}
+                      title={lastOne ? 'Keep at least one study day' : !managingCapacity ? 'Click Manage to change' : undefined}
                       onClick={() => toggleStudyDay(entry.day)}
                       className={`min-h-11 rounded-lg border px-1 text-[11.5px] font-medium transition ${
                         active
                           ? 'border-accent/40 bg-accent-soft text-t1'
                           : 'border-line bg-s1 text-t3 hover:border-line-strong hover:text-t2'
-                      } ${lastOne ? 'cursor-not-allowed opacity-70' : ''}`}
+                      } ${lastOne || !managingCapacity ? 'cursor-not-allowed opacity-70' : ''}`}
                     >
                       {entry.label}
                     </button>
                   )
                 })}
               </div>
-              <div className="mt-2 flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={planner.studyDays.length === 7}
-                  onClick={() => updatePlanner({ studyDays: [...DEFAULT_PLANNER.studyDays] })}
-                >
-                  Use all seven days
-                </Button>
-                <span className="faint num text-[11px]">
-                  {formatTotal({ min: daily.active, max: daily.active })} active +{' '}
-                  {formatTotal({ min: daily.passive, max: daily.passive })} passive per study day
-                </span>
-              </div>
+              {managingCapacity && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={planner.studyDays.length === 7}
+                    onClick={() => updatePlanner({ studyDays: [...DEFAULT_PLANNER.studyDays] })}
+                  >
+                    Use all seven days
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           <p className="faint mt-1.5 text-[11.5px]">

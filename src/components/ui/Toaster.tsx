@@ -19,14 +19,27 @@ export function Toaster() {
         <div key={toast.id} className="toast pointer-events-auto">
           <ToastIcon kind={toast.kind} />
           <p className="min-w-0 flex-1 leading-snug">{toast.message}</p>
-          <button
-            type="button"
-            className="text-t3 hover:text-t1"
-            onClick={() => dismiss(toast.id)}
-            aria-label="Dismiss notification"
-          >
-            <X size={14} />
-          </button>
+          {toast.action ? (
+            <button
+              type="button"
+              className="text-accent hover:text-accent-strong font-medium"
+              onClick={() => {
+                toast.action?.onClick()
+                dismiss(toast.id)
+              }}
+            >
+              {toast.action.label}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="text-t3 hover:text-t1"
+              onClick={() => dismiss(toast.id)}
+              aria-label="Dismiss notification"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       ))}
     </div>,

@@ -10,6 +10,8 @@ vi.mock('../../services/generateWeek', () => ({
   generateWeekFor: vi.fn(),
   cancelGeneration: vi.fn(),
   isGenerating: () => false,
+  checkInterruptedGeneration: () => null,
+  clearInterruptedGeneration: vi.fn(),
 }))
 
 const { generateWeekFor } = await import('../../services/generateWeek')

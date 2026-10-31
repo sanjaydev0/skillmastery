@@ -2,11 +2,17 @@ import { create } from 'zustand'
 
 export type ToastKind = 'success' | 'error' | 'info'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastItem {
   id: string
   message: string
   kind: ToastKind
   duration: number
+  action?: ToastAction
 }
 
 interface UiStore {
@@ -27,7 +33,7 @@ interface UiStore {
   closeSubjectSheet: () => void
   openMore: () => void
   closeMore: () => void
-  toast: (message: string, kind?: ToastKind, duration?: number) => void
+  toast: (message: string, kind?: ToastKind, duration?: number, action?: ToastAction) => void
   dismissToast: (id: string) => void
 }
 
@@ -51,10 +57,10 @@ export const useUiStore = create<UiStore>()((set, get) => ({
   closeSubjectSheet: () => set({ subjectSheetOpen: false }),
   openMore: () => set({ moreOpen: true }),
   closeMore: () => set({ moreOpen: false }),
-  toast: (message, kind = 'info', duration = 3800) => {
+  toast: (message, kind = 'info', duration = 3800, action) => {
     const id = `toast-${++toastSeq}`
     set((state) => ({
-      toasts: [...state.toasts.slice(-3), { id, message, kind, duration }],
+      toasts: [...state.toasts.slice(-3), { id, message, kind, duration, action }],
     }))
     window.setTimeout(() => {
       if (get().toasts.some((entry) => entry.id === id)) {

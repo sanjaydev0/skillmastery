@@ -599,6 +599,7 @@ function WeekEditForm({ week, onClose }: { week: Week; onClose: () => void }) {
   const subject = useActiveSubject()
   const updateWeek = useAppStore((state) => state.updateWeek)
   const deleteWeek = useAppStore((state) => state.deleteWeek)
+  const restoreTrash = useAppStore((state) => state.restoreTrash)
   const toast = useUiStore((state) => state.toast)
 
   const [phaseId, setPhaseId] = useState(week.phaseId)
@@ -713,8 +714,20 @@ function WeekEditForm({ week, onClose }: { week: Week; onClose: () => void }) {
                 `Delete Week ${week.weekNumber} and its concepts and cards? It moves to Recently deleted, where you can restore it.`,
               )
             ) {
-              deleteWeek(week.id)
-              toast(`Week ${week.weekNumber} moved to Recently deleted. Restore it from Settings.`, 'info', 7000)
+              const trashEntryId = deleteWeek(week.id)
+              if (trashEntryId) {
+                toast(
+                  `Week ${week.weekNumber} moved to Recently deleted.`,
+                  'info',
+                  8000,
+                  {
+                    label: 'Undo',
+                    onClick: () => {
+                      restoreTrash(trashEntryId)
+                    },
+                  }
+                )
+              }
               onClose()
             }
           }}

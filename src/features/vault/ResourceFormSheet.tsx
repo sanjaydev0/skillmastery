@@ -23,6 +23,7 @@ export function ResourceFormSheet({
   const addResource = useAppStore((state) => state.addResource)
   const updateResource = useAppStore((state) => state.updateResource)
   const deleteResource = useAppStore((state) => state.deleteResource)
+  const restoreTrash = useAppStore((state) => state.restoreTrash)
   const toast = useUiStore((state) => state.toast)
 
   const [title, setTitle] = useState(resource?.title ?? '')
@@ -157,9 +158,21 @@ export function ResourceFormSheet({
               size="sm"
               className="mt-2"
               onClick={() => {
-                if (window.confirm(`Remove “${resource.title}” from the vault?`)) {
-                  deleteResource(resource.id)
-                  toast('Resource removed.', 'info')
+                if (window.confirm(`Remove "${resource.title}" from the vault?`)) {
+                  const trashEntryId = deleteResource(resource.id)
+                  if (trashEntryId) {
+                    toast(
+                      `Resource "${resource.title}" moved to Recently deleted.`,
+                      'info',
+                      8000,
+                      {
+                        label: 'Undo',
+                        onClick: () => {
+                          restoreTrash(trashEntryId)
+                        },
+                      }
+                    )
+                  }
                   onClose()
                 }
               }}

@@ -130,13 +130,14 @@ export const DEFAULT_JOURNEY: Journey = {
   onboardedAt: null,
 }
 
-export type TrashKind = 'week' | 'subject' | 'dayPlans'
+export type TrashKind = 'week' | 'subject' | 'dayPlans' | 'node' | 'resource'
 
 export interface TrashCounts {
   weeks?: number
   nodes?: number
   cards?: number
   days?: number
+  resources?: number
 }
 
 /** A graph edge that was pruned from a surviving node when its week was deleted. */
@@ -154,7 +155,7 @@ export interface TrashEntry {
   subjectId: string
   subjectName: string
   /** A complete copy, so restore never depends on anything still living. */
-  payload: Week | Subject | DayPlan[]
+  payload: Week | Subject | DayPlan[] | KnowledgeNode | Resource
   /** Nodes deleted with the week. Restoring the week restores them. */
   nodes?: KnowledgeNode[]
   /** Cards deleted with the week. Restoring the week restores them. */
