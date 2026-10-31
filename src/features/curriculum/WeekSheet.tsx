@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import type { MasteryScores, Week } from '../../types/schema'
+import { XP } from '../../engine/gamification'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import {
@@ -59,6 +60,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
   const mode = useAppStore((state) => state.prefs.mode)
   const toggleChecklist = useAppStore((state) => state.toggleChecklist)
   const saveGate = useAppStore((state) => state.saveGate)
+  const gameLayer = useAppStore((state) => state.journey.gameLayer)
   const unlockWeek = useAppStore((state) => state.unlockWeek)
   const clearOverride = useAppStore((state) => state.clearOverride)
   const toast = useUiStore((state) => state.toast)
@@ -109,7 +111,9 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
 
   const handleSaveGate = () => {
     const result = saveGate(week.id, scores)
-    toast(result.message, result.ok ? 'success' : 'error', result.ok ? 5000 : 3800)
+    const justCleared = result.ok && result.message.startsWith('Gate cleared')
+    const message = justCleared && gameLayer ? `${result.message} +${XP.gate} XP.` : result.message
+    toast(message, result.ok ? 'success' : 'error', result.ok ? 5000 : 3800)
   }
 
   return (
