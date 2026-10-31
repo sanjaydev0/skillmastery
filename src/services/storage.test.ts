@@ -113,23 +113,18 @@ describe('SkillMastery storage namespace', () => {
 })
 
 describe('storage guard', () => {
-  it('is advisory and configurable up to 200 MB', () => {
-    expect(isOverStorageGuard(19_000_000, 20)).toBe(false)
-    expect(isOverStorageGuard(21_000_000, 20)).toBe(true)
-    expect(isOverStorageGuard(150_000_000, 200)).toBe(false)
-    expect(isOverStorageGuard(201_000_000, 200)).toBe(true)
-    expect(isOverStorageGuard(25_000_000)).toBe(true)
+  it('uses a fixed 4 MB budget and is not a stored preference', () => {
+    expect(DEFAULT_STORAGE_GUARD_MB).toBe(4)
+    expect(isOverStorageGuard(3_900_000)).toBe(false)
+    expect(isOverStorageGuard(4_100_000)).toBe(true)
   })
 
-  it('keeps the guard default well under the 200 MB ceiling', () => {
-    expect(DEFAULT_STORAGE_GUARD_MB).toBe(20)
+  it('keeps the mirror inside the same 5 MB browser ceiling', () => {
     expect(LOCAL_MIRROR_CAP_MB).toBe(5)
   })
 
-  it('never writes a mirror larger than the browser ceiling', async () => {
+  it('writes a 4 MB-plus payload to IndexedDB and skips the mirror', async () => {
     const big = fixture('Big track', 900)
-    big.prefs.localStorageThresholdMB = 5
-    big.prefs.storageGuardMB = 200
     big.subjects[0]!.weeks[0]!.anchor = 'x'.repeat(6_000_000)
 
     const target = await savePersisted(big)

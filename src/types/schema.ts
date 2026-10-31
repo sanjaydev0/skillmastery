@@ -347,12 +347,6 @@ export interface AppPrefs {
   lastBackupReminderAt?: number
   /** localStorage mirror threshold in MB (1-5, default 4). IndexedDB is always primary. */
   localStorageThresholdMB?: number
-  /**
-   * Total app-data guard in MB (5-200, default 20). IndexedDB is the store, so the
-   * guard can exceed the browser's ~5 MB localStorage ceiling. Passing it is a warning,
-   * never a write block.
-   */
-  storageGuardMB?: number
 }
 
 export interface Overrides {

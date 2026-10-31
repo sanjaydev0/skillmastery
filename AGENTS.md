@@ -140,7 +140,7 @@ Rules:
 
 - IndexedDB database `skillmastery`, object store `state`, key `app-data-v1`. The legacy database `masteryharness` is migrated once.
 - localStorage mirror: `skillmastery:data`, plus `skillmastery:theme` for the pre-paint boot script. The mirror never exceeds 5 MB (`LOCAL_MIRROR_CAP_MB`), whatever the stored threshold says.
-- `prefs.storageGuardMB` (5–200 MB, default 20) warns in Settings when saved data passes the guard. It is advisory, because IndexedDB has no such ceiling; it never blocks a write.
+- A fixed 4 MB budget (`DEFAULT_STORAGE_GUARD_MB`) shows a reminder in Settings when saved data passes it. It is a budget, not a preference: there is no control for it, and it never blocks a write.
 - Boot: `loadPersisted()` chooses the newest valid copy; invalid data is quarantined and a fresh seed opens with an explicit warning.
 - Autosave debounces 500ms, flushes on `pagehide` and visibility change, and mirrors immediately.
 - Export is schema-validated on import. Replace and merge are different operations; merge keeps the higher book chapter, unions daily log items, and lets this device's prompt-skill edits win while incoming files only fill gaps.

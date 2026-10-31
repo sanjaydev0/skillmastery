@@ -3,12 +3,10 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { SettingsSheet } from './SettingsSheet'
 
 describe('settings storage and capacity controls', () => {
-  it('offers a storage guard that reaches 200 MB', async () => {
+  it('states the fixed 4 MB budget and offers no storage guard control', async () => {
     render(<SettingsSheet onClose={vi.fn()} />)
-    const slider = await screen.findByLabelText('Storage guard in megabytes')
-    expect(slider).toHaveAttribute('min', '5')
-    expect(slider).toHaveAttribute('max', '200')
-    expect(slider).toHaveAttribute('step', '5')
+    expect(await screen.findByText(/keeps a 4 MB budget on this device/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Storage guard in megabytes')).not.toBeInTheDocument()
   })
 
   it('keeps weekly capacity read-only until Manage is pressed', async () => {

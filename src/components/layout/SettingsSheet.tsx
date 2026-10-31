@@ -26,7 +26,6 @@ import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { migrateAppData, parseBackupJson } from '../../services/validation'
 import {
-  DEFAULT_STORAGE_GUARD_MB,
   isLocalStorageMirrorEnabled,
   isOverStorageGuard,
   requestPersistentStorage,
@@ -98,7 +97,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const setMode = useAppStore((state) => state.setMode)
   const planner = useAppStore((state) => state.planner)
   const updatePlanner = useAppStore((state) => state.updatePlanner)
-  const updatePrefs = useAppStore((state) => state.updatePrefs)
   const gameLayer = useAppStore((state) => state.journey.gameLayer)
   const setGameLayer = useAppStore((state) => state.setGameLayer)
   const importData = useAppStore((state) => state.importData)
@@ -146,7 +144,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   }, [])
 
   const backupStale = !prefs.lastExportAt || Date.now() - prefs.lastExportAt > WEEK_MS
-  const overGuard = isOverStorageGuard(estimate?.usage ?? 0, prefs.storageGuardMB)
+  const overGuard = isOverStorageGuard(estimate?.usage ?? 0)
   const daily = dailyCapacity(planner)
 
   const toggleStudyDay = (day: Weekday) => {
@@ -608,36 +606,20 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                     Protection asks the browser to keep this origin from automatic eviction.
                   </span>
                 </div>
-                <div className="mt-3">
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-[11.5px] font-medium">Storage guard</span>
-                    <span className="num text-[11px] text-t3">{prefs.storageGuardMB ?? DEFAULT_STORAGE_GUARD_MB} MB</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="5"
-                    max="200"
-                    step="5"
-                    value={prefs.storageGuardMB ?? DEFAULT_STORAGE_GUARD_MB}
-                    onChange={(e) => updatePrefs({ storageGuardMB: Number(e.target.value) })}
-                    aria-label="Storage guard in megabytes"
-                    aria-valuetext={`${prefs.storageGuardMB ?? DEFAULT_STORAGE_GUARD_MB} megabytes`}
-                    className="mt-1.5 w-full accent-accent"
-                  />
-                  <p className="mt-1 text-[11px] text-t3">
-                    You are warned when this device's saved data passes the guard, up to 200 MB. The data lives in
-                    IndexedDB, so the guard is a reminder to export a backup, never a write limit.
+                <p className="faint mt-3 border-t border-line pt-2.5 text-[11px] leading-relaxed">
+                  This app keeps a 4 MB budget on this device. Saved data above it shows a reminder to export a
+                  backup. The budget is fixed, not a setting: IndexedDB stays the source of truth and nothing is
+                  deleted to meet it.
+                </p>
+                {overGuard ? (
+                  <p className="mt-2 rounded-lg border border-warn/30 bg-warn-soft px-2 py-1.5 text-[11px] text-t1">
+                    Saved data is past the 4 MB budget. Export a JSON backup, then delete a track or a week you no
+                    longer need.
                   </p>
-                  {overGuard ? (
-                    <p className="mt-2 rounded-lg border border-warn/30 bg-warn-soft px-2 py-1.5 text-[11px] text-t1">
-                      Saved data is above the guard. Export a JSON backup, then delete a track or a week you no longer
-                      need.
-                    </p>
-                  ) : null}
-                </div>
+                ) : null}
                 {!mirrorEnabled && (
                   <p className="mt-2.5 text-[11px] text-t3">
-                    localStorage mirror off · saved data is past the 5 MB mirror ceiling · IndexedDB remains the source
+                    localStorage mirror off · saved data is past the 4 MB mirror limit · IndexedDB remains the source
                     of truth
                   </p>
                 )}

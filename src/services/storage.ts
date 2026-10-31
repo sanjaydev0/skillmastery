@@ -19,8 +19,8 @@ export const MIGRATION_BACKUP_META_KEY = 'skillmastery:pre-migration-meta'
  * so the mirror never writes more than this even if the stored threshold is larger.
  */
 export const LOCAL_MIRROR_CAP_MB = 5
-/** Default total-data guard. IndexedDB has no such ceiling, so the guard is advisory. */
-export const DEFAULT_STORAGE_GUARD_MB = 20
+/** A fixed 4 MB guard: the web-standard budget this app plans to stay inside. */
+export const DEFAULT_STORAGE_GUARD_MB = 4
 
 export interface LoadResult {
   data: AppData | null

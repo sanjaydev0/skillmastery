@@ -68,7 +68,7 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 ## Local-first data
 
 - IndexedDB is the primary store; localStorage is a second copy and a last-chance mirror on `pagehide`, capped at 5 MB by the browser.
-- A **storage guard** in Settings (5–200 MB, default 20 MB) warns you when the saved data grows past it, so you can export before the device fills up. It is advice, not a write limit: data always goes to IndexedDB first.
+- The app keeps a fixed **4 MB budget** on the device. Passing it shows a reminder to export a backup. The budget is not adjustable in Settings, because it is a target the app is built to stay inside, not a preference.
 - On boot the newest valid copy wins. Invalid data is quarantined and a fresh seed opens with an explicit warning.
 - JSON backups are schema-validated before import and can replace all data or merge by id. They include prompt-skill edits; they never include the Velona key.
 - A seed-version upgrade refreshes authored curriculum text, day plans and new resources without wiping checks, checkpoint history, notes, reading status or user-added weeks and links.
