@@ -249,10 +249,9 @@ function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> })
       </summary>
       <div className="space-y-4 border-t border-line p-3.5">
         <p className="faint text-[11px] leading-relaxed">
-          <span className="font-medium text-t2">Written</span> means hand-authored day cards.{' '}
-          <span className="font-medium text-t2">Generated</span> means a saved draft you reviewed.{' '}
-          <span className="font-medium text-t2">Outline</span> means the week has a brief and its cards are still to
-          write.
+          A <span className="font-medium text-t2">Written</span> week has hand-authored day cards. A{' '}
+          <span className="font-medium text-t2">Generated</span> week has a saved draft you reviewed. An{' '}
+          <span className="font-medium text-t2">Outline</span> week has a brief and is still to write.
         </p>
         {subject.phases.map((phase) => {
           const weeks = subject.weeks
@@ -272,7 +271,7 @@ function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> })
                       <a
                         href={`#/plan/${week.id}`}
                         className="block px-2.5 py-2 transition hover:bg-s2"
-                        aria-current={isCurrent ? 'true' : undefined}
+                        aria-current={isCurrent ? 'page' : undefined}
                         aria-label={`Open Week ${week.weekNumber}: ${week.title}`}
                       >
                         <span className="flex items-baseline gap-2">
