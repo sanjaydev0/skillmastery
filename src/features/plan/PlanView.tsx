@@ -225,6 +225,16 @@ function WeekPlanCard({
 
 function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> }) {
   const lessons = subject.weeks.length
+  const dayPlans = useAppStore((state) => state.dayPlans)
+  const active = useActiveWeek()
+
+  const stateOf = (week: Week): { label: string; tone: 'good' | 'info' | 'neutral' } => {
+    if (week.weekNumber === 1) return { label: 'Written', tone: 'good' }
+    const plans = dayPlans[week.id]
+    if (plans?.length) return { label: 'Generated', tone: 'info' }
+    return { label: 'Outline', tone: 'neutral' }
+  }
+
   return (
     <details className="card mt-4 overflow-hidden">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3.5 [&::-webkit-details-marker]:hidden">
@@ -238,6 +248,12 @@ function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> })
         <ChevronRight size={16} className="flex-none text-t3" aria-hidden />
       </summary>
       <div className="space-y-4 border-t border-line p-3.5">
+        <p className="faint text-[11px] leading-relaxed">
+          <span className="font-medium text-t2">Written</span> means hand-authored day cards.{' '}
+          <span className="font-medium text-t2">Generated</span> means a saved draft you reviewed.{' '}
+          <span className="font-medium text-t2">Outline</span> means the week has a brief and its cards are still to
+          write.
+        </p>
         {subject.phases.map((phase) => {
           const weeks = subject.weeks
             .filter((week) => week.phaseId === phase.id)
@@ -249,18 +265,24 @@ function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> })
               <ul className="mt-1.5 divide-y divide-line rounded-xl border border-line">
                 {weeks.map((week) => {
                   const blueprint = blueprintFor(subject.id, week.weekNumber)
+                  const state = stateOf(week)
+                  const isCurrent = active?.id === week.id
                   return (
-                    <li key={week.id}>
+                    <li key={week.id} className={cn(isCurrent && 'border-l-2 border-l-accent bg-accent-soft/40')}>
                       <a
                         href={`#/plan/${week.id}`}
                         className="block px-2.5 py-2 transition hover:bg-s2"
+                        aria-current={isCurrent ? 'true' : undefined}
                         aria-label={`Open Week ${week.weekNumber}: ${week.title}`}
                       >
                         <span className="flex items-baseline gap-2">
                           <span className="num flex-none text-[11px] font-semibold text-t3">
                             W{String(week.weekNumber).padStart(2, '0')}
                           </span>
-                          <span className="min-w-0 text-[12.5px] font-medium">{week.title}</span>
+                          <span className="min-w-0 flex-1 text-[12.5px] font-medium">{week.title}</span>
+                          <Badge tone={state.tone} className="flex-none">
+                            {state.label}
+                          </Badge>
                         </span>
                         {blueprint ? (
                           <span className="mt-1 block space-y-0.5 pl-[30px]">

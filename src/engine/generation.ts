@@ -480,6 +480,11 @@ export function driftFlags(brief: WeekBrief, plans: DayPlan[]): string[] {
     flags.push(`The draft never names the week's artefact: ${brief.week.project}.`)
   }
 
+  const checkpointWords = artefactWords(brief.week.checkpoint)
+  if (checkpointWords.length > 0 && !checkpointWords.some((word) => all.toLowerCase().includes(word))) {
+    flags.push(`The draft never names the week's checkpoint: ${clip(brief.week.checkpoint, 120)}.`)
+  }
+
   const expectedMinutes = plans.reduce((total, plan) => total + plan.estMinutes, 0)
   const weekly = brief.capacity.active + brief.capacity.passive
   if (weekly > 0 && expectedMinutes > weekly * 1.1) {

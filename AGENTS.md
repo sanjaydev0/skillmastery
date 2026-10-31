@@ -67,7 +67,7 @@ Before every push:
 npx tsc -b && npm test && npm run lint && npm run build
 ```
 
-`npm run lint` currently reports 14 pre-existing warnings and zero errors. Do not add new warnings. Do not silence a warning with a blanket disable.
+`npm run lint` currently reports 13 pre-existing warnings and zero errors. Do not add new warnings. Do not silence a warning with a blanket disable.
 
 ---
 

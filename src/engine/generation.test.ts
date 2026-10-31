@@ -170,6 +170,7 @@ describe('driftFlags', () => {
       designNote: 'One number owns the screen.',
     }))
     expect(driftFlags(brief, sanitised).join(' ')).toMatch(/never names the week's artefact/)
+    expect(driftFlags(brief, sanitised).join(' ')).toMatch(/never names the week's checkpoint/)
   })
 
   it('flags cards that plan more minutes than the week allows', () => {

@@ -406,6 +406,28 @@ export function VaultView() {
                 missing, what you learned.
               </li>
             </ol>
+            <div className="mt-3 rounded-lg border border-line bg-s1 p-2.5">
+              <p className="text-[12px] font-semibold">Where a first pull request actually lands</p>
+              <ul className="mt-1.5 space-y-1.5 text-[11.5px] leading-relaxed text-t2">
+                <li>
+                  <InlineCode>flutter/flutter</InlineCode>: documentation, samples and framework tests. A missing
+                  example in <InlineCode>docs/</InlineCode> is a real contribution.
+                </li>
+                <li>
+                  <InlineCode>dart-lang/sdk</InlineCode> and <InlineCode>dart-lang/language</InlineCode>: doc fixes and
+                  a small test case that shows a confusing error.
+                </li>
+                <li>
+                  <InlineCode>rrousselGit/riverpod</InlineCode>, <InlineCode>rrousselGit/freezed</InlineCode>,{' '}
+                  <InlineCode>cfug/dio</InlineCode> and <InlineCode>flutter/packages</InlineCode> (go_router): an issue
+                  with a short reproduction is welcome even before a patch.
+                </li>
+              </ul>
+              <p className="faint mt-2 text-[11px] leading-relaxed">
+                Milestones: a documentation or sample pull request by Week 6, and a first code pull request by Week 12.
+                Both are optional and neither earns progress; the week's artefact is what the course counts.
+              </p>
+            </div>
             <div className="mt-3 flex flex-wrap gap-1.5 border-t border-line pt-2.5">
               <a
                 className="link inline-flex items-center gap-1 text-[11.5px]"
