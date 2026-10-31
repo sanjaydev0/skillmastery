@@ -7,7 +7,8 @@ import type { Journey } from '../types/schema'
  *
  * XP, levels, quests and the boss are all derived from the evidence: checked
  * tasks, cleared gates and the course day. Nothing here is stored, and nothing
- * here can be gamed by opening the app. Paused days never earn XP.
+ * here can be gamed by opening the app. A pause hides quests and the boss but
+ * never removes XP that real work already earned.
  *
  * The calm toggle (`journey.gameLayer === false`) hides the surface but never
  * resets it; turning it back on shows the same numbers.
@@ -25,9 +26,9 @@ export const XP = {
 } as const
 
 /**
- * A fixed threshold table. Level 1 at 100 XP, level 10 at 20,000 XP.
- * Beyond level 10 the title keeps climbing by the same step so the course
- * never runs out of ceiling.
+ * A fixed threshold table. Level 1 starts at 100 XP, level 10 at 64,000 XP.
+ * Beyond the last entry the title keeps climbing, so the course never runs
+ * out of ceiling.
  */
 export const LEVELS: readonly number[] = [
   0, 100, 250, 500, 1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 64_000,
@@ -221,20 +222,26 @@ function bossFor(e: Evidence): Boss | undefined {
   }
 }
 
+/** A calendar-day bucket, so ten tasks in one evening still count as one day. */
+function dayKey(timestamp: number): number {
+  const date = new Date(timestamp)
+  date.setHours(0, 0, 0, 0)
+  return date.getTime()
+}
+
 function totalXp(subject: Subject): number {
   let xp = 0
   for (const week of subject.weeks) {
     xp += week.checklist.filter((item) => item.done).length * XP.task
     if (week.gate.passedAt) xp += XP.gate
-    if (week.checklist.every((item) => item.done)) xp += XP.weekComplete
+    if (week.checklist.length > 0 && week.checklist.every((item) => item.done)) xp += XP.weekComplete
   }
-  // Days with active work: one course day per weekday of every week in the clock.
-  // We derive this from the checklist's doneAt dates to stay evidence-based.
+  // One active-day bonus per calendar day, however many tasks that day held.
   const activeDays = new Set<number>()
   for (const week of subject.weeks) {
     for (const item of week.checklist) {
       if (item.done && item.doneAt && item.context === 'active') {
-        activeDays.add(item.doneAt)
+        activeDays.add(dayKey(item.doneAt))
       }
     }
   }
@@ -243,26 +250,16 @@ function totalXp(subject: Subject): number {
 }
 
 function xpToday(subject: Subject, now: number): number {
+  const floor = dayKey(now)
   let xp = 0
-  const startOfToday = new Date(now)
-  startOfToday.setHours(0, 0, 0, 0)
-  const floor = startOfToday.getTime()
+  let hasActiveToday = false
   for (const week of subject.weeks) {
     for (const item of week.checklist) {
-      if (item.done && item.doneAt && item.doneAt >= floor) {
-        xp += XP.task
-        if (item.context === 'active') {
-          // Count the active-day bonus at most once per day.
-          // All tasks on the same day share the bonus, which we add once below.
-        }
-      }
+      if (!item.done || !item.doneAt || item.doneAt < floor) continue
+      xp += XP.task
+      if (item.context === 'active') hasActiveToday = true
     }
   }
-  const hasActiveToday = subject.weeks.some((week) =>
-    week.checklist.some(
-      (item) => item.done && item.doneAt && item.doneAt >= floor && item.context === 'active',
-    ),
-  )
   if (hasActiveToday) xp += XP.activeDay
   return xp
 }
@@ -273,20 +270,19 @@ function xpThisWeek(subject: Subject, journey: Journey, now: number): number {
   const weekNumber = courseWeek(day)
   const week = subject.weeks.find((entry) => entry.weekNumber === weekNumber)
   if (!week) return 0
-  
+
   let xp = week.checklist.filter((item) => item.done).length * XP.task
   if (week.gate.passedAt) xp += XP.gate
-  if (week.checklist.every((item) => item.done)) xp += XP.weekComplete
-  
-  // Add active-day bonus for each day this week with active work
+  if (week.checklist.length > 0 && week.checklist.every((item) => item.done)) xp += XP.weekComplete
+
   const activeDaysThisWeek = new Set<number>()
   for (const item of week.checklist) {
     if (item.done && item.doneAt && item.context === 'active') {
-      activeDaysThisWeek.add(item.doneAt)
+      activeDaysThisWeek.add(dayKey(item.doneAt))
     }
   }
   xp += activeDaysThisWeek.size * XP.activeDay
-  
+
   return xp
 }
 

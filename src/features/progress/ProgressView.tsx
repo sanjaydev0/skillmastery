@@ -112,7 +112,7 @@ export function ProgressView() {
         />
       </section>
 
-      {gameLayer && gameStats.xp > 0 && (
+      {gameLayer && (gameStats.xp > 0 || gameStats.quests.length > 0) && (
         <section className="card mt-4 p-4" aria-labelledby="game-stats-heading">
           <div className="flex items-start justify-between">
             <div>
@@ -150,6 +150,9 @@ export function ProgressView() {
                 <Swords size={16} className="text-accent" />
                 <p className="text-sm font-semibold">Active quests</p>
               </div>
+              <p className="faint mb-2 text-[11px]">
+                A quest marks XP already inside your total. Clearing it pays nothing twice.
+              </p>
               <div className="space-y-2">
                 {gameStats.quests.map((quest) => (
                   <div
@@ -161,8 +164,8 @@ export function ProgressView() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium uppercase tracking-wide text-t3">
-                            {quest.window}
+                          <span className="text-[11px] font-medium text-t3">
+                            {quest.window === 'today' ? 'Today' : 'This week'}
                           </span>
                           {quest.earned && (
                             <Badge tone="good">
@@ -174,7 +177,7 @@ export function ProgressView() {
                         <p className="mt-0.5 text-xs text-t3">{quest.detail}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="num text-sm font-semibold">+{quest.xp} XP</span>
+                        <span className="num text-sm font-semibold">Worth {quest.xp} XP</span>
                         {quest.progress.total > 0 && (
                           <span className="text-xs text-t3">
                             {quest.progress.done}/{quest.progress.total}
@@ -207,7 +210,7 @@ export function ProgressView() {
                     <p className="mt-0.5 text-xs text-t3">{gameStats.boss.detail}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="num text-sm font-semibold">+{gameStats.boss.xp} XP</span>
+                    <span className="num text-sm font-semibold">Worth {gameStats.boss.xp} XP</span>
                     {gameStats.boss.defeated && (
                       <Badge tone="good">
                         Defeated

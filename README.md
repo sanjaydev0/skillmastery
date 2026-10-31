@@ -14,7 +14,8 @@ Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Fu
 - **Map** — a prerequisite knowledge graph with Primitive → Concept → Failure Mode points, freshness and repair drills.
 - **Practice** — the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
 - **Library** — docs, the shared 30-minute canon, reading progress, saved links and a six-step open-source pathway from a public repository to a v1.0.0 release.
-- **Progress** — completed estimate ranges, phase rollups, checkpoints, concept mastery, and optional evidence marks.
+- **Progress** — completed estimate ranges, phase rollups, checkpoints, concept mastery, and the optional game layer.
+- **Game layer** — a level, XP, today's quests and a weekly boss, all counted from the same evidence. XP is 10 per checked task, 15 for an active day, 120 per cleared checkpoint and 200 per finished week. It is a second reading of the work, never a separate score, and Settings turns the whole surface off without losing a number.
 - **Progress marks** — optional evidence marks (first checkpoint, ten tasks, ten concepts) that never count days or streaks. Turn them off in Settings.
 - **Recently deleted** — every week or track you delete waits in a 20-item trash. Restore brings back its concepts, cards and graph edges; removal there is permanent.
 - **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups, undo, exact AnkiDroid TSV import steps and the optional AI helper.

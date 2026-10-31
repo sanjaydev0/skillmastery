@@ -147,9 +147,30 @@ export function HelpView() {
           </p>
         </Faq>
 
+        <Faq id="game" title="How does the game layer work?" icon={<Trophy size={15} />}>
+          <p>
+            The game layer is a second reading of the same evidence. A checked task is 10 XP, a day with one active
+            task adds 15 XP, a cleared checkpoint adds 120 XP and a finished week adds 200 XP. XP never comes from
+            opening the app, so it cannot be farmed.
+          </p>
+          <p className="mt-2">
+            <strong>Levels</strong> start at 100 XP and rise on a fixed table. Your level and today&apos;s XP appear at
+            the top of the Today page, and a level up is announced in a toast.
+          </p>
+          <p className="mt-2">
+            <strong>Quests</strong> are the day and week goals on the Progress page. A quest marks XP you already
+            earned; it does not pay twice. The <strong>boss</strong> is the current week: every task plus the
+            checkpoint.
+          </p>
+          <p className="mt-2">
+            Nothing is stored. Turn the whole layer off in <strong>Settings → Game layer</strong> and the pages stay
+            the same; turn it back on and every number returns.
+          </p>
+        </Faq>
+
         <Faq id="marks" title="What are progress marks?" icon={<Trophy size={15} />}>
           <p>
-            Marks are optional. Turn them on in <strong>Settings → Progress marks</strong>. They appear on the Progress
+            Marks are optional. Turn them on in <strong>Settings → Game layer</strong>. They appear on the Progress
             page.
           </p>
           <p className="mt-2">

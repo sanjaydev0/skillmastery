@@ -54,7 +54,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 223 tests across 30 files
+npm test           # Vitest, currently 230 tests across 31 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -135,6 +135,7 @@ Rules:
 10. **Day cards are stored, rollups are derived.** `dayPlans[weekId]` holds the editorial layer; `summariseWeek`/`summariseSubject` are the only places that compute capacity, totals and overload. Never store a computed total.
 11. **The clock is derived, the start date is stored.** `courseDay()`, `courseWeek()` and `consistency()` in `src/lib/courseClock.ts` read `journey`. A pause starts the next calendar day, so pausing never moves the course day backwards. Consistency is a ratio, never a streak.
 12. **Marks are derived, never stored.** `milestonesFor()` in `src/engine/milestones.ts` reads checked tasks, passed gates and mastered nodes. A mark never counts days, sessions or streaks, so a pause cannot remove one. `journey.gameLayer` only hides the surface.
+13. **The game layer is derived too.** `gameStatsFor()` in `src/engine/gamification.ts` pays 10 XP per checked task, one 15 XP active-day bonus per calendar day, 120 XP per cleared gate and 200 XP per finished week. Quests and the boss restate that XP; they never pay a second time. `journey.gameLayer` hides Today's strip and the Progress panel without changing a number.
 
 ### Persistence
 
@@ -193,7 +194,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **223 tests / 30 files** (October 2026).
+- Baseline: **230 tests / 31 files** (October 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;

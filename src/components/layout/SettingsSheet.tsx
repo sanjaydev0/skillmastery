@@ -329,24 +329,24 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
         <section>
           <SectionHead
-            title="Progress marks"
-            eyebrow="Optional · evidence, not a streak"
+            title="Game layer"
+            eyebrow="Optional · level, quests and marks"
             action={<Badge tone={gameLayer ? 'good' : 'neutral'}>{gameLayer ? 'On' : 'Off'}</Badge>}
           />
           <div className="rounded-xl border border-line bg-s2 p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[12px] font-medium">Show marks on Progress</p>
+                <p className="text-[12px] font-medium">Show level, XP, quests, the boss and marks</p>
                 <p className="faint mt-0.5 text-[11.5px] leading-relaxed">
-                  A mark records work you finished, such as the first checkpoint or ten checked tasks. No mark counts
-                  days or streaks, so a pause never takes one away.
+                  Everything here is counted from checked tasks, cleared checkpoints and finished weeks. Turning it off
+                  only hides the surface. Nothing is lost, and a pause never takes a mark or XP away.
                 </p>
               </div>
               <button
                 type="button"
                 role="switch"
                 aria-checked={gameLayer}
-                aria-label="Show progress marks"
+                aria-label="Show the game layer"
                 onClick={() => setGameLayer(!gameLayer)}
                 className={`relative h-6 w-11 flex-none rounded-full border transition ${
                   gameLayer ? 'border-accent/50 bg-accent' : 'border-line bg-s3'

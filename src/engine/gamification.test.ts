@@ -194,6 +194,34 @@ describe('gamification engine', () => {
     expect(stats.weekXp).toBe(2 * XP.task + XP.activeDay)
   })
 
+  it('pays one active-day bonus however many active tasks share the day', () => {
+    const actives = subject.weeks[0].checklist.filter((task) => task.context === 'active')
+    actives.slice(0, 3).forEach((task) => {
+      task.done = true
+      task.doneAt = now + 1_000
+    })
+
+    const stats = gameStatsFor(subject, journey, now)
+    expect(stats.xp).toBe(3 * XP.task + XP.activeDay)
+  })
+
+  it('pays the active-day bonus once per calendar day', () => {
+    const actives = subject.weeks[0].checklist.filter((task) => task.context === 'active')
+    actives[0]!.done = true
+    actives[0]!.doneAt = day(2026, 0, 1)
+    actives[1]!.done = true
+    actives[1]!.doneAt = day(2026, 0, 2)
+
+    const stats = gameStatsFor(subject, journey, now)
+    expect(stats.xp).toBe(2 * XP.task + 2 * XP.activeDay)
+  })
+
+  it('pays no week-completion XP for a week with no tasks', () => {
+    subject.weeks[0].checklist = []
+    const stats = gameStatsFor(subject, journey, now)
+    expect(stats.xp).toBe(0)
+  })
+
   it('handles empty subject gracefully', () => {
     const emptySubject: Subject = {
       id: 'empty',

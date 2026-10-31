@@ -36,7 +36,7 @@ describe('application smoke tests', () => {
     expect(localStorage.getItem('skillmastery:theme')).toBe('light')
     expect(within(dialog).getByRole('button', { name: /Light/ })).toHaveAttribute('aria-pressed', 'true')
 
-    const marks = within(dialog).getByRole('switch', { name: 'Show progress marks' })
+    const marks = within(dialog).getByRole('switch', { name: 'Show the game layer' })
     expect(marks).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(marks)
     expect(useAppStore.getState().journey.gameLayer).toBe(false)

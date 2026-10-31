@@ -9,6 +9,7 @@ import {
   Palette,
   Pause,
   Play,
+  Trophy,
 } from 'lucide-react'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
@@ -22,6 +23,7 @@ import {
 } from '../../engine/estimates'
 import { dueCards } from '../../engine/srs'
 import { weekStatus } from '../../engine/gating'
+import { gameStatsFor } from '../../engine/gamification'
 import { navigate } from '../../lib/router'
 import { formatShortDate } from '../../lib/dates'
 import {
@@ -84,6 +86,9 @@ export function TodayView() {
 
   const paused = isPaused(journey)
   const openPause = journey.pauses.find((entry) => entry.to === null)
+  const gameStats = useMemo(() => gameStatsFor(subject, journey), [subject, journey])
+  const showGame = journey.gameLayer && gameStats.xp > 0
+  const questsEarned = gameStats.quests.filter((quest) => quest.earned).length
 
   const daysSinceActivity = useMemo(() => {
     // Find the most recent doneAt timestamp from checklist items
@@ -185,6 +190,7 @@ export function TodayView() {
   const completeTask = (taskId: string) => {
     const task = week.checklist.find((item) => item.id === taskId)
     if (!task) return
+    const before = task.done ? null : gameStatsFor(subject, journey)
     toggleChecklist(week.id, taskId)
     toast(
       task.done
@@ -193,6 +199,15 @@ export function TodayView() {
       task.done ? 'info' : 'success',
       3200,
     )
+    if (before) {
+      const state = useAppStore.getState()
+      const nextSubject = state.subjects.find((entry) => entry.id === subject.id)
+      if (!nextSubject) return
+      const after = gameStatsFor(nextSubject, state.journey)
+      if (after.level > before.level) {
+        toast(`Level ${after.level}: ${after.title}.`, 'success', 6000)
+      }
+    }
   }
 
   return (
@@ -230,6 +245,39 @@ export function TodayView() {
           </Button>
         </div>
       </header>
+
+      {showGame ? (
+        <section
+          className="mt-4 rounded-xl border border-line bg-s2 px-3.5 py-3"
+          aria-label="Your level"
+        >
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span className="flex items-center gap-1.5 text-[12.5px] font-semibold">
+              <Trophy size={14} className="text-accent" aria-hidden />
+              Level {gameStats.level} {gameStats.title}
+            </span>
+            <span className="faint text-[11.5px]">{gameStats.xp} XP total</span>
+            <span className="faint text-[11.5px]">+{gameStats.todayXp} XP today</span>
+            {questsEarned > 0 ? (
+              <span className="faint text-[11.5px]">
+                {questsEarned} of {gameStats.quests.length} quests earned
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <ProgressBar
+              value={gameStats.levelProgress}
+              className="!h-1.5 flex-1"
+              label="Progress to the next level"
+            />
+            <span className="faint num flex-none text-[11px]">
+              {gameStats.nextLevelAt === null
+                ? 'Top level'
+                : `${gameStats.nextLevelAt - gameStats.xp} XP to go`}
+            </span>
+          </div>
+        </section>
+      ) : null}
 
       {showPauseNudge && (
         <section
