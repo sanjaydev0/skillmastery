@@ -3,7 +3,6 @@ import { DEFAULT_JOURNEY, DEFAULT_PLANNER, SCHEMA_VERSION, SEED_VERSION } from '
 import { seedBooks } from './books'
 import { weekOneDayPlans } from './dayPlans/week1'
 import { flutterSubject } from './tracks/flutter'
-import { fullstackSubject } from './tracks/fullstack'
 
 function clone<T>(value: T): T {
   if (typeof structuredClone === 'function') return structuredClone(value)
@@ -11,9 +10,8 @@ function clone<T>(value: T): T {
 }
 
 /**
- * Fresh, fully authored seed. Every track is self-contained; the passive canon
- * is intentionally shared because reading progress belongs to the person, not
- * to a particular technology track.
+ * Fresh, fully authored seed. The Flutter track is the one course this app
+ * ships; the shared passive canon belongs to the learner, not to a technology.
  */
 export function createSeedData(): AppData {
   const now = Date.now()
@@ -23,7 +21,7 @@ export function createSeedData(): AppData {
     createdAt: now,
     updatedAt: now,
     activeSubjectId: flutterSubject.id,
-    subjects: clone([flutterSubject, fullstackSubject]),
+    subjects: clone([flutterSubject]),
     books: clone(seedBooks),
     dailyLog: {},
     overrides: { weeks: {}, nodes: {} },

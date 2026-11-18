@@ -97,26 +97,31 @@ describe('trash round trip', () => {
     expect(useAppStore.getState().trash).toHaveLength(0)
   })
 
-  it('restores a deleted track with its weeks, nodes and cards', () => {
-    const fullstack = useAppStore.getState().subjects.find((subject) => subject.id === 'fullstack')!
-    const counts = {
-      weeks: fullstack.weeks.length,
-      nodes: fullstack.nodes.length,
-      cards: fullstack.cards.length,
-    }
+  it('restores a deleted track with its weeks, concepts and cards', () => {
+    // The seed ships one track now, so the deleted track is a created one.
+    const created = useAppStore.getState().addSubject({
+      name: 'Sketching',
+      shortName: 'Sketch',
+      tagline: 'Draw what you can see',
+      accent: 'violet',
+    })
+    expect(created.ok).toBe(true)
+    // addSubject switches to the new track, so the id is the active one.
+    const id = useAppStore.getState().activeSubjectId
+    const before = useAppStore.getState().subjects.find((subject) => subject.id === id)!
 
-    expect(useAppStore.getState().deleteSubject('fullstack').ok).toBe(true)
-    expect(useAppStore.getState().subjects.some((subject) => subject.id === 'fullstack')).toBe(false)
+    expect(useAppStore.getState().deleteSubject(id).ok).toBe(true)
+    expect(useAppStore.getState().subjects.some((subject) => subject.id === id)).toBe(false)
 
     const entry = useAppStore.getState().trash[0]!
     expect(entry.kind).toBe('subject')
-    expect(entry.counts).toMatchObject(counts)
+    expect(entry.counts).toMatchObject({ weeks: before.weeks.length, concepts: 0, cards: 0 })
 
     expect(useAppStore.getState().restoreTrash(entry.id).ok).toBe(true)
-    const back = useAppStore.getState().subjects.find((subject) => subject.id === 'fullstack')!
-    expect(back.weeks).toHaveLength(counts.weeks)
-    expect(back.nodes).toHaveLength(counts.nodes)
-    expect(back.cards).toHaveLength(counts.cards)
+    const back = useAppStore.getState().subjects.find((subject) => subject.id === id)!
+    expect(back.weeks).toHaveLength(before.weeks.length)
+    expect(back.concepts).toEqual([])
+    expect(back.cards).toEqual([])
   })
 
   it('moves day cards to trash and puts them back once', () => {

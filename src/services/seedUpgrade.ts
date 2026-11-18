@@ -60,6 +60,17 @@ function mergeResources(current: Subject['resources'], fresh: Subject['resources
 }
 
 /**
+ * Authored concepts are additive the same way. A concept the learner already
+ * proved keeps its proof history and review date untouched; only concepts the
+ * old seed never had are appended.
+ */
+function mergeConcepts(current: Subject['concepts'], fresh: Subject['concepts']): Subject['concepts'] {
+  const known = new Set(current.map((concept) => concept.id))
+  const additions = fresh.filter((concept) => !known.has(concept.id))
+  return additions.length ? [...current, ...additions] : current
+}
+
+/**
  * Authored day cards are content, so a seed bump replaces a stale authored card
  * with the corrected one. A learner edit or a generated card is progress-adjacent
  * work and always wins. A week with no cards gains the authored seven.
@@ -98,6 +109,7 @@ export function refreshSeedContent(data: AppData): SeedRefreshResult {
         const template = fresh.weeks.find((entry) => entry.id === week.id)
         return template ? refreshWeek(week, template) : week
       }),
+      concepts: mergeConcepts(subject.concepts, fresh.concepts),
       resources: mergeResources(subject.resources, fresh.resources),
     }
   })

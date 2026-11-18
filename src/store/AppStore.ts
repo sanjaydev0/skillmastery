@@ -448,6 +448,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       counts: {
         weeks: subject.weeks.length,
         nodes: subject.nodes.length,
+        concepts: subject.concepts.length,
         cards: subject.cards.length,
       },
     }

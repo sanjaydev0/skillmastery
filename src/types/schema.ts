@@ -5,7 +5,7 @@
  */
 
 export const SCHEMA_VERSION = 6
-export const SEED_VERSION = 5
+export const SEED_VERSION = 6
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
 export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
@@ -135,6 +135,8 @@ export type TrashKind = 'week' | 'subject' | 'dayPlans' | 'node' | 'resource'
 export interface TrashCounts {
   weeks?: number
   nodes?: number
+  concepts?: number
+  dayProofs?: number
   cards?: number
   days?: number
   resources?: number

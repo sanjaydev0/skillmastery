@@ -1,4 +1,6 @@
 import type { Subject } from '../../types/schema'
+import { buildConcepts } from '../../engine/concepts'
+import { FLUTTER_BLUEPRINT } from '../curriculum/blueprint'
 import { flutterFoundation } from './flutterWeeks1to6'
 import { flutterArchitecture } from './flutterWeeks7to12'
 import { flutterSystems } from './flutterWeeks13to24'
@@ -37,12 +39,9 @@ export const flutterSubject: Subject = {
     ...flutterArchitecture.weeks,
     ...flutterSystems.weeks,
   ],
-  nodes: [
-    ...flutterFoundation.nodes,
-    ...flutterArchitecture.nodes,
-    ...flutterSystems.nodes,
-  ],
-  concepts: [],
+  // Concepts are derived from the blueprint, never hand-built.
+  nodes: [],
+  concepts: buildConcepts(FLUTTER_BLUEPRINT, (weekNumber) => `fl-w${weekNumber}`),
   dayProofs: [],
   cards: [
     ...flutterFoundation.cards,

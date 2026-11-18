@@ -3,8 +3,6 @@ import type {
   ChecklistItem,
   DaySlot,
   Flashcard,
-  KnowledgeNode,
-  KnowledgePoint,
   Resource,
   ResourceKind,
   Week,
@@ -65,45 +63,6 @@ export function standardChecks(
     },
     { label: `Weekly checkpoint: ${opts.gate}`, context: 'active', tier: 'C', minutes: 60 },
   ])
-}
-
-export interface NodeSpec {
-  id: string
-  weekId: string
-  title: string
-  tags: string[]
-  kp: [primitive: string, concept: string, failureMode: string]
-  prereq?: string[]
-  encompasses?: string[]
-  extraKps?: Array<[primitive: string, concept: string, failureMode: string]>
-  notes?: string
-}
-
-export function seedNode(spec: NodeSpec): KnowledgeNode {
-  const make = (index: number, tuple: [string, string, string]): KnowledgePoint => ({
-    id: `${spec.id}-kp${index + 1}`,
-    primitive: tuple[0],
-    concept: tuple[1],
-    failureMode: tuple[2],
-    fails: 0,
-  })
-  return {
-    id: spec.id,
-    weekId: spec.weekId,
-    title: spec.title,
-    slug: spec.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, ''),
-    tags: spec.tags,
-    prerequisiteIds: spec.prereq ?? [],
-    encompassedNodeIds: spec.encompasses ?? [],
-    knowledgePoints: [make(0, spec.kp), ...(spec.extraKps ?? []).map((tuple, index) => make(index + 1, tuple))],
-    status: 'locked',
-    srs: { strength: 0, intervalDays: 0, dueAt: 0, implicitReviews: 0 },
-    repairFlags: [],
-    ...(spec.notes ? { notes: spec.notes } : {}),
-  }
 }
 
 export interface WeekSpec {
