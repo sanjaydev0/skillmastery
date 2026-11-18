@@ -15,11 +15,10 @@ import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppSto
 import { useUiStore } from '../../store/uiStore'
 import {
   missingWeekPrereqs,
-  nodeBadge,
-  overallMastery,
   weekProgress,
   weekStatus,
 } from '../../engine/gating'
+import { conceptsForWeek, overallProof } from '../../engine/concepts'
 import { dueCards } from '../../engine/srs'
 import { formatShortDate } from '../../lib/dates'
 import { cn, percent } from '../../lib/utils'
@@ -47,7 +46,9 @@ export function CurriculumView() {
   )
   const cleared = orderedWeeks.filter((week) => week.gate.passedAt).length
   const due = dueCards(subject.cards).length
-  const masteredNodes = subject.nodes.filter((node) => node.status === 'mastered').length
+  const provedConcepts = subject.concepts.filter(
+    (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+  ).length
 
   const phases = subject.phases.filter(
     (phase) => phaseFilter === 'all' || phase.id === phaseFilter,
@@ -81,9 +82,9 @@ export function CurriculumView() {
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
           ['Gates cleared', `${cleared}/${orderedWeeks.length}`, <CheckCircle2 key="g" size={14} />],
-          ['Node mastery', `${percent(overallMastery(subject.nodes))}%`, <Sparkles key="n" size={14} />],
+          ['Concepts proved', `${percent(overallProof(subject.concepts))}%`, <Sparkles key="n" size={14} />],
           ['Cards due', `${due}`, <CalendarDays key="d" size={14} />],
-          ['Mastered nodes', `${masteredNodes}/${subject.nodes.length}`, <Lock key="m" size={14} />],
+          ['Proved concepts', `${provedConcepts}/${subject.concepts.length}`, <Lock key="m" size={14} />],
         ].map(([label, value, icon]) => (
           <div key={String(label)} className="card flex items-center gap-2.5 px-3 py-2.5">
             <span className="grid h-7 w-7 flex-none place-items-center rounded-lg bg-s2 text-t2" aria-hidden>
@@ -231,8 +232,10 @@ function WeekCard({ week, active }: { week: Week; active: boolean }) {
   const overrides = useAppStore((state) => state.overrides)
   const status = weekStatus(week, subject.weeks, overrides)
   const missing = missingWeekPrereqs(week, subject.weeks)
-  const nodes = subject.nodes.filter((node) => node.weekId === week.id)
-  const mastered = nodes.filter((node) => nodeBadge(node, subject, overrides) === 'mastered').length
+  const concepts = conceptsForWeek(subject.concepts, week.weekNumber)
+  const proved = concepts.filter(
+    (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+  ).length
   const attempts = week.gate.attempts
   const lastAttempt = attempts[attempts.length - 1]
   const overridden = Boolean(overrides.weeks[week.id])
@@ -286,9 +289,9 @@ function WeekCard({ week, active }: { week: Week; active: boolean }) {
       <p className="muted mt-1 line-clamp-2 text-[11.5px] leading-relaxed">{week.anchor}</p>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-1">
-        <span className="pill !py-0.5 !text-[11px]">{nodes.length} nodes</span>
+        <span className="pill !py-0.5 !text-[11px]">{concepts.length} concepts</span>
         <span className="pill !py-0.5 !text-[11px]">{week.checklist.length} checks</span>
-        <span className="pill !py-0.5 !text-[11px]">{mastered} mastered</span>
+        <span className="pill !py-0.5 !text-[11px]">{proved} proved</span>
       </div>
 
       <div className="mt-2.5 flex items-center gap-2">

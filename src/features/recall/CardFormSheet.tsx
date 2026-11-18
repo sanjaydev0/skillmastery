@@ -21,7 +21,7 @@ export function CardFormSheet({ card, onClose }: { card?: Flashcard; onClose: ()
   const [nodeId, setNodeId] = useState(card?.nodeId ?? '')
   const [error, setError] = useState('')
 
-  const weekNodes = subject.nodes.filter((node) => !weekId || node.weekId === weekId)
+  const weekConcepts = subject.concepts.filter((concept) => !weekId || concept.weekId === weekId)
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -130,12 +130,12 @@ export function CardFormSheet({ card, onClose }: { card?: Flashcard; onClose: ()
             </select>
           </Field>
         </div>
-        <Field label="Knowledge node (optional)" hint="Links the card to a node for context in Anki exports.">
+        <Field label="Concept (optional)" hint="Links the card to a concept for context in Anki exports.">
           <select className="select" value={nodeId} onChange={(event) => setNodeId(event.target.value)}>
-            <option value="">No node</option>
-            {weekNodes.map((node) => (
-              <option key={node.id} value={node.id}>
-                {node.title}
+            <option value="">No concept</option>
+            {weekConcepts.map((concept) => (
+              <option key={concept.id} value={concept.id}>
+                {concept.term}
               </option>
             ))}
           </select>

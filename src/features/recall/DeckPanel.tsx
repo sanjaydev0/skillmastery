@@ -46,7 +46,7 @@ export function DeckPanel() {
     if (filtered.length === 0) return
     const options = {
       deck: `SkillMastery::${subject.shortName}`,
-      nodes: subject.nodes,
+      concepts: subject.concepts,
       weeks: subject.weeks,
     }
     const content = format === 'tsv' ? toAnkiTsv(filtered, options) : toAnkiCsv(filtered, options)
@@ -173,7 +173,7 @@ export function DeckPanel() {
         <div className="mt-3 space-y-1.5">
           {filtered.map((card) => {
             const weekNumber = card.weekId ? weekNumbers.get(card.weekId) : undefined
-            const node = card.nodeId ? subject.nodes.find((entry) => entry.id === card.nodeId) : undefined
+            const node = card.nodeId ? subject.concepts.find((entry) => entry.id === card.nodeId) : undefined
             return (
               <div key={card.id} className="card p-3">
                 <div className="flex items-start gap-3">

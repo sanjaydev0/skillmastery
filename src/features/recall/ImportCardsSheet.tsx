@@ -69,7 +69,7 @@ export function ImportCardsSheet({ onClose }: { onClose: () => void }) {
           ? card.weekId
           : undefined
       const nodeId =
-        typeof card.nodeId === 'string' && subject.nodes.some((node) => node.id === card.nodeId)
+        typeof card.nodeId === 'string' && subject.concepts.some((concept) => concept.id === card.nodeId)
           ? card.nodeId
           : undefined
       const result = addCard({ front: card.front, back: card.back, tags, source, weekId, nodeId })

@@ -29,7 +29,6 @@ const weeks: Week[] = [
       'No async, streams or isolates yet',
       'Do not add packages; the Dart SDK and `test` are enough',
     ],
-    encompassedNodeIds: [],
     checklist: checks(W1, [
       {
         id: `${W1}-d1a`,
@@ -163,7 +162,6 @@ const weeks: Week[] = [
       'No benchmarking framework; a Stopwatch is enough',
       'Keep inheritance to one level, or use composition instead',
     ],
-    encompassedNodeIds: [`${W1}-n2`, `${W1}-n3`],
     checklist: checks(W2, [
       {
         id: `${W2}-d1a`,
@@ -295,7 +293,6 @@ const weeks: Week[] = [
       'No state-management package — a sealed class and a controller is enough',
       'Do not memorise every pattern syntax; five cover most code',
     ],
-    encompassedNodeIds: [`${W1}-n1`, `${W2}-n1`],
     checklist: standardChecks(W3, {
       docs: 'dart.dev records, patterns, async',
       book: 'Think Like a Programmer Ch 4 & 6',
@@ -326,7 +323,6 @@ const weeks: Week[] = [
       'Skip animation curves until Week 21',
       'No Flutter layout internals before Week 5',
     ],
-    encompassedNodeIds: [`${W2}-n3`, `${W3}-n2`],
     checklist: standardChecks(W4, {
       docs: 'Material 3 foundations + Apple HIG layout',
       book: 'Design of Everyday Things Ch 1–2 + Refactoring UI hierarchy',
@@ -356,7 +352,6 @@ const weeks: Week[] = [
       'GlobalKey is a last resort, not a layout tool',
       'Skip engine source dives; the constraint protocol is enough',
     ],
-    encompassedNodeIds: [`${W2}-n3`, `${W3}-n2`],
     checklist: standardChecks(W5, {
       docs: 'Flutter layout constraints + Inside Flutter',
       book: 'Design of Everyday Things Ch 3–4 + Refactoring UI spacing',
@@ -386,7 +381,6 @@ const weeks: Week[] = [
       'No custom painting yet (Week 20)',
       'Skip platform-specific Cupertino forks unless the screen demands it',
     ],
-    encompassedNodeIds: [`${W4}-n2`, `${W5}-n2`],
     checklist: standardChecks(W6, {
       docs: 'Material 3 components + Flutter accessibility',
       book: 'Refactoring UI typography, colour, finishing touches',

@@ -65,30 +65,27 @@ export function PromptHub() {
   const edited = Boolean(promptOverrides[selected.id])
 
   const variables = useMemo(() => {
-    const nodes = week
-      ? subject.nodes.filter((node) => node.weekId === week.id)
-      : subject.nodes
-    const kps = nodes.length
-      ? nodes
+    const concepts = week
+      ? subject.concepts.filter((concept) => concept.weekId === week.id)
+      : subject.concepts
+    const kps = concepts.length
+      ? concepts
           .map(
-            (node) =>
-              `• ${node.title}: ${node.knowledgePoints
-                .map((kp) => `[P] ${kp.primitive} | [C] ${kp.concept} | [F] ${kp.failureMode}`)
-                .join(' · ')}`,
+            (concept) =>
+              `• ${concept.term}: ${concept.definition} | The mistake it prevents: ${concept.failureMode || 'not recorded'}`,
           )
           .join('\n')
-      : 'No knowledge nodes created for this week yet.'
-    const failedNodes = nodes.filter((node) => node.knowledgePoints.some((kp) => kp.fails > 0))
+      : 'No concepts recorded for this week yet.'
+    const failedConcepts = concepts.filter((concept) =>
+      concept.checks.some((check) => check.outcome === 'failed'),
+    )
     const mistakeCards = subject.cards.filter(
       (card) => card.source === 'mistake' && (!week || card.weekId === week.id),
     )
     const mistakeLines = [
-      ...failedNodes.map(
-        (node) =>
-          `• ${node.title}: ${node.knowledgePoints
-            .filter((kp) => kp.fails > 0)
-            .map((kp) => `${kp.concept || kp.primitive} (${kp.fails} failures)`)
-            .join(', ')}`,
+      ...failedConcepts.map(
+        (concept) =>
+          `• ${concept.term}: ${concept.failureMode || concept.definition} (proved: not yet)`,
       ),
       ...mistakeCards.slice(0, 5).map((card) => `• Card: ${card.front} → ${card.back}`),
     ]

@@ -4,20 +4,20 @@ import type {
   Book,
   CardSource,
   ChecklistItem,
+  Concept,
   DayPlan,
   DayPlanOrigin,
   DaySlot,
   Flashcard,
-  KnowledgeNode,
   Mode,
   Overrides,
   PlannerSettings,
+  ProofOutcome,
   Resource,
   ResourceKind,
   ResourceStatus,
   Subject,
   Theme,
-  TrashEdge,
   TrashEntry,
   Week,
   Weekday,
@@ -25,9 +25,7 @@ import type {
 import { DEFAULT_PLANNER, PROMPT_TEMPLATE_MAX_CHARS, TRASH_LIMIT } from '../types/schema'
 import { createSeedData } from '../data/seedData'
 import { activeWeek } from '../engine/gating'
-import { isNodeOpen } from '../engine/gating'
-import { explicitReview, fireCredit, emptySrs } from '../engine/fire'
-import { addRepairFlag, clearFlagsFrom, clearRepairFlag, recordKpFailure, resetNodeFailures } from '../engine/remediation'
+import { nextProofStep, proofDueAt, PROOF_INTERVALS } from '../engine/proofs'
 import { gradeCard } from '../engine/srs'
 import type { Grade } from '../engine/srs'
 import { recordAttempt } from '../engine/mastery'
@@ -50,7 +48,6 @@ import {
 export interface ActionResult {
   ok: boolean
   message: string
-  credits?: number
 }
 
 interface AppStore extends AppData {
@@ -86,24 +83,9 @@ interface AppStore extends AppData {
   addWeek: (input: { phaseId: string; title: string; anchor: string }) => ActionResult
   updateWeek: (weekId: string, patch: Partial<Week>) => void
   deleteWeek: (weekId: string) => string | null
-  startNode: (nodeId: string) => void
-  markNodeMastered: (nodeId: string) => ActionResult
-  logNodeReview: (nodeId: string) => ActionResult
-  failKnowledgePoint: (nodeId: string, kpId: string) => ActionResult
-  clearRepair: (prereqId: string, flagId: string) => void
-  addNode: (input: {
-    weekId: string
-    title: string
-    tags: string
-    primitive: string
-    concept: string
-    failureMode: string
-    prerequisiteIds: string[]
-    encompassedNodeIds: string[]
-    notes?: string
-  }) => ActionResult
-  updateNode: (nodeId: string, patch: Partial<KnowledgeNode>) => void
-  deleteNode: (nodeId: string) => string | null
+  /** Append one proof to a concept and reschedule its next review. */
+  checkConcept: (conceptId: string, outcome: ProofOutcome, note?: string) => ActionResult
+  setConceptNote: (conceptId: string, note: string) => void
   addCard: (input: {
     front: string
     back: string
@@ -139,8 +121,7 @@ interface AppStore extends AppData {
   deleteBook: (bookId: string) => void
   toggleDailyItem: (itemId: string) => void
   unlockWeek: (weekId: string) => void
-  unlockNode: (nodeId: string) => void
-  clearOverride: (kind: 'week' | 'node', id: string) => void
+  clearOverride: (kind: 'week', id: string) => void
   importData: (data: AppData, mode: 'replace' | 'merge') => void
   resetToSeed: () => void
   resetChecklistItem: (weekId: string, itemId: string) => void
@@ -210,19 +191,8 @@ function makeChecklist(weekId: string, title: string): ChecklistItem[] {
 }
 
 /** Clearing progress must never touch the curriculum text, only the evidence. */
-function resetNodeProgress(node: KnowledgeNode, at: number): KnowledgeNode {
-  return {
-    ...node,
-    status: 'locked',
-    srs: emptySrs(),
-    repairFlags: [],
-    knowledgePoints: node.knowledgePoints.map((point) => {
-      const next = { ...point, fails: 0 }
-      delete next.lastFailedAt
-      return next
-    }),
-    updatedAt: at,
-  }
+function resetConceptProgress(concept: Concept, at: number): Concept {
+  return { ...concept, checks: [], step: -1, dueAt: 0, updatedAt: at }
 }
 
 function resetCardProgress(card: Flashcard, at: number): Flashcard {
@@ -237,10 +207,10 @@ function clearGateProgress(week: Week): Week {
   }
 }
 
-function pruneOverrides(overrides: Overrides, weekIds: Set<string>, nodeIds: Set<string>): Overrides {
+function pruneOverrides(overrides: Overrides, weekIds: Set<string>): Overrides {
   return {
+    ...overrides,
     weeks: Object.fromEntries(Object.entries(overrides.weeks).filter(([key]) => !weekIds.has(key))),
-    nodes: Object.fromEntries(Object.entries(overrides.nodes).filter(([key]) => !nodeIds.has(key))),
   }
 }
 
@@ -447,7 +417,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       payload: subject,
       counts: {
         weeks: subject.weeks.length,
-        nodes: subject.nodes.length,
         concepts: subject.concepts.length,
         cards: subject.cards.length,
       },
@@ -476,11 +445,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       if (subject.weeks.some((candidate) => candidate.id === week.id)) {
         return { ok: false, message: 'That week is already back.' }
       }
-      const nodeIds = new Set((entry.nodes ?? []).map((node) => node.id))
-      const knownNodes = new Set(subject.nodes.map((node) => node.id))
+      const knownConcepts = new Set(subject.concepts.map((concept) => concept.id))
       const knownCards = new Set(subject.cards.map((card) => card.id))
+      const knownProofs = new Set(subject.dayProofs.map((proof) => `${proof.weekId}:${proof.day}`))
       const dependedOnIt = new Set(entry.weekLinks ?? [])
-      const pruned = new Map((entry.edges ?? []).map((edge) => [edge.nodeId, edge]))
 
       const weeks = [...subject.weeks, week]
         .sort((a, b) => a.weekNumber - b.weekNumber)
@@ -489,24 +457,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
             ? { ...candidate, prerequisiteWeekIds: [...candidate.prerequisiteWeekIds, week.id] }
             : candidate,
         )
-      const nodes = [...subject.nodes, ...(entry.nodes ?? []).filter((node) => !knownNodes.has(node.id))].map(
-        (node) => {
-          const edge = pruned.get(node.id)
-          if (!edge) return node
-          return {
-            ...node,
-            prerequisiteIds: [
-              ...new Set([...node.prerequisiteIds, ...edge.prerequisiteIds.filter((id) => nodeIds.has(id))]),
-            ],
-            encompassedNodeIds: [
-              ...new Set([
-                ...node.encompassedNodeIds,
-                ...edge.encompassedNodeIds.filter((id) => nodeIds.has(id)),
-              ]),
-            ],
-          }
-        },
-      )
+      const concepts = [
+        ...subject.concepts,
+        ...(entry.concepts ?? []).filter((concept) => !knownConcepts.has(concept.id)),
+      ]
+      const dayProofs = [
+        ...subject.dayProofs,
+        ...(entry.dayProofs ?? []).filter((proof) => !knownProofs.has(`${proof.weekId}:${proof.day}`)),
+      ]
       const cards = [
         ...subject.cards,
         ...(entry.cards ?? []).filter((card) => !knownCards.has(card.id)),
@@ -514,7 +472,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       set({
         subjects: state.subjects.map((candidate) =>
-          candidate.id === subject.id ? { ...candidate, weeks, nodes, cards } : candidate,
+          candidate.id === subject.id ? { ...candidate, weeks, concepts, dayProofs, cards } : candidate,
         ),
         trash: state.trash.filter((candidate) => candidate.id !== entryId),
         updatedAt: now(),
@@ -529,38 +487,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }
       set({
         subjects: [...state.subjects, subject],
-        trash: state.trash.filter((candidate) => candidate.id !== entryId),
-        updatedAt: now(),
-      })
-      return { ok: true, message: `"${entry.label}" restored.` }
-    }
-
-    if (entry.kind === 'node') {
-      const node = entry.payload as KnowledgeNode
-      const subject = state.subjects.find((candidate) => candidate.id === entry.subjectId)
-      if (!subject) return { ok: false, message: 'The track that owned that node is gone.' }
-      if (subject.nodes.some((candidate) => candidate.id === node.id)) {
-        return { ok: false, message: 'That node is already back.' }
-      }
-      const knownCards = new Set(subject.cards.map((card) => card.id))
-      const cards = [
-        ...subject.cards,
-        ...(entry.cards ?? []).filter((card) => !knownCards.has(card.id)),
-      ]
-      const inbound = new Map((entry.edges ?? []).map((edge) => [edge.nodeId, edge]))
-      const nodes = [...subject.nodes, node].map((candidate) => {
-        const edge = inbound.get(candidate.id)
-        if (!edge) return candidate
-        return {
-          ...candidate,
-          prerequisiteIds: Array.from(new Set([...candidate.prerequisiteIds, ...edge.prerequisiteIds])),
-          encompassedNodeIds: Array.from(new Set([...candidate.encompassedNodeIds, ...edge.encompassedNodeIds])),
-        }
-      })
-      set({
-        subjects: state.subjects.map((candidate) =>
-          candidate.id === subject.id ? { ...candidate, nodes, cards } : candidate,
-        ),
         trash: state.trash.filter((candidate) => candidate.id !== entryId),
         updatedAt: now(),
       })
@@ -603,16 +529,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const entry = state.trash.find((candidate) => candidate.id === entryId)
       if (!entry) return {}
       // A purged week is never coming back, so a card that pointed at one of
-      // its nodes loses the link now instead of keeping a dangling id.
-      const removedNodes = new Set((entry.nodes ?? []).map((node) => node.id))
+      // its concepts loses the link now instead of keeping a dangling id.
+      const removedConcepts = new Set((entry.concepts ?? []).map((concept) => concept.id))
       const subjects =
-        entry.kind === 'week' && removedNodes.size > 0
+        entry.kind === 'week' && removedConcepts.size > 0
           ? state.subjects.map((subject) =>
               subject.id === entry.subjectId
                 ? {
                     ...subject,
                     cards: subject.cards.map((card) =>
-                      card.nodeId && removedNodes.has(card.nodeId)
+                      card.nodeId && removedConcepts.has(card.nodeId)
                         ? { ...card, nodeId: undefined }
                         : card,
                     ),
@@ -671,27 +597,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const wasPassed = Boolean(week.gate.passedAt)
     const gate = recordAttempt(week.gate, scores, at)
     const justPassed = !wasPassed && Boolean(gate.passedAt)
-    let credits = 0
-    const nodes = subject.nodes.map((node) => {
-      if (!justPassed || !week.encompassedNodeIds.includes(node.id)) return node
-      const credited = fireCredit(node.srs, at)
-      if (credited.credited) credits++
-      return { ...node, srs: credited.srs, updatedAt: at }
-    })
     set({
       ...patchSubject(
         state,
         (current) => ({
           ...current,
           weeks: current.weeks.map((entry) => (entry.id === weekId ? { ...entry, gate } : entry)),
-          nodes,
         }),
         at,
       ),
     })
     return {
       ok: true,
-      credits,
       message: gate.passedAt
         ? justPassed
           ? `Gate cleared. Week ${week.weekNumber + 1} unlocked.`
@@ -749,9 +666,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const subject = activeSubjectOf(state)
     const week = subject?.weeks.find((entry) => entry.id === weekId)
     if (!subject || !week) return null
-    const removedNodeIds = new Set(
-      subject.nodes.filter((node) => node.weekId === weekId).map((node) => node.id),
-    )
     const entry: TrashEntry = {
       id: uniqueId('trash'),
       kind: 'week',
@@ -760,23 +674,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       subjectId: subject.id,
       subjectName: subject.shortName,
       payload: week,
-      nodes: subject.nodes.filter((node) => node.weekId === weekId),
+      // A complete copy, so restoring the week restores its whole record.
+      concepts: subject.concepts.filter((concept) => concept.weekId === weekId),
+      dayProofs: subject.dayProofs.filter((proof) => proof.weekId === weekId),
       cards: subject.cards.filter((card) => card.weekId === weekId),
-      // Record the graph edges this delete is about to prune, so a restore puts
-      // them back instead of leaving a silently thinner prerequisite graph.
-      edges: subject.nodes
-        .filter((node) => node.weekId !== weekId)
-        .map((node) => ({
-          nodeId: node.id,
-          prerequisiteIds: node.prerequisiteIds.filter((id) => removedNodeIds.has(id)),
-          encompassedNodeIds: node.encompassedNodeIds.filter((id) => removedNodeIds.has(id)),
-        }))
-        .filter((edge) => edge.prerequisiteIds.length > 0 || edge.encompassedNodeIds.length > 0),
       weekLinks: subject.weeks
         .filter((candidate) => candidate.id !== weekId && candidate.prerequisiteWeekIds.includes(weekId))
         .map((candidate) => candidate.id),
       counts: {
-        nodes: removedNodeIds.size,
+        concepts: subject.concepts.filter((concept) => concept.weekId === weekId).length,
+        dayProofs: subject.dayProofs.filter((proof) => proof.weekId === weekId).length,
         cards: subject.cards.filter((card) => card.weekId === weekId).length,
         days: state.dayPlans[weekId]?.length ?? 0,
       },
@@ -792,13 +699,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
               ...candidate,
               prerequisiteWeekIds: candidate.prerequisiteWeekIds.filter((id) => id !== weekId),
             })),
-          nodes: active.nodes
-            .filter((node) => node.weekId !== weekId)
-            .map((node) => ({
-              ...node,
-              prerequisiteIds: node.prerequisiteIds.filter((id) => !removedNodeIds.has(id)),
-              encompassedNodeIds: node.encompassedNodeIds.filter((id) => !removedNodeIds.has(id)),
-            })),
+          concepts: active.concepts.filter((concept) => concept.weekId !== weekId),
+          dayProofs: active.dayProofs.filter((proof) => proof.weekId !== weekId),
           cards: active.cards.filter((card) => card.weekId !== weekId),
         }),
         now(),
@@ -809,239 +711,55 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     return entry.id
   },
 
-  startNode: (nodeId) =>
-    set((state) => {
-      const at = now()
-      return patchSubject(
-        state,
-        (subject) => ({
-          ...subject,
-          nodes: subject.nodes.map((node) =>
-            node.id === nodeId && node.status === 'locked' ? { ...node, status: 'learning', updatedAt: at } : node,
-          ),
-        }),
-        at,
-      )
-    }),
-
-  markNodeMastered: (nodeId) => {
+  checkConcept: (conceptId, outcome, note) => {
     const state = get()
     const subject = activeSubjectOf(state)
-    const node = subject?.nodes.find((entry) => entry.id === nodeId)
-    if (!subject || !node) return { ok: false, message: 'Node not found.' }
-    if (!isNodeOpen(node, subject, state.overrides)) {
-      return { ok: false, message: 'Prerequisites are not mastered. Unlock it first if you mean to override.' }
-    }
+    const concept = subject?.concepts.find((entry) => entry.id === conceptId)
+    if (!subject || !concept) return { ok: false, message: 'That concept no longer exists.' }
     const at = now()
-    let credits = 0
-    let nodes = subject.nodes.map((entry) => {
-      if (entry.id === nodeId) {
-        const clearedFlags = entry.repairFlags.map((flag) =>
-          flag.clearedAt ? flag : { ...flag, clearedAt: at },
-        )
-        return {
-          ...entry,
-          status: 'mastered' as const,
-          repairFlags: clearedFlags,
-          knowledgePoints: resetNodeFailures(entry).knowledgePoints,
-          srs: explicitReview(entry.srs, at),
-          updatedAt: at,
-        }
-      }
-      if (entry.repairFlags.some((flag) => flag.fromNodeId === nodeId && !flag.clearedAt)) {
-        return clearFlagsFrom(entry, nodeId, at)
-      }
-      return entry
-    })
-    nodes = nodes.map((entry) => {
-      if (!node.encompassedNodeIds.includes(entry.id)) return entry
-      const credited = fireCredit(entry.srs, at)
-      if (credited.credited) credits++
-      return { ...entry, srs: credited.srs, updatedAt: at }
-    })
-    set({ ...patchSubject(state, (current) => ({ ...current, nodes }), at) })
-    return {
-      ok: true,
-      credits,
-      message: credits
-        ? `${node.title} mastered · FIRe credited ${credits} encompassed node${credits === 1 ? '' : 's'}.`
-        : `${node.title} mastered.`,
-    }
-  },
-
-  logNodeReview: (nodeId) => {
-    const state = get()
-    const subject = activeSubjectOf(state)
-    const node = subject?.nodes.find((entry) => entry.id === nodeId)
-    if (!subject || !node) return { ok: false, message: 'Node not found.' }
-    const at = now()
-    let credits = 0
-    const nodes = subject.nodes.map((entry) => {
-      if (entry.id === nodeId) {
-        return { ...entry, srs: explicitReview(entry.srs, at), updatedAt: at }
-      }
-      if (!node.encompassedNodeIds.includes(entry.id)) return entry
-      const credited = fireCredit(entry.srs, at)
-      if (credited.credited) credits++
-      return { ...entry, srs: credited.srs, updatedAt: at }
-    })
-    set({ ...patchSubject(state, (current) => ({ ...current, nodes }), at) })
-    return {
-      ok: true,
-      credits,
-      message: credits
-        ? `Review logged · FIRe extended ${credits} encompassed node${credits === 1 ? '' : 's'}.`
-        : 'Review logged.',
-    }
-  },
-
-  failKnowledgePoint: (nodeId, kpId) => {
-    const state = get()
-    const subject = activeSubjectOf(state)
-    const node = subject?.nodes.find((entry) => entry.id === nodeId)
-    if (!subject || !node) return { ok: false, message: 'Node not found.' }
-    const at = now()
-    const failed = recordKpFailure(node, kpId, at)
-    const kp = failed.knowledgePoints.find((entry) => entry.id === kpId)
-    const shouldFlag = (kp?.fails ?? 0) >= 2
-    let flagged = 0
-    const nodes = subject.nodes.map((entry) => {
-      if (entry.id === nodeId) return failed
-      if (!shouldFlag || !node.prerequisiteIds.includes(entry.id)) return entry
-      const updated = addRepairFlag(entry, nodeId, kpId, at)
-      if (updated !== entry) flagged++
-      return updated
-    })
-    set({ ...patchSubject(state, (current) => ({ ...current, nodes }), at) })
-    return {
-      ok: true,
-      credits: flagged,
-      message: shouldFlag
-        ? flagged
-          ? `Second failure logged. ${flagged} prerequisite${flagged === 1 ? '' : 's'} flagged for a 30-min repair drill.`
-          : 'Second failure logged. This node needs repair before advancing.'
-        : `Failure logged (${kp?.fails ?? 1}/2). One more and its prerequisites get flagged.`,
-    }
-  },
-
-  clearRepair: (prereqId, flagId) =>
-    set((state) => {
-      const at = now()
-      return patchSubject(
-        state,
-        (subject) => ({
-          ...subject,
-          nodes: subject.nodes.map((node) => {
-            if (node.id !== prereqId) return node
-            const cleared = clearRepairFlag(node, flagId, at)
-            return { ...cleared, srs: explicitReview(node.srs, at) }
-          }),
-        }),
-        at,
-      )
-    }),
-
-  addNode: (input) => {
-    const state = get()
-    const subject = activeSubjectOf(state)
-    if (!subject) return { ok: false, message: 'No active subject.' }
-    if (!input.title.trim()) return { ok: false, message: 'A title is required.' }
-    const at = now()
-    const id = uniqueId('node')
-    const node: KnowledgeNode = {
-      id,
-      weekId: input.weekId,
-      title: input.title.trim(),
-      slug: input.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-      tags: input.tags
-        .split(/[,\s]+/)
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      prerequisiteIds: input.prerequisiteIds,
-      encompassedNodeIds: input.encompassedNodeIds,
-      knowledgePoints: [
-        {
-          id: `${id}-kp1`,
-          primitive: input.primitive,
-          concept: input.concept,
-          failureMode: input.failureMode,
-          fails: 0,
-        },
-      ],
-      status: 'locked',
-      srs: emptySrs(),
-      repairFlags: [],
-      notes: input.notes?.trim() || undefined,
-      createdAt: at,
+    const step = nextProofStep(concept.step, outcome)
+    const checks = [...concept.checks, { at, outcome, ...(note?.trim() ? { note: note.trim().slice(0, 200) } : {}) }]
+    const updated: Concept = {
+      ...concept,
+      checks: checks.slice(-24),
+      step,
+      dueAt: proofDueAt(step, at),
       updatedAt: at,
     }
-    set({ ...patchSubject(state, (current) => ({ ...current, nodes: [...current.nodes, node] }), at) })
-    return { ok: true, message: `Node “${node.title}” added.` }
+    set({
+      ...patchSubject(
+        state,
+        (current) => ({
+          ...current,
+          concepts: current.concepts.map((entry) => (entry.id === conceptId ? updated : entry)),
+        }),
+        at,
+      ),
+    })
+    return {
+      ok: true,
+      message:
+        outcome === 'cold'
+          ? `“${concept.term}” proved. Next review in ${PROOF_INTERVALS[step]} days.`
+          : outcome === 'warm'
+            ? `“${concept.term}” needs notes. Review tomorrow.`
+            : `“${concept.term}” back to the start. Review tomorrow.`,
+    }
   },
 
-  updateNode: (nodeId, patch) =>
+  setConceptNote: (conceptId, note) =>
     set((state) =>
       patchSubject(
         state,
         (subject) => ({
           ...subject,
-          nodes: subject.nodes.map((node) =>
-            node.id === nodeId ? { ...node, ...patch, updatedAt: now() } : node,
+          concepts: subject.concepts.map((entry) =>
+            entry.id === conceptId ? { ...entry, notes: note.trim() || undefined, updatedAt: now() } : entry,
           ),
         }),
         now(),
       ),
     ),
-
-  deleteNode: (nodeId) => {
-    const state = get()
-    const subject = activeSubjectOf(state)
-    if (!subject) return null
-    const node = subject.nodes.find((entry) => entry.id === nodeId)
-    if (!node) return null
-    const removedCards = subject.cards.filter((card) => card.nodeId === nodeId)
-    const inboundEdges: TrashEdge[] = subject.nodes
-      .filter((n) => n.id !== nodeId && (n.prerequisiteIds.includes(nodeId) || n.encompassedNodeIds.includes(nodeId)))
-      .map((n) => ({
-        nodeId: n.id,
-        prerequisiteIds: n.prerequisiteIds,
-        encompassedNodeIds: n.encompassedNodeIds,
-      }))
-    const entry: TrashEntry = {
-      id: uniqueId('trash'),
-      kind: 'node',
-      deletedAt: now(),
-      label: node.title,
-      subjectId: subject.id,
-      subjectName: subject.shortName,
-      payload: node,
-      cards: removedCards,
-      edges: inboundEdges,
-      counts: {
-        nodes: 1,
-        cards: removedCards.length,
-      },
-    }
-    set((current) => ({
-      ...patchSubject(
-        current,
-        (subj) => ({
-          ...subj,
-          nodes: subj.nodes
-            .filter((n) => n.id !== nodeId)
-            .map((n) => ({
-              ...n,
-              prerequisiteIds: n.prerequisiteIds.filter((id) => id !== nodeId),
-              encompassedNodeIds: n.encompassedNodeIds.filter((id) => id !== nodeId),
-            })),
-          cards: subj.cards.map((card) => (card.nodeId === nodeId ? { ...card, nodeId: undefined } : card)),
-        }),
-        now(),
-      ),
-      trash: [entry, ...current.trash].slice(0, TRASH_LIMIT),
-    }))
-    return entry.id
-  },
 
   addCard: (input) => {
     const state = get()
@@ -1249,19 +967,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       updatedAt: now(),
     })),
 
-  unlockNode: (nodeId) =>
-    set((state) => ({
-      overrides: { ...state.overrides, nodes: { ...state.overrides.nodes, [nodeId]: now() } },
-      updatedAt: now(),
-    })),
-
   clearOverride: (kind, id) =>
     set((state) => {
-      const overrides = {
-        weeks: { ...state.overrides.weeks },
-        nodes: { ...state.overrides.nodes },
-      }
-      delete overrides[kind === 'week' ? 'weeks' : 'nodes'][id]
+      const weeks = { ...state.overrides.weeks }
+      delete weeks[id]
+      const overrides = { ...state.overrides, weeks }
       return { overrides, updatedAt: now() }
     }),
 
@@ -1306,7 +1016,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       dailyLog,
       overrides: {
         weeks: { ...incoming.overrides.weeks, ...state.overrides.weeks },
-        nodes: { ...incoming.overrides.nodes, ...state.overrides.nodes },
       },
       // Local prompt edits win a merge; an incoming file only fills gaps.
       promptOverrides: { ...incoming.promptOverrides, ...state.promptOverrides },
@@ -1357,19 +1066,21 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const subject = activeSubjectOf(state)
       const week = subject?.weeks.find((entry) => entry.id === id)
       if (!subject || !week) return { ok: false, message: 'Week not found.' }
-      const nodeIds = new Set(subject.nodes.filter((node) => node.weekId === id).map((node) => node.id))
       set({
         ...patchSubject(
           state,
           (current) => ({
             ...current,
             weeks: current.weeks.map((entry) => (entry.id === id ? clearGateProgress(entry) : entry)),
-            nodes: current.nodes.map((node) => (nodeIds.has(node.id) ? resetNodeProgress(node, at) : node)),
+            concepts: current.concepts.map((concept) =>
+              concept.weekId === id ? resetConceptProgress(concept, at) : concept,
+            ),
+            dayProofs: current.dayProofs.filter((proof) => proof.weekId !== id),
             cards: current.cards.map((card) => (card.weekId === id ? resetCardProgress(card, at) : card)),
           }),
           at,
         ),
-        overrides: pruneOverrides(state.overrides, new Set([id]), nodeIds),
+        overrides: pruneOverrides(state.overrides, new Set([id])),
       })
       return {
         ok: true,
@@ -1381,20 +1092,20 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const subject = activeSubjectOf(state)
       if (!subject) return { ok: false, message: 'No active subject.' }
       const weekIds = new Set(subject.weeks.map((week) => week.id))
-      const nodeIds = new Set(subject.nodes.map((node) => node.id))
       set({
         ...patchSubject(
           state,
           (current) => ({
             ...current,
             weeks: current.weeks.map(clearGateProgress),
-            nodes: current.nodes.map((node) => resetNodeProgress(node, at)),
+            concepts: current.concepts.map((concept) => resetConceptProgress(concept, at)),
+            dayProofs: [],
             cards: current.cards.map((card) => resetCardProgress(card, at)),
             resources: current.resources.map((resource) => ({ ...resource, status: 'toRead' })),
           }),
           at,
         ),
-        overrides: pruneOverrides(state.overrides, weekIds, nodeIds),
+        overrides: pruneOverrides(state.overrides, weekIds),
       })
       return {
         ok: true,
@@ -1598,14 +1309,8 @@ const UNDOABLE_ACTIONS: Record<string, string> = {
   addWeek: 'Add week',
   updateWeek: 'Edit week',
   deleteWeek: 'Delete week',
-  startNode: 'Start concept',
-  markNodeMastered: 'Master concept',
-  logNodeReview: 'Log review',
-  failKnowledgePoint: 'Log mistake',
-  clearRepair: 'Clear repair drill',
-  addNode: 'Add concept',
-  updateNode: 'Edit concept',
-  deleteNode: 'Delete concept',
+  checkConcept: 'Review concept',
+  setConceptNote: 'Note concept',
   addCard: 'Add flashcard',
   updateCard: 'Edit flashcard',
   deleteCard: 'Delete flashcard',
@@ -1619,7 +1324,6 @@ const UNDOABLE_ACTIONS: Record<string, string> = {
   deleteBook: 'Delete book',
   toggleDailyItem: 'Toggle daily habit',
   unlockWeek: 'Unlock week',
-  unlockNode: 'Unlock concept',
   clearOverride: 'Clear override',
   importData: 'Import data',
   resetToSeed: 'Reset to seed',

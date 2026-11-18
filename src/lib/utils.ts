@@ -1,5 +1,5 @@
-import type { AppData, Book, Flashcard, KnowledgeNode, Subject, Week } from '../types/schema'
-import { formatDateTime } from '../lib/dates'
+import type { AppData, Book, Concept, Flashcard, Subject, Week } from '../types/schema'
+import { formatDateTime, relativeDays } from '../lib/dates'
 
 export function slugify(value: string): string {
   return value
@@ -84,7 +84,7 @@ export function fileStamp(now = new Date()): string {
 
 export interface AnkiOptions {
   deck: string
-  nodes?: KnowledgeNode[]
+  concepts?: Concept[]
   weeks?: Week[]
 }
 
@@ -101,11 +101,11 @@ function ankiTag(value: string): string {
 }
 
 export function ankiRows(cards: Flashcard[], options: AnkiOptions): string[][] {
-  const nodeTitle = new Map((options.nodes ?? []).map((node) => [node.id, node.title]))
+  const conceptTerm = new Map((options.concepts ?? []).map((concept) => [concept.id, concept.term]))
   const weekTitle = new Map((options.weeks ?? []).map((week) => [week.id, `W${week.weekNumber}`]))
   return cards.map((card) => {
     const tags = [...card.tags.map(ankiTag), card.source === 'mistake' ? 'mistake-log' : 'core']
-    const context = [card.weekId ? weekTitle.get(card.weekId) : '', card.nodeId ? nodeTitle.get(card.nodeId) : '']
+    const context = [card.weekId ? weekTitle.get(card.weekId) : '', card.nodeId ? conceptTerm.get(card.nodeId) : '']
       .filter(Boolean)
       .join(' · ')
     return [ankiField(card.front), ankiField(card.back), tags.filter(Boolean).join(' '), card.source, context]
@@ -146,14 +146,16 @@ export function toAnkiCsv(cards: Flashcard[], options: AnkiOptions): string {
 
 export function toObsidianMarkdown(subject: Subject, books: Book[], now = new Date()): string {
   const weeksMastered = subject.weeks.filter((week) => week.gate.passedAt).length
-  const nodesMastered = subject.nodes.filter((node) => node.status === 'mastered').length
+  const conceptsProved = subject.concepts.filter(
+    (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+  ).length
   const lines: string[] = [
     '---',
     `title: "${subject.name}"`,
     'source: SkillMastery',
     `exported: ${now.toISOString()}`,
     `weeks_mastered: ${weeksMastered}/${subject.weeks.length}`,
-    `nodes_mastered: ${nodesMastered}/${subject.nodes.length}`,
+    `concepts_proved: ${conceptsProved}/${subject.concepts.length}`,
     'tags: [skillmastery, learning-log]',
     '---',
     '',
@@ -161,7 +163,7 @@ export function toObsidianMarkdown(subject: Subject, books: Book[], now = new Da
     '',
     `> ${subject.tagline}`,
     '',
-    `Compiled ${formatDateTime(now.getTime())} · ${weeksMastered}/${subject.weeks.length} weeks mastered · ${nodesMastered}/${subject.nodes.length} nodes mastered.`,
+    `Compiled ${formatDateTime(now.getTime())} · ${weeksMastered}/${subject.weeks.length} weeks cleared · ${conceptsProved}/${subject.concepts.length} concepts proved.`,
     '',
   ]
 
@@ -187,19 +189,21 @@ export function toObsidianMarkdown(subject: Subject, books: Book[], now = new Da
       }
       lines.push('')
 
-      const nodes = subject.nodes.filter((node) => node.weekId === week.id)
-      if (nodes.length) {
-        lines.push('#### Knowledge nodes', '')
-        for (const node of nodes) {
-          lines.push(`##### [[${slugify(subject.shortName)}-${node.slug}|${node.title}]]`, '')
-          lines.push(`Status: **${node.status}** · strength ${node.srs.strength.toFixed(1)}/5 · tags ${node.tags.map((t) => `#${ankiTag(t)}`).join(' ') || '—'}`, '')
-          node.knowledgePoints.forEach((kp, index) => {
-            lines.push(
-              `${index + 1}. **Primitive:** ${kp.primitive}`,
-              `   **Concept:** ${kp.concept}`,
-              `   **Failure mode:** ${kp.failureMode}`,
-            )
-          })
+      const concepts = subject.concepts.filter((concept) => concept.weekId === week.id)
+      if (concepts.length) {
+        lines.push('#### Concepts', '')
+        for (const concept of concepts) {
+          const last = concept.checks[concept.checks.length - 1]
+          lines.push(
+            `##### [[${slugify(subject.shortName)}-${concept.id}|${concept.term}]]`,
+            '',
+            `Proved: **${last ? last.outcome : 'not yet'}**${concept.dueAt ? ` · next review ${relativeDays(concept.dueAt)}` : ''}`,
+            '',
+            concept.definition || '',
+          )
+          if (concept.failureMode) {
+            lines.push('', `The mistake it prevents: ${concept.failureMode}`)
+          }
           lines.push('')
         }
       }

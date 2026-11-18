@@ -127,12 +127,14 @@ function SwitchSheet({
       }
     >
       <p className="muted mb-4 text-[12.5px]">
-        Each track keeps its own weeks, knowledge graph and deck. The 30-minute passive canon is shared
-        because reading progress belongs to you, not to a technology.
+        Each track keeps its own weeks, concepts and deck. The 30-minute passive canon is shared because
+        reading progress belongs to you, not to a technology.
       </p>
       <div className="space-y-2">
         {subjects.map((subject) => {
-          const mastered = subject.nodes.filter((node) => node.status === 'mastered').length
+          const proved = subject.concepts.filter(
+            (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+          ).length
           const gates = subject.weeks.filter((week) => week.gate.passedAt).length
           const isActive = subject.id === activeId
           return (
@@ -162,12 +164,12 @@ function SwitchSheet({
                     {isActive ? <Check size={14} className="flex-none text-accent" aria-label="Active" /> : null}
                   </div>
                   <p className="faint mt-0.5 text-[11.5px]">
-                    {gates}/{subject.weeks.length} weeks cleared · {mastered} nodes mastered
+                    {gates}/{subject.weeks.length} weeks cleared · {proved} concepts proved
                   </p>
                   <ProgressBar
-                    value={subject.nodes.length ? mastered / subject.nodes.length : 0}
+                    value={subject.concepts.length ? proved / subject.concepts.length : 0}
                     className="mt-2 !h-1.5"
-                    label={`${subject.name} mastery`}
+                    label={`${subject.name} concepts proved`}
                   />
                 </div>
               </div>

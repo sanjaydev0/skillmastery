@@ -14,8 +14,6 @@ export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
 export type SubjectAccent = 'sky' | 'emerald' | 'violet' | 'amber'
 
-export type NodeStatus = 'locked' | 'learning' | 'mastered' | 'needs-repair'
-
 export type WeekStatus = 'locked' | 'ready' | 'in-progress' | 'mastered'
 
 export type MasteryCategory = 'concept' | 'implementation' | 'craft' | 'debugging'
@@ -130,23 +128,15 @@ export const DEFAULT_JOURNEY: Journey = {
   onboardedAt: null,
 }
 
-export type TrashKind = 'week' | 'subject' | 'dayPlans' | 'node' | 'resource'
+export type TrashKind = 'week' | 'subject' | 'dayPlans' | 'resource'
 
 export interface TrashCounts {
   weeks?: number
-  nodes?: number
   concepts?: number
   dayProofs?: number
   cards?: number
   days?: number
   resources?: number
-}
-
-/** A graph edge that was pruned from a surviving node when its week was deleted. */
-export interface TrashEdge {
-  nodeId: string
-  prerequisiteIds: string[]
-  encompassedNodeIds: string[]
 }
 
 export interface TrashEntry {
@@ -157,13 +147,13 @@ export interface TrashEntry {
   subjectId: string
   subjectName: string
   /** A complete copy, so restore never depends on anything still living. */
-  payload: Week | Subject | DayPlan[] | KnowledgeNode | Resource
-  /** Nodes deleted with the week. Restoring the week restores them. */
-  nodes?: KnowledgeNode[]
+  payload: Week | Subject | DayPlan[] | Concept | Resource
+  /** Concepts deleted with the week. Restoring the week restores them. */
+  concepts?: Concept[]
+  /** Day proofs deleted with the week. Restoring the week restores them. */
+  dayProofs?: DayProof[]
   /** Cards deleted with the week. Restoring the week restores them. */
   cards?: Flashcard[]
-  /** Inbound edges pruned on delete, so an undelete reconnects the graph. */
-  edges?: TrashEdge[]
   /** Surviving weeks that listed the deleted week as a prerequisite. */
   weekLinks?: string[]
   counts: TrashCounts
@@ -171,54 +161,6 @@ export interface TrashEntry {
 
 /** Oldest entries are dropped once this many are kept. */
 export const TRASH_LIMIT = 20
-
-export interface KnowledgePoint {
-  id: string
-  primitive: string
-  concept: string
-  failureMode: string
-  fails: number
-  lastFailedAt?: number
-}
-
-export interface SrsState {
-  /** 0–5. Fractional values come from FIRe implicit reviews. */
-  strength: number
-  /** Days until the next review. 0 means "never reviewed". */
-  intervalDays: number
-  /** Epoch ms. 0 means "never scheduled". */
-  dueAt: number
-  lastReviewedAt?: number
-  lastFireAt?: number
-  implicitReviews: number
-}
-
-export interface RepairFlag {
-  id: string
-  /** The downstream node whose knowledge point failed twice. */
-  fromNodeId: string
-  kpId: string
-  at: number
-  clearedAt?: number
-}
-
-export interface KnowledgeNode {
-  id: string
-  weekId: string
-  title: string
-  slug: string
-  tags: string[]
-  prerequisiteIds: string[]
-  /** Advanced nodes implicitly exercise these simpler nodes (Math Academy FIRe). */
-  encompassedNodeIds: string[]
-  knowledgePoints: KnowledgePoint[]
-  status: NodeStatus
-  srs: SrsState
-  repairFlags: RepairFlag[]
-  notes?: string
-  createdAt?: number
-  updatedAt?: number
-}
 
 export interface ChecklistItem {
   id: string
@@ -339,8 +281,6 @@ export interface Week {
   /** The 30-min canon assignment for this week. */
   bookFocus: string
   prerequisiteWeekIds: string[]
-  /** Nodes from earlier weeks that this week's gate implicitly re-exercises. */
-  encompassedNodeIds: string[]
   checklist: ChecklistItem[]
   gate: MasteryGate
   capstone?: string
@@ -406,7 +346,6 @@ export interface Subject {
   accent: SubjectAccent
   phases: Phase[]
   weeks: Week[]
-  nodes: KnowledgeNode[]
   /** The concept index, derived from the authored route. */
   concepts: Concept[]
   /** Closed-book proofs, one row per week and day. */
@@ -431,7 +370,6 @@ export interface AppPrefs {
 
 export interface Overrides {
   weeks: Record<string, number>
-  nodes: Record<string, number>
 }
 
 export interface AppData {

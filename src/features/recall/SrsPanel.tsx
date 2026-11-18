@@ -163,7 +163,7 @@ export function SrsPanel() {
     }
 
     const week = subject.weeks.find((entry) => entry.id === currentCard.weekId)
-    const node = currentCard.nodeId ? subject.nodes.find((entry) => entry.id === currentCard.nodeId) : undefined
+    const node = currentCard.nodeId ? subject.concepts.find((entry) => entry.id === currentCard.nodeId) : undefined
     const progress = session.ids.length ? session.index / session.ids.length : 0
 
     return (

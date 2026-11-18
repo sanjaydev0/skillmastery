@@ -52,7 +52,7 @@ const NAV_ICONS: Record<ViewName, typeof LayoutDashboard> = {
 const MOBILE_LABELS: Record<ViewName, string> = {
   today: 'Today',
   plan: 'Plan',
-  map: 'Map',
+  map: 'Concepts',
   practice: 'Practice',
   library: 'Library',
   progress: 'Progress',

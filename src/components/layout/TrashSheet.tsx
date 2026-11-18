@@ -11,14 +11,13 @@ const KIND_LABEL: Record<TrashKind, string> = {
   week: 'Week',
   subject: 'Track',
   dayPlans: 'Day cards',
-  node: 'Concept',
   resource: 'Resource',
 }
 
 function countsLine(entry: TrashEntry): string {
   const parts: string[] = []
   if (entry.counts.weeks) parts.push(`${entry.counts.weeks} week${entry.counts.weeks === 1 ? '' : 's'}`)
-  if (entry.counts.nodes) parts.push(`${entry.counts.nodes} concept${entry.counts.nodes === 1 ? '' : 's'}`)
+  if (entry.counts.concepts) parts.push(`${entry.counts.concepts} concept${entry.counts.concepts === 1 ? '' : 's'}`)
   if (entry.counts.cards) parts.push(`${entry.counts.cards} card${entry.counts.cards === 1 ? '' : 's'}`)
   if (entry.counts.days) parts.push(`${entry.counts.days} day card${entry.counts.days === 1 ? '' : 's'}`)
   if (entry.counts.resources) parts.push(`${entry.counts.resources} resource${entry.counts.resources === 1 ? '' : 's'}`)

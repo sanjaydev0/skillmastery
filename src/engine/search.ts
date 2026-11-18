@@ -1,6 +1,6 @@
 import type { Book, Subject } from '../types/schema'
 
-export type SearchKind = 'week' | 'node' | 'card' | 'resource' | 'book'
+export type SearchKind = 'week' | 'concept' | 'card' | 'resource' | 'book'
 
 export interface SearchDoc {
   id: string
@@ -16,7 +16,7 @@ export interface SearchDoc {
 
 const KIND_WEIGHT: Record<SearchKind, number> = {
   week: 8,
-  node: 6,
+  concept: 6,
   card: 4,
   resource: 3,
   book: 2,
@@ -56,12 +56,12 @@ export function buildSearchIndex(subjects: Subject[], books: Book[]): SearchDoc[
   const docs: SearchDoc[] = []
   for (const subject of subjects) {
     for (const week of subject.weeks) {
-      const nodeTitles = subject.nodes
-        .filter((node) => node.weekId === week.id)
-        .map((node) => node.title)
+      const conceptTerms = subject.concepts
+        .filter((concept) => concept.weekId === week.id)
+        .map((concept) => concept.term)
         .join(' ')
       const haystack = normalise(
-        [week.title, week.anchor, week.bookFocus, week.capstone ?? '', nodeTitles, 'week ' + week.weekNumber].join(' '),
+        [week.title, week.anchor, week.bookFocus, week.capstone ?? '', conceptTerms, 'week ' + week.weekNumber].join(' '),
       )
       docs.push({
         id: week.id,
@@ -75,21 +75,22 @@ export function buildSearchIndex(subjects: Subject[], books: Book[]): SearchDoc[
         haystack,
       })
     }
-    for (const node of subject.nodes) {
-      const week = subject.weeks.find((w) => w.id === node.weekId)
-      const kpText = node.knowledgePoints
-        .map((kp) => `${kp.primitive} ${kp.concept} ${kp.failureMode}`)
-        .join(' ')
+    for (const concept of subject.concepts) {
+      const week = subject.weeks.find((w) => w.id === concept.weekId)
       docs.push({
-        id: node.id,
-        kind: 'node',
-        title: node.title,
-        subtitle: week ? `Week ${week.weekNumber} · ${node.tags.slice(0, 2).join(' · ')}` : 'Knowledge node',
-        tags: node.tags,
+        id: concept.id,
+        kind: 'concept',
+        title: concept.term,
+        subtitle: week ? `Week ${week.weekNumber} concept` : 'Concept',
+        tags: [`week-${concept.weekNumber}`],
         subjectId: subject.id,
         subjectName: subject.shortName,
-        hash: `#/node/${node.id}`,
-        haystack: normalise([node.title, node.tags.join(' '), kpText, node.notes ?? ''].join(' ')),
+        // The old `#/node/<id>` hash still opens the right record, but new
+        // links use the concept shape.
+        hash: `#/concept/${concept.id}`,
+        haystack: normalise(
+          [concept.term, concept.definition, concept.failureMode, concept.notes ?? ''].join(' '),
+        ),
       })
     }
     for (const card of subject.cards) {

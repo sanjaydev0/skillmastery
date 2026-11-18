@@ -14,8 +14,8 @@ import { StartView } from './features/start/StartView'
 import { TodayView } from './features/today/TodayView'
 import { PlanView } from './features/plan/PlanView'
 import { PlanWeekPage } from './features/plan/PlanWeekPage'
-import { NodesView } from './features/nodes/NodesView'
-import { NodeSheet } from './features/nodes/NodeSheet'
+import { ConceptsView } from './features/concepts/ConceptsView'
+import { ConceptSheet } from './features/concepts/ConceptSheet'
 import { RecallView } from './features/recall/RecallView'
 import { VaultView } from './features/vault/VaultView'
 import { ProgressView } from './features/progress/ProgressView'
@@ -54,18 +54,18 @@ export default function App() {
     const exists =
       detail.kind === 'week'
         ? subject.weeks.some((week) => week.id === detail.id)
-        : subject.nodes.some((node) => node.id === detail.id)
+        : subject.concepts.some((concept) => concept.id === detail.id)
     if (!exists) {
       toast(
         detail.kind === 'week'
           ? 'That week is not in the active track. It may have been deleted or belong to another track.'
-          : 'That knowledge node is not in the active track. It may have been deleted or belong to another track.',
+          : 'That concept is not in the active track. It may have been deleted or belong to another track.',
         'info',
         5000,
       )
       go(route.view)
     }
-  }, [route.detail, route.view, subject.id, subject.weeks, subject.nodes, toast])
+  }, [route.detail, route.view, subject.id, subject.weeks, subject.concepts, toast])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -127,17 +127,17 @@ export default function App() {
             <PlanView />
           )
         ) : null}
-        {route.view === 'map' ? <NodesView /> : null}
+        {route.view === 'map' ? <ConceptsView /> : null}
         {route.view === 'practice' ? <RecallView /> : null}
         {route.view === 'library' ? <VaultView /> : null}
         {route.view === 'progress' ? <ProgressView /> : null}
         {route.view === 'help' ? <HelpView /> : null}
       </AppShell>
 
-      {route.detail?.kind === 'node' ? (
-        <NodeSheet
-          key={`node-${route.detail.id}`}
-          nodeId={route.detail.id}
+      {route.detail?.kind === 'concept' ? (
+        <ConceptSheet
+          key={`concept-${route.detail.id}`}
+          conceptId={route.detail.id}
           onClose={() => go(route.view)}
         />
       ) : null}

@@ -8,7 +8,7 @@ export function exportBackupJson(): { subjects: number; at: number } {
   return { subjects: data.subjects.length, at: Date.now() }
 }
 
-export function exportObsidianMarkdown(): { nodes: number; at: number } {
+export function exportObsidianMarkdown(): { concepts: number; at: number } {
   const state = useAppStore.getState()
   const subject = state.subjects.find((entry) => entry.id === state.activeSubjectId) ?? state.subjects[0]!
   downloadText(
@@ -16,5 +16,5 @@ export function exportObsidianMarkdown(): { nodes: number; at: number } {
     toObsidianMarkdown(subject, state.books),
     'text/markdown',
   )
-  return { nodes: subject.nodes.length, at: Date.now() }
+  return { concepts: subject.concepts.length, at: Date.now() }
 }

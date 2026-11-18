@@ -82,18 +82,24 @@ function gateLine(week: Week, subject: Subject, withStatus = true): string {
 }
 
 function failurePointsOf(week: Week, subject: Subject): string[] {
-  const nodes = subject.nodes.filter((node) => node.weekId === week.id)
-  return nodes
-    .flatMap((node) =>
-      node.knowledgePoints
-        .filter((point) => point.fails > 0)
-        .map((point) => `${node.title}: ${point.failureMode}`),
+  return subject.concepts
+    .filter((concept) => concept.weekId === week.id)
+    .flatMap((concept) =>
+      concept.checks
+        .filter((check) => check.outcome === 'failed')
+        .map(() => `${concept.term}: ${concept.failureMode}`),
     )
     .slice(0, 4)
 }
 
 function masteredOf(week: Week, subject: Subject): string[] {
-  return subject.nodes.filter((node) => node.weekId === week.id && node.status === 'mastered').map((node) => node.title)
+  return subject.concepts
+    .filter(
+      (concept) =>
+        concept.weekId === week.id &&
+        concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+    )
+    .map((concept) => concept.term)
 }
 
 /**
@@ -123,16 +129,16 @@ export function buildWeekBrief(
     failures: failurePointsOf(entry, subject),
   }))
 
-  const mastered = subject.nodes
-    .filter((node) => node.status === 'mastered')
-    .map((node) => clip(node.title, 80))
+  const mastered = subject.concepts
+    .filter((concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold')
+    .map((concept) => clip(concept.term, 80))
     .slice(0, 24)
 
-  const failures = subject.nodes
-    .flatMap((node) =>
-      node.knowledgePoints
-        .filter((point) => point.fails > 0)
-        .map((point) => clip(`${node.title}: ${point.failureMode}`, 160)),
+  const failures = subject.concepts
+    .flatMap((concept) =>
+      concept.checks
+        .filter((check) => check.outcome === 'failed')
+        .map(() => clip(`${concept.term}: ${concept.failureMode}`, 160)),
     )
     .slice(0, 12)
 
@@ -245,7 +251,7 @@ ${days || '- no day focus recorded'}
 
 ${historyLines}
 
-Mastered nodes so far: ${brief.mastered.join('; ') || 'none'}
+Concepts proved so far: ${brief.mastered.join('; ') || 'none'}
 Failure modes already seen: ${brief.failures.join('; ') || 'none'}
 
 Weekly capacity: ${brief.capacity.active} active minutes and ${brief.capacity.passive} passive minutes. Keep each day inside its share. Do not add work the learner cannot fit.

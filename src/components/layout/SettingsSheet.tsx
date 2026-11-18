@@ -165,7 +165,11 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
   const runObsidian = () => {
     const result = exportObsidianMarkdown()
-    toast(`Obsidian export downloaded · ${result.nodes} node${result.nodes === 1 ? '' : 's'}.`, 'success', 5200)
+    toast(
+      `Obsidian export downloaded · ${result.concepts} concept${result.concepts === 1 ? '' : 's'}.`,
+      'success',
+      5200,
+    )
   }
 
   const protect = async () => {
@@ -235,12 +239,12 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const applyImport = (mode: 'replace' | 'merge') => {
     if (!pending) return
     const tracks = pending.data.subjects.length
-    const nodes = pending.data.subjects.reduce((sum, entry) => sum + entry.nodes.length, 0)
+    const concepts = pending.data.subjects.reduce((sum, entry) => sum + entry.concepts.length, 0)
     importData(pending.data, mode)
     setPending(null)
     toast(
       mode === 'replace'
-        ? `Backup restored: ${tracks} track${tracks === 1 ? '' : 's'}, ${nodes} node${nodes === 1 ? '' : 's'}.`
+        ? `Backup restored: ${tracks} track${tracks === 1 ? '' : 's'}, ${concepts} concept${concepts === 1 ? '' : 's'}.`
         : `Backup merged: ${tracks} track${tracks === 1 ? '' : 's'} reconciled by id.`,
       'success',
       6500,
@@ -665,7 +669,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 <p className="text-[12px] font-semibold">Obsidian notes</p>
               </div>
               <p className="muted mt-1 text-[11px] leading-relaxed">
-                Active track as Markdown: phases, weeks, nodes, knowledge points and reading canon.
+                Active track as Markdown: phases, weeks, concepts, proofs and the reading canon.
               </p>
               <Button size="sm" variant="outline" className="mt-2 w-full" icon={<Download size={13} />} onClick={runObsidian}>
                 Export .md
@@ -712,7 +716,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 <p className="muted mt-0.5 text-[11.5px] leading-relaxed">
                   {pending.data.subjects.length} track
                   {pending.data.subjects.length === 1 ? '' : 's'} ·{' '}
-                  {pending.data.subjects.reduce((sum, entry) => sum + entry.nodes.length, 0)} nodes ·{' '}
+                  {pending.data.subjects.reduce((sum, entry) => sum + entry.concepts.length, 0)} concepts ·{' '}
                   {pending.data.subjects.reduce((sum, entry) => sum + entry.cards.length, 0)} cards
                   {pending.exportedAt ? ` · exported ${formatDateTime(Date.parse(pending.exportedAt))}` : ''}
                 </p>

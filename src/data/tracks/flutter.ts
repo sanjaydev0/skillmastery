@@ -40,7 +40,6 @@ export const flutterSubject: Subject = {
     ...flutterSystems.weeks,
   ],
   // Concepts are derived from the blueprint, never hand-built.
-  nodes: [],
   concepts: buildConcepts(FLUTTER_BLUEPRINT, (weekNumber) => `fl-w${weekNumber}`),
   dayProofs: [],
   cards: [

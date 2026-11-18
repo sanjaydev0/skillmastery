@@ -7,7 +7,6 @@ import type {
   DaySlot,
   GateChecks,
   Journey,
-  KnowledgeNode,
   MasteryScores,
   PlannerSettings,
   Subject,
@@ -22,6 +21,23 @@ import {
   TRASH_LIMIT,
 } from '../types/schema'
 import { estimateForMinutes } from '../engine/estimates'
+
+/**
+ * The v5 knowledge node, kept only so an old backup can still be read. Nothing
+ * in the app writes this shape any more; `nodeToConcept` turns it into a v6
+ * concept on import.
+ */
+interface LegacyKnowledgeNode {
+  id: string
+  weekId: string
+  title: string
+  knowledgePoints: Array<{ primitive: string; concept: string; failureMode: string }>
+  status: 'locked' | 'learning' | 'mastered' | 'needs-repair'
+  srs: { strength: number; dueAt: number }
+  notes?: string
+  createdAt?: number
+  updatedAt?: number
+}
 
 const knowledgePointSchema = z.object({
   id: z.string().min(1),
@@ -154,7 +170,6 @@ const weekSchema = z.object({
   rabbitHoles: z.array(z.string()).default([]),
   bookFocus: z.string().default(''),
   prerequisiteWeekIds: z.array(z.string()).default([]),
-  encompassedNodeIds: z.array(z.string()).default([]),
   checklist: z.array(checklistItemSchema).default([]),
   gate: gateSchema.default({ attempts: [] }),
   capstone: z.string().optional(),
@@ -222,11 +237,12 @@ const subjectSchema = z.object({
   accent: z.enum(['sky', 'emerald', 'violet', 'amber']),
   phases: z.array(phaseSchema).min(1),
   weeks: z.array(weekSchema),
-  nodes: z.array(nodeSchema),
   concepts: z.array(conceptSchema).default([]),
   dayProofs: z.array(dayProofSchema).default([]),
   cards: z.array(cardSchema),
   resources: z.array(resourceSchema),
+  /** v5 import only. The migration turns nodes into concepts and drops them. */
+  nodes: z.array(nodeSchema).optional(),
 })
 
 const dayLogSchema = z.object({
@@ -244,7 +260,6 @@ const prefsSchema = z.object({
 
 const overridesSchema = z.object({
   weeks: z.record(z.string(), z.number()).default({}),
-  nodes: z.record(z.string(), z.number()).default({}),
 })
 
 /**
@@ -297,12 +312,6 @@ const journeySchema = z.object({
   onboardedAt: z.number().nullable().default(null),
 })
 
-const trashEdgeSchema = z.object({
-  nodeId: z.string().min(1),
-  prerequisiteIds: z.array(z.string()).default([]),
-  encompassedNodeIds: z.array(z.string()).default([]),
-})
-
 const trashEntrySchema = z.object({
   id: z.string().min(1),
   kind: z.enum(['week', 'subject', 'dayPlans']),
@@ -311,14 +320,15 @@ const trashEntrySchema = z.object({
   subjectId: z.string(),
   subjectName: z.string(),
   payload: z.union([weekSchema, subjectSchema, z.array(dayPlanSchema)]),
-  nodes: z.array(nodeSchema).optional(),
+  concepts: z.array(conceptSchema).optional(),
+  dayProofs: z.array(dayProofSchema).optional(),
   cards: z.array(cardSchema).optional(),
-  edges: z.array(trashEdgeSchema).optional(),
   weekLinks: z.array(z.string()).optional(),
   counts: z
     .object({
       weeks: z.number().optional(),
-      nodes: z.number().optional(),
+      concepts: z.number().optional(),
+      dayProofs: z.number().optional(),
       cards: z.number().optional(),
       days: z.number().optional(),
     })
@@ -335,7 +345,7 @@ export const appDataSchema = z.object({
   subjects: z.array(subjectSchema).min(1),
   books: z.array(bookSchema).default([]),
   dailyLog: z.record(z.string(), dayLogSchema).default({}),
-  overrides: overridesSchema.default({ weeks: {}, nodes: {} }),
+  overrides: overridesSchema.default({ weeks: {} }),
   prefs: prefsSchema.default({ theme: 'dark', mode: 'active', sidebarCollapsed: false, localStorageThresholdMB: 4 }),
   planner: plannerSchema.default(() => ({ ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] })),
   promptOverrides: z.record(z.string(), z.string().max(PROMPT_TEMPLATE_MAX_CHARS)).default({}),
@@ -366,8 +376,14 @@ export type MigratableAppData = Omit<
   AppData,
   'planner' | 'promptOverrides' | 'journey' | 'dayPlans' | 'trash' | 'subjects'
 > & {
-  /** Pre-v6 payloads carry no concepts or day proofs; the migration adds them. */
-  subjects: Array<Omit<Subject, 'concepts' | 'dayProofs'> & Partial<Pick<Subject, 'concepts' | 'dayProofs'>>>
+  /**
+   * Pre-v6 payloads carry no concepts or day proofs and may still carry the v5
+   * node graph; the migration turns one into the other.
+   */
+  subjects: Array<
+    Omit<Subject, 'concepts' | 'dayProofs'> &
+      Partial<Pick<Subject, 'concepts' | 'dayProofs'>> & { nodes?: LegacyKnowledgeNode[] }
+  >
   planner?: Partial<PlannerSettings> & {
     /** v3 per-day capacity, folded into the weekly total on upgrade. */
     weekdayActiveMinutes?: number
@@ -547,7 +563,7 @@ function normaliseSubjects(subjects: Subject[], fillMissingDays: boolean): Subje
 }
 
 /** A v5 node becomes a v6 concept. The old claim stays, labelled as a claim. */
-function nodeToConcept(node: KnowledgeNode, weekNumber: number): Concept {
+function nodeToConcept(node: LegacyKnowledgeNode, weekNumber: number): Concept {
   const first = node.knowledgePoints[0]
   return {
     id: node.id,
@@ -591,10 +607,14 @@ function gateChecksPass(checks: GateChecks): boolean {
  */
 function migrateSubjectsV6(subjects: Subject[], legacy: boolean): Subject[] {
   return subjects.map((subject) => {
-    const loose = subject as Subject & { concepts?: Concept[]; dayProofs?: DayProof[] }
+    const loose = subject as Subject & {
+      concepts?: Concept[]
+      dayProofs?: DayProof[]
+      nodes?: LegacyKnowledgeNode[]
+    }
     const weekNumberOf = new Map(subject.weeks.map((week) => [week.id, week.weekNumber]))
     const carried = legacy
-      ? subject.nodes
+      ? (loose.nodes ?? [])
           .filter((node) => weekNumberOf.has(node.weekId))
           .map((node) => nodeToConcept(node, weekNumberOf.get(node.weekId)!))
       : []

@@ -43,7 +43,7 @@ interface PaletteEntry {
 
 const KIND_ICON: Record<SearchKind, typeof BookOpen> = {
   week: CalendarRange,
-  node: Network,
+  concept: Network,
   card: BrainCircuit,
   resource: Library,
   book: BookOpen,
@@ -51,7 +51,7 @@ const KIND_ICON: Record<SearchKind, typeof BookOpen> = {
 
 const KIND_LABEL: Record<SearchKind, string> = {
   week: 'Week',
-  node: 'Node',
+  concept: 'Concept',
   card: 'Card',
   resource: 'Resource',
   book: 'Book',
@@ -321,7 +321,7 @@ export function CommandPalette() {
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search weeks, nodes, cards, resources…"
+            placeholder="Search weeks, concepts, cards, resources…"
             className="palette-search min-w-0 flex-1 bg-transparent text-[14px] text-t1 outline-none placeholder:text-t3"
             aria-label="Search everything"
             aria-controls="palette-results"
@@ -347,7 +347,7 @@ export function CommandPalette() {
             <div className="px-4 py-10 text-center">
               <p className="text-[13px] font-semibold">No matches</p>
               <p className="muted mt-1 text-[12px]">
-                Try a week title, node name, tag, failure mode or resource.
+                Try a week title, concept term, definition or resource.
               </p>
             </div>
           ) : (

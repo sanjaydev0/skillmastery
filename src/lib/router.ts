@@ -12,7 +12,7 @@ export type ViewName =
 
 export interface Route {
   view: ViewName
-  detail?: { kind: 'week' | 'node'; id: string }
+  detail?: { kind: 'week' | 'concept'; id: string }
 }
 
 /**
@@ -25,7 +25,7 @@ export const START_VIEW = { id: 'start', label: 'Day 0', hash: '#/start' } as co
 export const VIEWS: { id: ViewName; label: string; hash: string }[] = [
   { id: 'today', label: 'Today', hash: '#/today' },
   { id: 'plan', label: 'Plan', hash: '#/plan' },
-  { id: 'map', label: 'Map', hash: '#/map' },
+  { id: 'map', label: 'Concepts', hash: '#/map' },
   { id: 'practice', label: 'Practice', hash: '#/practice' },
   { id: 'library', label: 'Library', hash: '#/library' },
   { id: 'progress', label: 'Progress', hash: '#/progress' },
@@ -54,7 +54,9 @@ export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split('?')[0] ?? ''
   const [head, id] = path.split('/')
   if ((head === 'week' || head === 'plan') && id) return { view: 'plan', detail: { kind: 'week', id } }
-  if (head === 'node' && id) return { view: 'map', detail: { kind: 'node', id } }
+  // `#/node/<id>` is the v5 link shape; concept ids match the old node ids,
+  // so a saved link still opens the right record.
+  if ((head === 'concept' || head === 'node') && id) return { view: 'map', detail: { kind: 'concept', id } }
   if (head === 'start') return { view: 'start' }
   if (head && LEGACY_VIEWS[head]) return { view: LEGACY_VIEWS[head] }
   const view = VIEWS.find((entry) => entry.id === head)?.id ?? 'today'

@@ -61,8 +61,10 @@ export function milestonesFor(subject: Subject): Milestone[] {
   const firstGate = earliest(cleared.map((week) => week.gate.passedAt))
   const firstWeekOne = weeks.find((week) => week.weekNumber === 1)
 
-  const mastered = subject.nodes.filter((node) => node.status === 'mastered')
-  const firstMastered = earliest(mastered.map((node) => node.updatedAt ?? node.createdAt))
+  const mastered = subject.concepts.filter(
+    (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+  )
+  const firstMastered = earliest(mastered.map((concept) => concept.updatedAt))
 
   const half = items.length > 0 && checked.length * 2 >= items.length
   const halfAt = half ? checkDates[Math.ceil(items.length / 2) - 1] : undefined
@@ -133,8 +135,8 @@ export function milestonesFor(subject: Subject): Milestone[] {
     },
     {
       id: 'first-concept',
-      title: 'One concept mastered',
-      detail: 'Master one concept through a checkpoint or a review.',
+      title: 'One concept proved',
+      detail: 'Recall one concept without notes.',
       group: 'concepts',
       earned: mastered.length >= 1,
       ...(mastered.length >= 1 && firstMastered !== undefined ? { earnedAt: firstMastered } : {}),
@@ -143,7 +145,7 @@ export function milestonesFor(subject: Subject): Milestone[] {
     {
       id: 'ten-concepts',
       title: 'Ten concepts',
-      detail: 'Master ten concepts.',
+      detail: 'Recall ten concepts without notes.',
       group: 'concepts',
       earned: mastered.length >= 10,
       ...(mastered.length >= 10 && firstMastered !== undefined ? { earnedAt: firstMastered } : {}),

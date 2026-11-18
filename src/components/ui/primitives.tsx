@@ -1,6 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import {
   AlertTriangle,
+  Circle,
+  Clock,
   ArrowRight,
   Check,
   CheckCircle2,
@@ -12,7 +14,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
-import type { NodeBadge } from '../../engine/gating'
+import type { ConceptBadge } from '../../engine/concepts'
 import type { WeekStatus } from '../../types/schema'
 import { cn, percent } from '../../lib/utils'
 
@@ -128,20 +130,18 @@ const WEEK_TONE: Record<WeekStatus, Tone> = {
   mastered: 'good',
 }
 
-const NODE_LABEL: Record<NodeBadge, string> = {
-  locked: 'Locked',
-  ready: 'Ready',
-  learning: 'Learning',
-  mastered: 'Mastered',
-  'needs-repair': 'Needs repair',
+const CONCEPT_LABEL: Record<ConceptBadge, string> = {
+  new: 'Not proved',
+  learning: 'Shaky',
+  proved: 'Proved',
+  due: 'Due',
 }
 
-const NODE_TONE: Record<NodeBadge, Tone> = {
-  locked: 'neutral',
-  ready: 'accent',
+const CONCEPT_TONE: Record<ConceptBadge, Tone> = {
+  new: 'neutral',
   learning: 'info',
-  mastered: 'good',
-  'needs-repair': 'bad',
+  proved: 'good',
+  due: 'accent',
 }
 
 function StatusIcon({ status }: { status: string }) {
@@ -161,10 +161,12 @@ export function WeekBadge({ status }: { status: WeekStatus }) {
   )
 }
 
-export function NodeBadgePill({ status }: { status: NodeBadge }) {
+export function ConceptBadgePill({ status }: { status: ConceptBadge }) {
+  const icon =
+    status === 'proved' ? <CheckCircle2 size={11} aria-hidden /> : status === 'due' ? <Clock size={11} aria-hidden /> : status === 'learning' ? <CircleDot size={11} aria-hidden /> : <Circle size={11} aria-hidden />
   return (
-    <Badge tone={NODE_TONE[status]} icon={<StatusIcon status={status} />}>
-      {NODE_LABEL[status]}
+    <Badge tone={CONCEPT_TONE[status]} icon={icon}>
+      {CONCEPT_LABEL[status]}
     </Badge>
   )
 }

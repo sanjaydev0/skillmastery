@@ -1,4 +1,5 @@
-import type { Concept } from '../types/schema'
+import type { Concept, ProofCheck } from '../types/schema'
+import { endOfLocalDay } from '../lib/dates'
 import type { WeekBlueprint } from '../data/curriculum/blueprint'
 
 /**
@@ -78,4 +79,34 @@ export function buildConcepts(
 
 export function conceptsForWeek(concepts: Concept[], weekNumber: number): Concept[] {
   return concepts.filter((concept) => concept.weekNumber === weekNumber)
+}
+
+export type ConceptBadge = 'new' | 'learning' | 'proved' | 'due'
+
+/** Derived, never stored: the badge reads the proof history and the clock. */
+export function conceptBadge(concept: Concept, now = Date.now()): ConceptBadge {
+  const last = concept.checks[concept.checks.length - 1]
+  if (last?.outcome === 'cold') {
+    return concept.dueAt > 0 && concept.dueAt <= endOfLocalDay(new Date(now)) ? 'due' : 'proved'
+  }
+  if (last) return 'learning'
+  return 'new'
+}
+
+export function conceptLastCheck(concept: Concept): ProofCheck | undefined {
+  return concept.checks[concept.checks.length - 1]
+}
+
+export function overallProof(concepts: Concept[]): number {
+  if (concepts.length === 0) return 0
+  const proved = concepts.filter((concept) => conceptBadge(concept) === 'proved' || conceptBadge(concept) === 'due')
+  return proved.length / concepts.length
+}
+
+/** Concepts due today, oldest first. A pause never clears a due date. */
+export function dueConcepts(concepts: Concept[], now = Date.now()): Concept[] {
+  const end = endOfLocalDay(new Date(now))
+  return concepts
+    .filter((concept) => concept.dueAt > 0 && concept.dueAt <= end)
+    .sort((a, b) => a.dueAt - b.dueAt)
 }

@@ -77,7 +77,6 @@ export interface WeekSpec {
   outcomes?: string[]
   rabbitHoles?: string[]
   prerequisiteWeekIds?: string[]
-  encompassedNodeIds?: string[]
   capstone?: string
   detail?: 'full' | 'compact'
 }
@@ -95,7 +94,6 @@ export function seedWeek(spec: WeekSpec): Week {
     rabbitHoles: spec.rabbitHoles ?? [],
     bookFocus: spec.bookFocus,
     prerequisiteWeekIds: spec.prerequisiteWeekIds ?? defaultPrereq,
-    encompassedNodeIds: spec.encompassedNodeIds ?? [],
     checklist: spec.checklist,
     gate: { attempts: [], notes: spec.gate },
     ...(spec.capstone ? { capstone: spec.capstone } : {}),

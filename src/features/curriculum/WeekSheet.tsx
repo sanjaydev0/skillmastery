@@ -8,14 +8,11 @@ import {
   FileText,
   Lock,
   Pencil,
-  Plus,
   ShieldQuestion,
   Sparkles,
   Target,
   Trash2,
   Unlock,
-  Wrench,
-  X,
 } from 'lucide-react'
 import type { MasteryScores, Week } from '../../types/schema'
 import { XP } from '../../engine/gamification'
@@ -24,14 +21,12 @@ import { useUiStore } from '../../store/uiStore'
 import {
   missingWeekPrereqs,
   isWeekAvailable,
-  nodeBadge,
-  weekEncompassedNodes,
   weekProgress,
   weekStatus,
 } from '../../engine/gating'
-import { activeFlags } from '../../engine/remediation'
+import { conceptBadge } from '../../engine/concepts'
 import { emptyScores, evaluateGate } from '../../engine/mastery'
-import { MASTERY_CATEGORIES, formatShortDate, minutesLabel } from '../../lib/dates'
+import { MASTERY_CATEGORIES, formatShortDate, minutesLabel, relativeDays } from '../../lib/dates'
 import { cn, percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 import { Sheet } from '../../components/ui/Sheet'
@@ -43,13 +38,12 @@ import {
   EmptyState,
   Field,
   InlineError,
-  NodeBadgePill,
+  ConceptBadgePill,
   ProgressBar,
   SectionHead,
   Tabs,
   WeekBadge,
 } from '../../components/ui/primitives'
-import { NodeEditorForm } from '../nodes/NodeEditorForm'
 
 type WeekTab = 'plan' | 'gate' | 'edit'
 type CheckFilter = 'all' | 'passive' | 'active'
@@ -70,7 +64,6 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
   const week = subject.weeks.find((entry) => entry.id === weekId)
   const [tab, setTab] = useState<WeekTab>('plan')
   const [checkFilter, setCheckFilter] = useState<CheckFilter>(mode)
-  const [addingNode, setAddingNode] = useState(false)
   const [scores, setScores] = useState<MasteryScores>(() => week?.gate.scores ?? emptyScores(3))
   const [confirmUnlock, setConfirmUnlock] = useState(false)
 
@@ -79,24 +72,18 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
     setScores(week.gate.scores ?? emptyScores(3))
     setCheckFilter(mode)
     setTab('plan')
-    setAddingNode(false)
     setConfirmUnlock(false)
   }, [week?.id])
 
   const phase = subject.phases.find((entry) => entry.id === week?.phaseId)
-  const nodes = useMemo(
-    () => (week ? subject.nodes.filter((node) => node.weekId === week.id) : []),
-    [subject.nodes, week],
+  const concepts = useMemo(
+    () => (week ? subject.concepts.filter((concept) => concept.weekId === week.id) : []),
+    [subject.concepts, week],
   )
   const resources = useMemo(
     () => (week ? subject.resources.filter((resource) => resource.weekId === week.id) : []),
     [subject.resources, week],
   )
-  const encompassed = useMemo(
-    () => (week ? weekEncompassedNodes(week, subject.nodes) : []),
-    [week, subject.nodes],
-  )
-
   if (!week) return null
 
   const status = weekStatus(week, subject.weeks, overrides)
@@ -109,7 +96,9 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
     (item) => checkFilter === 'all' || item.context === checkFilter,
   )
   const done = filteredChecks.filter((item) => item.done).length
-  const completedNodes = nodes.filter((node) => node.status === 'mastered').length
+  const provedConcepts = concepts.filter(
+    (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+  ).length
 
   const handleSaveGate = () => {
     const result = saveGate(week.id, scores)
@@ -127,7 +116,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
       footer={
         <>
           <span className="faint mr-auto hidden text-[11px] sm:block">
-            {completedNodes}/{nodes.length} nodes proven · {percent(progress)}% checks
+            {provedConcepts}/{concepts.length} concepts proved · {percent(progress)}% checks
           </span>
           <Button variant="ghost" onClick={onClose}>
             Close
@@ -189,82 +178,49 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
 
             <section>
               <SectionHead
-                title="Knowledge nodes"
-                eyebrow={`${completedNodes}/${nodes.length} mastered`}
+                title="Concepts"
+                eyebrow={`${provedConcepts}/${concepts.length} proved`}
                 action={
-                  <Button
-                    size="sm"
-                    variant={addingNode ? 'ghost' : 'soft'}
-                    icon={addingNode ? <X size={13} /> : <Plus size={13} />}
-                    onClick={() => setAddingNode((value) => !value)}
-                  >
-                    {addingNode ? 'Cancel' : 'Add node'}
+                  <Button size="sm" variant="soft" icon={<ArrowUpRight size={13} />} onClick={() => navigate('#/map')}>
+                    Open the index
                   </Button>
                 }
               />
-              {addingNode ? (
-                <div className="rounded-xl border border-accent/25 bg-s1 p-3">
-                  <p className="mb-3 text-[12px] font-semibold">New knowledge node</p>
-                  <NodeEditorForm
-                    subject={subject}
-                    weekId={week.id}
-                    onDone={() => setAddingNode(false)}
-                    onCancel={() => setAddingNode(false)}
-                    compact
-                  />
-                </div>
-              ) : null}
-              {nodes.length === 0 ? (
+              {concepts.length === 0 ? (
                 <EmptyState
                   compact
                   icon={<Target size={16} />}
-                  title="No knowledge nodes in this week"
-                  description="A week is proven through nodes: primitive, concept, failure mode. Add the first one."
-                  action={
-                    !addingNode ? (
-                      <Button size="sm" variant="soft" icon={<Plus size={12} />} onClick={() => setAddingNode(true)}>
-                        Add the first node
-                      </Button>
-                    ) : undefined
-                  }
+                  title="No concepts recorded for this week yet"
+                  description="Concepts come from the route. Generate the week and it adds its own."
                 />
               ) : (
                 <div className="space-y-1.5">
-                  {nodes.map((node) => {
-                    const badge = nodeBadge(node, subject, overrides)
-                    const flags = activeFlags(node)
-                    const kp = node.knowledgePoints[0]
-                    const weekOf = subject.weeks.find((entry) => entry.id === node.weekId)
+                  {concepts.map((concept) => {
+                    const badge = conceptBadge(concept)
+                    const last = concept.checks[concept.checks.length - 1]
                     return (
                       <button
-                        key={node.id}
+                        key={concept.id}
                         type="button"
-                        onClick={() => navigate(`#/node/${node.id}`)}
+                        onClick={() => navigate(`#/concept/${concept.id}`)}
                         className="card card-hover w-full rounded-xl p-3 text-left"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <NodeBadgePill status={badge} />
-                              {flags.length > 0 ? (
-                                <Badge tone="bad" icon={<Wrench size={10} />}>
-                                  {flags.length} repair
-                                </Badge>
-                              ) : null}
+                              <ConceptBadgePill status={badge} />
                             </div>
-                            <p className="mt-1.5 text-[12.5px] font-semibold">{node.title}</p>
-                            {kp ? <p className="muted mt-0.5 line-clamp-2 text-[11px]">{kp.primitive}</p> : null}
+                            <p className="mt-1.5 text-[12.5px] font-semibold">{concept.term}</p>
+                            {concept.definition ? (
+                              <p className="muted mt-0.5 line-clamp-2 text-[11px]">{concept.definition}</p>
+                            ) : null}
                           </div>
                           <ArrowUpRight size={14} className="mt-1 flex-none text-t3" aria-hidden />
                         </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <div className="rail !h-1.5 flex-1">
-                            <span style={{ width: `${(node.srs.strength / 5) * 100}%` }} />
-                          </div>
-                          <span className="faint num text-[11px]">
-                            W{weekOf?.weekNumber ?? '?'} · {node.srs.strength.toFixed(1)}/5 · {node.srs.implicitReviews} FIRe
-                          </span>
-                        </div>
+                        <p className="faint mt-2 text-[11px]">
+                          {last ? `proved ${formatShortDate(last.at)}` : 'not proved yet'}
+                          {concept.dueAt ? ` · next review ${relativeDays(concept.dueAt)}` : ''}
+                        </p>
                       </button>
                     )
                   })}
@@ -372,34 +328,19 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
               </section>
 
               <section>
-                <SectionHead title="Implicit repetition" eyebrow="FIRe links" />
-                {encompassed.length === 0 ? (
-                  <p className="faint text-[11.5px]">
-                    This week's gate does not explicitly credit older nodes yet.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {encompassed.map((node) => {
-                      const weekOf = subject.weeks.find((entry) => entry.id === node.weekId)
-                      return (
-                        <button
-                          key={node.id}
-                          type="button"
-                          onClick={() => navigate(`#/node/${node.id}`)}
-                          className="flex w-full items-start gap-2 rounded-lg border border-line bg-s1 p-2.5 text-left transition hover:border-line-strong"
-                        >
-                          <Sparkles size={12} className="mt-0.5 flex-none text-accent" aria-hidden />
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[11.5px] font-medium">{node.title}</span>
-                            <span className="faint block text-[11px]">
-                              Week {weekOf?.weekNumber ?? '?'} · strength {node.srs.strength.toFixed(1)}
-                            </span>
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
+                <SectionHead title="Review schedule" eyebrow="From your proofs only" />
+                {(() => {
+                  const due = subject.concepts.filter(
+                    (concept) => concept.dueAt > 0 && concept.dueAt <= Date.now(),
+                  )
+                  return (
+                    <p className="faint text-[11.5px]">
+                      {due.length > 0
+                        ? `${due.length} concept${due.length === 1 ? '' : 's'} due today. Open Practice to review.`
+                        : 'Nothing due. A concept joins this queue only after you prove or review it.'}
+                    </p>
+                  )
+                })()}
               </section>
             </div>
 

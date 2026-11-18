@@ -34,7 +34,6 @@ const weeks: Week[] = [
       'Do not hand-write SQL strings in widgets',
       'Skip ORM benchmarking until a query is actually slow',
     ],
-    encompassedNodeIds: ['fl-w2-n3', 'fl-w10-n2'],
     detail: 'compact',
     checklist: standardChecks(W13, {
       docs: 'Drift docs + SQLite WAL',
@@ -65,7 +64,6 @@ const weeks: Week[] = [
       'Skip codegen for dependency injection',
       'No micro-packages until a second consumer exists',
     ],
-    encompassedNodeIds: ['fl-w7-n1', 'fl-w10-n3'],
     detail: 'compact',
     checklist: standardChecks(W14, {
       docs: 'Flutter app architecture guide',
@@ -96,7 +94,6 @@ const weeks: Week[] = [
       'Skip background isolates until Week 18',
       'Never delete the outbox row before the server acknowledges it',
     ],
-    encompassedNodeIds: ['fl-w13-n2', 'fl-w10-n2'],
     detail: 'compact',
     capstone: 'Capstone 4: offline-first field inventory engine',
     checklist: standardChecks(W15, {
@@ -128,7 +125,6 @@ const weeks: Week[] = [
       'Skip custom auth servers',
       'No table without RLS enabled',
     ],
-    encompassedNodeIds: ['fl-w13-n1', 'fl-w15-n1'],
     detail: 'compact',
     checklist: standardChecks(W16, {
       docs: 'Supabase RLS + Postgres row security',
@@ -159,7 +155,6 @@ const weeks: Week[] = [
       'Skip bidirectional CRDT sync',
       'Never apply remote rows without a transaction boundary',
     ],
-    encompassedNodeIds: ['fl-w15-n1', 'fl-w16-n2'],
     detail: 'compact',
     checklist: standardChecks(W17, {
       docs: 'Supabase realtime + Postgres logical replication concepts',
@@ -190,7 +185,6 @@ const weeks: Week[] = [
       'Skip FFI until a native dependency demands it',
       'No shared mutable state between isolates',
     ],
-    encompassedNodeIds: ['fl-w13-n1', 'fl-w15-n2'],
     detail: 'compact',
     capstone: 'Capstone 5: full-stack cloud + offline sync workspace',
     checklist: standardChecks(W18, {
@@ -222,7 +216,6 @@ const weeks: Week[] = [
       'Skip engine source dives',
       'No nested scrollables without a shared scroll controller plan',
     ],
-    encompassedNodeIds: ['fl-w5-n2', 'fl-w6-n2'],
     detail: 'compact',
     checklist: standardChecks(W19, {
       docs: 'CustomScrollView + Flutter scrolling',
@@ -253,7 +246,6 @@ const weeks: Week[] = [
       'Skip shader authoring until the 2D path is fast',
       'Never rebuild a painter per frame',
     ],
-    encompassedNodeIds: ['fl-w5-n1', 'fl-w19-n1'],
     detail: 'compact',
     checklist: standardChecks(W20, {
       docs: 'CustomPainter API + Canvas',
@@ -284,7 +276,6 @@ const weeks: Week[] = [
       'Skip custom physics engines',
       'Never block navigation on an animation',
     ],
-    encompassedNodeIds: ['fl-w6-n2', 'fl-w20-n1'],
     detail: 'compact',
     checklist: standardChecks(W21, {
       docs: 'Flutter animations',
@@ -315,7 +306,6 @@ const weeks: Week[] = [
       'Skip mocking the framework',
       'No test that depends on wall-clock time',
     ],
-    encompassedNodeIds: ['fl-w8-n1', 'fl-w17-n2'],
     detail: 'compact',
     checklist: standardChecks(W22, {
       docs: 'Flutter testing overview',
@@ -346,7 +336,6 @@ const weeks: Week[] = [
       'Skip micro-optimisations without a profile',
       'No manual release process',
     ],
-    encompassedNodeIds: ['fl-w19-n1', 'fl-w20-n2'],
     detail: 'compact',
     checklist: standardChecks(W23, {
       docs: 'Impeller + performance best practices',
@@ -377,7 +366,6 @@ const weeks: Week[] = [
       'Do not rewrite the architecture to impress',
       'Skip the portfolio polish until the system is defensible',
     ],
-    encompassedNodeIds: ['fl-w14-n1', 'fl-w18-n2'],
     detail: 'compact',
     capstone: 'Capstone 6: commercial offline-first + cloud-synced flagship',
     checklist: standardChecks(W24, {

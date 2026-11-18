@@ -1,7 +1,6 @@
 import type { Flashcard, Resource, Week } from '../../types/schema'
 import { seedCard, seedResource, seedWeek, standardChecks } from '../seedHelpers'
 
-const W3 = 'fl-w3'
 const W7 = 'fl-w7'
 const W8 = 'fl-w8'
 const W9 = 'fl-w9'
@@ -29,7 +28,6 @@ const weeks: Week[] = [
       'Do not mix provider, bloc and setState in one feature',
       'Skip codegen until the hand-written provider is understood',
     ],
-    encompassedNodeIds: [`${W3}-n2`, 'fl-w2-n3'],
     checklist: standardChecks(W7, {
       docs: 'riverpod.dev getting started + Dart classes',
       book: 'Refactoring UI — empty, loading, error states',
@@ -59,7 +57,6 @@ const weeks: Week[] = [
       'Skip RxDart operators unless the built-in stream tools fail',
       'No real-time sockets until Week 12',
     ],
-    encompassedNodeIds: [`${W3}-n3`, 'fl-w2-n2'],
     checklist: standardChecks(W8, {
       docs: 'Riverpod providers + AsyncValue',
       book: 'Common-Sense Guide Ch 1–4',
@@ -89,7 +86,6 @@ const weeks: Week[] = [
       'Skip URL sync until the route graph is stable',
       'No custom transitions until Week 21',
     ],
-    encompassedNodeIds: [`${W3}-n2`, 'fl-w7-n3'],
     checklist: standardChecks(W9, {
       docs: 'go_router package + Flutter navigation',
       book: 'Common-Sense Guide Ch 7–9',
@@ -119,7 +115,6 @@ const weeks: Week[] = [
       'Skip GraphQL until REST error semantics are solid',
       'Never log tokens or PII in interceptors',
     ],
-    encompassedNodeIds: [`${W3}-n2`, 'fl-w7-n3'],
     checklist: standardChecks(W10, {
       docs: 'Dio interceptors + HTTP semantics',
       book: 'Common-Sense Guide Ch 10–11',
@@ -149,7 +144,6 @@ const weeks: Week[] = [
       'Do not implement OAuth provider flows from scratch',
       'Skip biometrics unless a product requirement exists',
     ],
-    encompassedNodeIds: ['fl-w10-n2'],
     checklist: standardChecks(W11, {
       docs: 'JWT introduction + flutter_secure_storage',
       book: 'Common-Sense Guide Ch 12–13',
@@ -179,7 +173,6 @@ const weeks: Week[] = [
       'Skip distributed fan-out until Phase 3',
       'Never put an unbounded event list in widget state',
     ],
-    encompassedNodeIds: ['fl-w8-n3', 'fl-w9-n2'],
     checklist: standardChecks(W12, {
       docs: 'Flutter web sockets + MDN WebSocket',
       book: 'Common-Sense Guide Ch 14–16',
