@@ -2,8 +2,13 @@ import { z } from 'zod'
 import type {
   AppData,
   ChecklistItem,
+  Concept,
+  DayProof,
   DaySlot,
+  GateChecks,
   Journey,
+  KnowledgeNode,
+  MasteryScores,
   PlannerSettings,
   Subject,
   TrashEntry,
@@ -78,6 +83,42 @@ const checklistItemSchema = z.object({
   done: z.boolean().default(false),
 })
 
+const gateChecksSchema = z.object({
+  explain: z.boolean(),
+  build: z.boolean(),
+  finish: z.boolean(),
+  debug: z.boolean(),
+})
+
+const proofCheckSchema = z.object({
+  at: z.number(),
+  outcome: z.enum(['cold', 'warm', 'failed']),
+  note: z.string().optional(),
+})
+
+const conceptSchema = z.object({
+  id: z.string().min(1),
+  weekId: z.string().min(1),
+  weekNumber: z.number().int().min(1),
+  term: z.string().min(1),
+  definition: z.string().default(''),
+  failureMode: z.string().default(''),
+  checks: z.array(proofCheckSchema).default([]),
+  step: z.number().int().min(-1).default(-1),
+  dueAt: z.number().default(0),
+  notes: z.string().optional(),
+  createdAt: z.number().default(0),
+  updatedAt: z.number().default(0),
+})
+
+const dayProofSchema = z.object({
+  weekId: z.string().min(1),
+  day: z.number().int().min(1).max(7),
+  at: z.number(),
+  outcome: z.enum(['cold', 'warm', 'failed']),
+  note: z.string().optional(),
+})
+
 const scoresSchema = z.object({
   concept: z.number().min(0).max(5),
   implementation: z.number().min(0).max(5),
@@ -87,12 +128,16 @@ const scoresSchema = z.object({
 
 const gateAttemptSchema = z.object({
   at: z.number(),
-  scores: scoresSchema,
-  average: z.number(),
+  checks: gateChecksSchema.optional(),
+  /** Legacy v5 scores, kept on import so the attempt history stays readable. */
+  scores: scoresSchema.optional(),
+  average: z.number().optional(),
   passed: z.boolean(),
+  note: z.string().optional(),
 })
 
 const gateSchema = z.object({
+  checks: gateChecksSchema.optional(),
   scores: scoresSchema.optional(),
   attempts: z.array(gateAttemptSchema).default([]),
   passedAt: z.number().optional(),
@@ -114,6 +159,12 @@ const weekSchema = z.object({
   gate: gateSchema.default({ attempts: [] }),
   capstone: z.string().optional(),
   detail: z.enum(['full', 'compact']).default('compact'),
+  review: z
+    .object({
+      at: z.number(),
+      note: z.string(),
+    })
+    .optional(),
 })
 
 const phaseSchema = z.object({
@@ -172,6 +223,8 @@ const subjectSchema = z.object({
   phases: z.array(phaseSchema).min(1),
   weeks: z.array(weekSchema),
   nodes: z.array(nodeSchema),
+  concepts: z.array(conceptSchema).default([]),
+  dayProofs: z.array(dayProofSchema).default([]),
   cards: z.array(cardSchema),
   resources: z.array(resourceSchema),
 })
@@ -311,8 +364,10 @@ export function parseBackupJson(raw: string): ParsedBackup {
  */
 export type MigratableAppData = Omit<
   AppData,
-  'planner' | 'promptOverrides' | 'journey' | 'dayPlans' | 'trash'
+  'planner' | 'promptOverrides' | 'journey' | 'dayPlans' | 'trash' | 'subjects'
 > & {
+  /** Pre-v6 payloads carry no concepts or day proofs; the migration adds them. */
+  subjects: Array<Omit<Subject, 'concepts' | 'dayProofs'> & Partial<Pick<Subject, 'concepts' | 'dayProofs'>>>
   planner?: Partial<PlannerSettings> & {
     /** v3 per-day capacity, folded into the weekly total on upgrade. */
     weekdayActiveMinutes?: number
@@ -491,6 +546,80 @@ function normaliseSubjects(subjects: Subject[], fillMissingDays: boolean): Subje
   }))
 }
 
+/** A v5 node becomes a v6 concept. The old claim stays, labelled as a claim. */
+function nodeToConcept(node: KnowledgeNode, weekNumber: number): Concept {
+  const first = node.knowledgePoints[0]
+  return {
+    id: node.id,
+    weekId: node.weekId,
+    weekNumber,
+    term: node.title,
+    definition: first?.concept ?? '',
+    failureMode: first?.failureMode ?? '',
+    checks:
+      node.status === 'mastered'
+        ? [{ at: node.updatedAt ?? Date.now(), outcome: 'warm', note: 'Carried over from the old concept map' }]
+        : [],
+    // The old strength was a 0–5 number nobody could really judge; it only
+    // seeds where in the review ladder the concept starts.
+    step: node.srs.strength >= 3 ? 2 : node.srs.strength > 0 ? 1 : -1,
+    dueAt: node.srs.dueAt,
+    notes: node.notes,
+    createdAt: node.createdAt ?? 0,
+    updatedAt: node.updatedAt ?? 0,
+  }
+}
+
+/** Four yes/no questions from four guessed 1–5 numbers: 4 and up counts as yes. */
+function gateChecksFromScores(scores: MasteryScores): GateChecks {
+  return {
+    explain: scores.concept >= 4,
+    build: scores.implementation >= 4,
+    finish: scores.craft >= 4,
+    debug: scores.debugging >= 4,
+  }
+}
+
+function gateChecksPass(checks: GateChecks): boolean {
+  return checks.explain && checks.build && checks.finish && checks.debug
+}
+
+/**
+ * Schema v6: concepts and day proofs arrive, and the numeric gate becomes four
+ * yes/no answers. Runs for every payload so a hand-edited v6 file is normalised
+ * too, but the v5 conversions only run for a pre-v6 payload.
+ */
+function migrateSubjectsV6(subjects: Subject[], legacy: boolean): Subject[] {
+  return subjects.map((subject) => {
+    const loose = subject as Subject & { concepts?: Concept[]; dayProofs?: DayProof[] }
+    const weekNumberOf = new Map(subject.weeks.map((week) => [week.id, week.weekNumber]))
+    const carried = legacy
+      ? subject.nodes
+          .filter((node) => weekNumberOf.has(node.weekId))
+          .map((node) => nodeToConcept(node, weekNumberOf.get(node.weekId)!))
+      : []
+    const weeks = subject.weeks.map((week) => {
+      if (week.gate.checks || !legacy || !week.gate.scores) return week
+      const checks = gateChecksFromScores(week.gate.scores)
+      // A week only stays cleared when every answer was actually yes.
+      return {
+        ...week,
+        gate: {
+          ...week.gate,
+          checks,
+          passedAt: gateChecksPass(checks) ? week.gate.passedAt : undefined,
+        },
+      }
+    })
+    return {
+      ...subject,
+      weeks,
+      concepts: [...(loose.concepts ?? []), ...carried],
+      dayProofs: loose.dayProofs ?? [],
+    }
+  })
+}
+
 /**
  * Future schema upgrades land here. Each step must be additive and defensive:
  * a failed migration returns the original payload rather than throwing.
@@ -506,8 +635,16 @@ export function migrateAppData(input: MigratableAppData): AppData {
   )
   const journey = normaliseJourney(input.journey)
   const dayPlans = normaliseDayPlans(input.dayPlans)
-  const trash = (input.trash ?? []).slice(0, TRASH_LIMIT)
-  const subjects = normaliseSubjects(input.subjects, input.schemaVersion < SCHEMA_VERSION)
+  // Concept trash entries died with the graph; a deleted week keeps its own
+  // concepts inside its payload.
+  const trash = (input.trash ?? [])
+    .filter((entry) => entry.kind !== 'node')
+    .slice(0, TRASH_LIMIT)
+  const legacy = input.schemaVersion < SCHEMA_VERSION
+  const subjects = migrateSubjectsV6(
+    normaliseSubjects(input.subjects as Subject[], legacy),
+    legacy,
+  )
 
   if (input.schemaVersion >= SCHEMA_VERSION) {
     return { ...input, subjects, planner, promptOverrides, journey, dayPlans, trash }

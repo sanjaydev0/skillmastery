@@ -17,6 +17,8 @@ function createSubject(weeks = 2, tasksPerWeek = 10): Subject {
     phases: [{ id: 'phase-1', name: 'Phase 1', subtitle: 'Test phase' }],
     weeks: [],
     nodes: [],
+    concepts: [],
+    dayProofs: [],
     cards: [],
     resources: [],
   }
@@ -232,6 +234,8 @@ describe('gamification engine', () => {
       phases: [],
       weeks: [],
       nodes: [],
+      concepts: [],
+      dayProofs: [],
       cards: [],
       resources: [],
     }

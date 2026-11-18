@@ -295,6 +295,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       phases,
       weeks: [week],
       nodes: [],
+      concepts: [],
+      dayProofs: [],
       cards: [],
       resources: [],
     }

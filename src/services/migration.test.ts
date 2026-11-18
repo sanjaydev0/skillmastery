@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createSeedData } from '../data/seedData'
-import type { AppData, ChecklistItem, Subject, Week } from '../types/schema'
+import type { AppData, ChecklistItem, MasteryScores, Subject, Week } from '../types/schema'
 import { DEFAULT_PLANNER, SCHEMA_VERSION } from '../types/schema'
 import type { MigratableAppData } from './validation'
 import { appDataSchema, migrateAppData, parseBackupJson } from './validation'
@@ -249,5 +249,171 @@ describe('schema migration', () => {
     const parsed = parseBackupJson(raw)
     expect(parsed.data.schemaVersion).toBe(SCHEMA_VERSION)
     expect(parsed.data.promptOverrides).toEqual({})
+  })
+})
+
+describe('schema v6: the record book', () => {
+  const v5Node = {
+    id: 'fl-n1',
+    weekId: 'fl-w1',
+    title: 'final vs const',
+    slug: 'final-vs-const',
+    tags: [],
+    prerequisiteIds: [],
+    encompassedNodeIds: [],
+    knowledgePoints: [
+      {
+        id: 'fl-n1-kp1',
+        primitive: 'Stack bindings pointing at heap objects',
+        concept: 'final locks the reference, const freezes the whole value',
+        failureMode: 'Calling add() on a final list and expecting the UI to notice',
+        fails: 0,
+      },
+    ],
+    status: 'mastered',
+    srs: { strength: 3, intervalDays: 7, dueAt: 99, implicitReviews: 2 },
+    repairFlags: [],
+    notes: 'My note',
+    updatedAt: 50,
+  }
+
+  function v5Payload(): MigratableAppData {
+    return {
+      schemaVersion: 5,
+      seedVersion: 5,
+      createdAt: 1,
+      updatedAt: 1,
+      activeSubjectId: 'flutter',
+      subjects: [
+        {
+          id: 'flutter',
+          name: 'Flutter',
+          shortName: 'Flutter',
+          tagline: '',
+          accent: 'sky',
+          phases: [{ id: 'fl-p1', name: 'Phase 1', subtitle: '' }],
+          weeks: [
+            {
+              id: 'fl-w1',
+              weekNumber: 1,
+              phaseId: 'fl-p1',
+              title: 'Week 1',
+              anchor: '',
+              outcomes: [],
+              rabbitHoles: [],
+              bookFocus: '',
+              prerequisiteWeekIds: [],
+              encompassedNodeIds: [],
+              checklist: [],
+              detail: 'compact',
+              gate: {
+                scores: { concept: 5, implementation: 4, craft: 3, debugging: 3 },
+                attempts: [],
+                passedAt: 10,
+              },
+            },
+          ],
+          nodes: [v5Node],
+          cards: [
+            {
+              id: 'c1',
+              nodeId: 'fl-n1',
+              front: 'Q',
+              back: 'A',
+              tags: [],
+              source: 'core',
+              scheduleStep: 0,
+              dueAt: 0,
+              lapses: 0,
+              reviews: 0,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          resources: [],
+        } as never,
+      ],
+      books: [],
+      dailyLog: {},
+      overrides: { weeks: {}, nodes: {} },
+      prefs: { theme: 'dark', mode: 'active', sidebarCollapsed: false, localStorageThresholdMB: 4 },
+      promptOverrides: {},
+      journey: { startedAt: null, startWeekday: 1, pauses: [], gameLayer: true, onboardedAt: null },
+      dayPlans: {},
+      trash: [],
+    }
+  }
+
+  it('migrates mastered nodes into carried concept checks', () => {
+    const migrated = migrateAppData(v5Payload())
+    expect(migrated.schemaVersion).toBe(6)
+    const subject = migrated.subjects[0]!
+    expect(subject.concepts).toHaveLength(1)
+    expect(subject.concepts[0]).toMatchObject({
+      id: 'fl-n1',
+      weekNumber: 1,
+      term: 'final vs const',
+      definition: 'final locks the reference, const freezes the whole value',
+      failureMode: 'Calling add() on a final list and expecting the UI to notice',
+      notes: 'My note',
+      step: 2,
+      dueAt: 99,
+    })
+    expect(subject.concepts[0]!.checks).toHaveLength(1)
+    expect(subject.concepts[0]!.checks[0]).toMatchObject({
+      outcome: 'warm',
+      note: 'Carried over from the old concept map',
+    })
+    expect(subject.dayProofs).toEqual([])
+    // Cards keep their link, so a deck never loses its source concept.
+    expect(subject.cards[0]!.nodeId).toBe('fl-n1')
+  })
+
+  it('keeps an unmastered node as an unproved concept', () => {
+    const payload = v5Payload()
+    const subjects = payload.subjects as unknown as { nodes: typeof v5Node[] }[]
+    subjects[0]!.nodes[0]!.status = 'learning'
+    subjects[0]!.nodes[0]!.srs.strength = 1
+    const migrated = migrateAppData(payload)
+    const concept = migrated.subjects[0]!.concepts[0]!
+    expect(concept.checks).toEqual([])
+    expect(concept.step).toBe(1)
+  })
+
+  it('turns numeric gate scores into four yes/no checks', () => {
+    const week = migrateAppData(v5Payload()).subjects[0]!.weeks[0]!
+    expect(week.gate.checks).toEqual({ explain: true, build: true, finish: false, debug: false })
+    // A week the old scores did not honestly clear does not stay cleared.
+    expect(week.gate.passedAt).toBeUndefined()
+  })
+
+  it('keeps a gate cleared when all four answers were yes', () => {
+    const payload = v5Payload()
+    const subjects = payload.subjects as unknown as { weeks: { gate: { scores: MasteryScores } }[] }[]
+    subjects[0]!.weeks[0]!.gate.scores = { concept: 5, implementation: 5, craft: 5, debugging: 5 }
+    const week = migrateAppData(payload).subjects[0]!.weeks[0]!
+    expect(week.gate.passedAt).toBe(10)
+  })
+
+  it('drops concept trash entries from an old backup', () => {
+    const payload = v5Payload()
+    payload.trash = [
+      { id: 't1', kind: 'node', deletedAt: 1, label: 'x', subjectId: 'flutter', subjectName: 'Flutter', payload: {} as never, counts: {} },
+    ]
+    expect(migrateAppData(payload).trash).toEqual([])
+  })
+
+  it('keeps an old v3 backup importable', () => {
+    const payload = v5Payload()
+    payload.schemaVersion = 3
+    expect(migrateAppData(payload).schemaVersion).toBe(6)
+  })
+
+  it('round-trips a v6 payload without inventing concepts', () => {
+    const seed = createSeedData()
+    const migrated = migrateAppData(seed)
+    expect(migrated.schemaVersion).toBe(6)
+    expect(migrated.subjects[0]!.concepts).toEqual(seed.subjects[0]!.concepts)
+    expect(migrated.subjects[0]!.dayProofs).toEqual([])
   })
 })

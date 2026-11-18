@@ -54,6 +54,8 @@ import { NodeEditorForm } from '../nodes/NodeEditorForm'
 type WeekTab = 'plan' | 'gate' | 'edit'
 type CheckFilter = 'all' | 'passive' | 'active'
 
+const GATE_KEYS = ['explain', 'build', 'finish', 'debug'] as const
+
 export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => void }) {
   const subject = useActiveSubject()
   const overrides = useAppStore((state) => state.overrides)
@@ -508,11 +510,15 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                     >
                       <div>
                         <p className="text-[11.5px] font-medium">
-                          {formatShortDate(attempt.at)} · average {attempt.average.toFixed(1)}
+                          {formatShortDate(attempt.at)}
+                          {attempt.average !== undefined ? ` · average ${attempt.average.toFixed(1)}` : ''}
                         </p>
                         <p className="faint num text-[11px]">
-                          C{attempt.scores.concept} · I{attempt.scores.implementation} · X{attempt.scores.craft} · D
-                          {attempt.scores.debugging}
+                          {attempt.scores
+                            ? `C${attempt.scores.concept} · I${attempt.scores.implementation} · X${attempt.scores.craft} · D${attempt.scores.debugging}`
+                            : attempt.checks
+                              ? `${GATE_KEYS.filter((key) => attempt.checks?.[key]).length} of 4 yes`
+                              : 'attempt saved'}
                         </p>
                       </div>
                       <Badge tone={attempt.passed ? 'good' : 'neutral'}>

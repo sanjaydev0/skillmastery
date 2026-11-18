@@ -33,6 +33,8 @@ export const fullstackSubject: Subject = {
   ],
   weeks: [...fullstackFoundation.weeks, ...fullstackSystems.weeks],
   nodes: [...fullstackFoundation.nodes, ...fullstackSystems.nodes],
+  concepts: [],
+  dayProofs: [],
   cards: [...fullstackFoundation.cards, ...fullstackSystems.cards],
   resources: [...fullstackFoundation.resources, ...fullstackSystems.resources],
 }

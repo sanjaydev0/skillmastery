@@ -76,7 +76,7 @@ function gateLine(week: Week, subject: Subject, withStatus = true): string {
   const last = week.gate.attempts[week.gate.attempts.length - 1]
   if (!withStatus) return task
   const status = last
-    ? `last attempt scored ${last.average.toFixed(1)}/5, ${last.passed ? 'passed' : 'not passed'}`
+    ? `last attempt ${last.passed ? 'passed' : 'not passed'}${last.average !== undefined ? `, scored ${last.average.toFixed(1)}/5` : ''}`
     : 'not attempted yet'
   return `${clip(task, 150)} — ${status}`
 }

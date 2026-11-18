@@ -4,7 +4,7 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6
 export const SEED_VERSION = 5
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
@@ -238,14 +238,86 @@ export interface ChecklistItem {
   doneAt?: number
 }
 
+/**
+ * v6: the record-book evidence layer.
+ *
+ * A proof is something the learner did, never a number they guessed. Three
+ * outcomes cover both proof scales (day and checkpoint) and concept reviews.
+ */
+export type ProofOutcome = 'cold' | 'warm' | 'failed'
+
+export interface ProofCheck {
+  at: number
+  outcome: ProofOutcome
+  note?: string
+}
+
+/** The four questions a checkpoint asks. All four yes clears the week. */
+export interface GateChecks {
+  /** Can you explain it in your own words? */
+  explain: boolean
+  /** Can you build it without the notes? */
+  build: boolean
+  /** Does it look right on the phone? */
+  finish: boolean
+  /** Can you fix it when it breaks? */
+  debug: boolean
+}
+
+/** One closed-book answer for one day of one week. */
+export interface DayProof {
+  weekId: string
+  /** Day slot 1–7 inside the course week. */
+  day: DaySlot
+  at: number
+  outcome: ProofOutcome
+  note?: string
+}
+
+/** One sentence to next week's learner, saved with the weekly review. */
+export interface WeekReview {
+  at: number
+  note: string
+}
+
+/**
+ * A concept is a read-only record derived from the authored route. The only
+ * learner data it carries is the proof history and a review date; nothing
+ * here is hand-scored.
+ */
+export interface Concept {
+  id: string
+  weekId: string
+  weekNumber: number
+  term: string
+  definition: string
+  failureMode: string
+  /** Newest last. Empty until the first proof or review. */
+  checks: ProofCheck[]
+  /** Index into PROOF_INTERVALS. -1 before the first check. */
+  step: number
+  /** Epoch ms. 0 means "never scheduled". */
+  dueAt: number
+  notes?: string
+  createdAt: number
+  updatedAt: number
+}
+
 export interface GateAttempt {
   at: number
-  scores: MasteryScores
-  average: number
+  /** v6 yes/no answers. Legacy v5 attempts kept their numeric scores. */
+  checks?: GateChecks
+  /** Legacy v5 scores. Read on import only. */
+  scores?: MasteryScores
+  average?: number
   passed: boolean
+  note?: string
 }
 
 export interface MasteryGate {
+  /** The four yes/no answers a learner can actually judge. */
+  checks?: GateChecks
+  /** Legacy v5 scores. Read on import only. */
   scores?: MasteryScores
   attempts: GateAttempt[]
   passedAt?: number
@@ -271,6 +343,8 @@ export interface Week {
   gate: MasteryGate
   capstone?: string
   detail: DetailLevel
+  /** One sentence for next week's learner, saved on the weekly review. */
+  review?: WeekReview
 }
 
 export interface Phase {
@@ -331,6 +405,10 @@ export interface Subject {
   phases: Phase[]
   weeks: Week[]
   nodes: KnowledgeNode[]
+  /** The concept index, derived from the authored route. */
+  concepts: Concept[]
+  /** Closed-book proofs, one row per week and day. */
+  dayProofs: DayProof[]
   cards: Flashcard[]
   resources: Resource[]
 }

@@ -308,7 +308,7 @@ function WeekCard({ week, active }: { week: Week; active: boolean }) {
             : week.gate.passedAt
               ? `Gate cleared ${formatShortDate(week.gate.passedAt)}`
               : lastAttempt
-                ? `Last gate attempt ${lastAttempt.average.toFixed(1)} avg`
+                ? `Gate attempted ${formatShortDate(lastAttempt.at)}`
                 : week.bookFocus}
         </span>
         <ChevronRight size={12} className="flex-none text-t3" aria-hidden />

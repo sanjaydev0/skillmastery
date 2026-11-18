@@ -42,6 +42,8 @@ export const flutterSubject: Subject = {
     ...flutterArchitecture.nodes,
     ...flutterSystems.nodes,
   ],
+  concepts: [],
+  dayProofs: [],
   cards: [
     ...flutterFoundation.cards,
     ...flutterArchitecture.cards,

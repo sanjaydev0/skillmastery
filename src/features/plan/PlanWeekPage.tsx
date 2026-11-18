@@ -255,7 +255,8 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
                   <li key={attempt.at} className="flex items-center justify-between gap-2 rounded-lg bg-s2 px-2.5 py-1.5 text-[11.5px]">
                     <span className="num">{formatShortDate(attempt.at)}</span>
                     <span className={attempt.passed ? 'text-good' : 'text-warn'}>
-                      {attempt.average.toFixed(1)} avg, {attempt.passed ? 'cleared' : 'not yet'}
+                      {attempt.passed ? 'cleared' : 'not yet'}
+                      {attempt.average !== undefined ? `, ${attempt.average.toFixed(1)} avg` : ''}
                     </span>
                   </li>
                 ))}
