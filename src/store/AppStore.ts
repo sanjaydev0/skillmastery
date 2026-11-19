@@ -10,6 +10,7 @@ import type {
   DayProof,
   DaySlot,
   Flashcard,
+  GateChecks,
   Mode,
   Overrides,
   PlannerSettings,
@@ -80,7 +81,7 @@ interface AppStore extends AppData {
   purgeTrash: (entryId: string) => void
   emptyTrash: () => void
   toggleChecklist: (weekId: string, itemId: string) => void
-  saveGate: (weekId: string, scores: Week['gate']['scores']) => ActionResult
+  saveGate: (weekId: string, checks: GateChecks, note?: string) => ActionResult
   addWeek: (input: { phaseId: string; title: string; anchor: string }) => ActionResult
   updateWeek: (weekId: string, patch: Partial<Week>) => void
   deleteWeek: (weekId: string) => string | null
@@ -588,16 +589,31 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       )
     }),
 
-  saveGate: (weekId, scores) => {
-    if (!scores) return { ok: false, message: 'Set all four scores first.' }
+  saveGate: (weekId, checks, note) => {
+    if (
+      !checks ||
+      typeof checks.explain !== 'boolean' ||
+      typeof checks.build !== 'boolean' ||
+      typeof checks.finish !== 'boolean' ||
+      typeof checks.debug !== 'boolean'
+    ) {
+      return { ok: false, message: 'Answer all four questions first.' }
+    }
     const state = get()
     const subject = activeSubjectOf(state)
     const week = subject?.weeks.find((entry) => entry.id === weekId)
     if (!subject || !week) return { ok: false, message: 'Week not found.' }
     const at = now()
     const wasPassed = Boolean(week.gate.passedAt)
-    const gate = recordAttempt(week.gate, scores, at)
+    const gate = recordAttempt(
+      week.gate,
+      checks,
+      at,
+    )
+    const attempt = gate.attempts[gate.attempts.length - 1]
+    if (attempt && note?.trim()) attempt.note = note.trim().slice(0, 200)
     const justPassed = !wasPassed && Boolean(gate.passedAt)
+    const overrides = justPassed ? pruneOverrides(state.overrides, new Set([weekId])) : state.overrides
     set({
       ...patchSubject(
         state,
@@ -607,6 +623,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         }),
         at,
       ),
+      overrides,
     })
     return {
       ok: true,
@@ -614,7 +631,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         ? justPassed
           ? `Gate cleared. Week ${week.weekNumber + 1} unlocked.`
           : 'Gate already cleared — attempt saved.'
-        : 'Attempt saved. Gate not cleared yet.',
+        : 'Attempt saved. Not cleared yet.',
     }
   },
 

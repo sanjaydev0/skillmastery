@@ -14,7 +14,7 @@ import {
   Trash2,
   Unlock,
 } from 'lucide-react'
-import type { MasteryScores, Week } from '../../types/schema'
+import type { GateChecks, Week } from '../../types/schema'
 import { XP } from '../../engine/gamification'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
@@ -25,8 +25,8 @@ import {
   weekStatus,
 } from '../../engine/gating'
 import { conceptBadge } from '../../engine/concepts'
-import { emptyScores, evaluateGate } from '../../engine/mastery'
-import { MASTERY_CATEGORIES, formatShortDate, minutesLabel, relativeDays } from '../../lib/dates'
+import { GATE_QUESTIONS, gatePass, gateWeakest } from '../../engine/proofs'
+import { formatShortDate, minutesLabel, relativeDays } from '../../lib/dates'
 import { cn, percent } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 import { Sheet } from '../../components/ui/Sheet'
@@ -50,6 +50,8 @@ type CheckFilter = 'all' | 'passive' | 'active'
 
 const GATE_KEYS = ['explain', 'build', 'finish', 'debug'] as const
 
+const EMPTY_CHECKS: GateChecks = { explain: false, build: false, finish: false, debug: false }
+
 export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => void }) {
   const subject = useActiveSubject()
   const overrides = useAppStore((state) => state.overrides)
@@ -64,12 +66,12 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
   const week = subject.weeks.find((entry) => entry.id === weekId)
   const [tab, setTab] = useState<WeekTab>('plan')
   const [checkFilter, setCheckFilter] = useState<CheckFilter>(mode)
-  const [scores, setScores] = useState<MasteryScores>(() => week?.gate.scores ?? emptyScores(3))
+  const [checks, setChecks] = useState<GateChecks>(() => week?.gate.checks ?? EMPTY_CHECKS)
   const [confirmUnlock, setConfirmUnlock] = useState(false)
 
   useEffect(() => {
     if (!week) return
-    setScores(week.gate.scores ?? emptyScores(3))
+    setChecks(week.gate.checks ?? EMPTY_CHECKS)
     setCheckFilter(mode)
     setTab('plan')
     setConfirmUnlock(false)
@@ -91,7 +93,9 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
   const available = isWeekAvailable(week, subject.weeks, overrides)
   const overridden = Boolean(overrides.weeks[week.id])
   const missing = missingWeekPrereqs(week, subject.weeks)
-  const evaluation = evaluateGate(scores)
+  const passed = gatePass(checks)
+  const weakest = gateWeakest(checks)
+  const yesCount = GATE_KEYS.filter((key) => checks[key]).length
   const filteredChecks = week.checklist.filter(
     (item) => checkFilter === 'all' || item.context === checkFilter,
   )
@@ -101,7 +105,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
   ).length
 
   const handleSaveGate = () => {
-    const result = saveGate(week.id, scores)
+    const result = saveGate(week.id, checks)
     const justCleared = result.ok && result.message.startsWith('Gate cleared')
     const message = justCleared && gameLayer ? `${result.message} +${XP.gate} XP.` : result.message
     toast(message, result.ok ? 'success' : 'error', result.ok ? 5000 : 3800)
@@ -369,7 +373,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                 <div>
                   <p className="eyebrow">Closed-book challenge</p>
                   <p className="mt-1 text-[12.5px] font-semibold">
-                    Average ≥ 4.0, and no category below 3.
+                    Four questions. All four must be yes.
                   </p>
                 </div>
                 <Badge tone={week.gate.passedAt ? 'good' : 'neutral'}>
@@ -378,56 +382,60 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
               </div>
               <p className="muted mt-2 text-[12px] leading-relaxed">
                 {week.gate.notes ||
-                  'Run the week’s blind challenge first. Score what you actually demonstrated, not what you intended to learn.'}
+                  'Run the week’s challenge without notes first. Answer what you actually did, not what you meant to learn.'}
               </p>
             </section>
 
-            <div className="space-y-3">
-              {MASTERY_CATEGORIES.map((category) => (
-                <div key={category.key} className="rounded-xl border border-line bg-s1 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-[12.5px] font-semibold">{category.label}</p>
-                      <p className="faint text-[11.5px]">{category.hint}</p>
-                    </div>
-                    <span className="num text-[15px] font-semibold">{scores[category.key]}</span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-5 gap-1.5" role="group" aria-label={`${category.label} score`}>
-                    {[1, 2, 3, 4, 5].map((value) => (
+            <div className="space-y-2">
+              {GATE_QUESTIONS.map((question) => {
+                const on = checks[question.key]
+                return (
+                  <div key={question.key} className="rounded-xl border border-line bg-s1 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[12.5px] font-semibold">{question.label}</p>
+                        <p className="faint mt-0.5 text-[11.5px]">{question.detail}</p>
+                      </div>
                       <button
-                        key={value}
                         type="button"
-                        aria-pressed={scores[category.key] === value}
-                        aria-label={`${category.label}: ${value} of 5`}
-                        onClick={() => setScores((current) => ({ ...current, [category.key]: value } as MasteryScores))}
+                        role="switch"
+                        aria-checked={on}
+                        aria-label={question.label}
+                        onClick={() =>
+                          setChecks((current) => ({ ...current, [question.key]: !current[question.key] }))
+                        }
                         className={cn(
-                          'grid h-11 place-items-center rounded-lg border text-[12px] font-semibold transition',
-                          scores[category.key] === value
-                            ? 'border-accent bg-accent text-[var(--accent-contrast)]'
-                            : 'border-line bg-s2 text-t2 hover:border-line-strong',
+                          'relative h-6 w-11 flex-none rounded-full border transition',
+                          on ? 'border-accent bg-accent' : 'border-line bg-s3',
                         )}
                       >
-                        {value}
+                        <span
+                          className={cn(
+                            'absolute top-0.5 h-[18px] w-[18px] rounded-full bg-s1 transition',
+                            on ? 'left-[22px]' : 'left-0.5',
+                          )}
+                          aria-hidden
+                        />
                       </button>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="rounded-xl border border-line bg-s2 p-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="eyebrow">Live evaluation</span>
-                <Badge tone={evaluation.passed ? 'good' : evaluation.blockers.length ? 'warn' : 'neutral'}>
-                  Average {evaluation.average.toFixed(1)}
+                <Badge tone={passed ? 'good' : yesCount > 0 ? 'warn' : 'neutral'}>
+                  {yesCount} of 4 answered
                 </Badge>
               </div>
               <p className="muted mt-1.5 text-[12px]">
-                {evaluation.passed
-                  ? 'This attempt clears the gate. Save it to unlock the next week.'
-                  : evaluation.blockers.length
-                    ? evaluation.blockers.join(' · ')
-                    : 'Set all four scores to evaluate.'}
+                {passed
+                  ? 'All four are yes. Save this attempt to unlock the next week.'
+                  : weakest.length > 0
+                    ? `Still a no: ${weakest.map((key) => GATE_QUESTIONS.find((q) => q.key === key)?.label.replace(/^Can you |^Does it /, '').replace(/\?$/, '')).join(', ')}. Practise that, then try again.`
+                    : 'Answer the four questions.'}
               </p>
               <Button
                 variant="primary"
@@ -455,10 +463,10 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                           {attempt.average !== undefined ? ` · average ${attempt.average.toFixed(1)}` : ''}
                         </p>
                         <p className="faint num text-[11px]">
-                          {attempt.scores
-                            ? `C${attempt.scores.concept} · I${attempt.scores.implementation} · X${attempt.scores.craft} · D${attempt.scores.debugging}`
-                            : attempt.checks
-                              ? `${GATE_KEYS.filter((key) => attempt.checks?.[key]).length} of 4 yes`
+                          {attempt.checks
+                            ? `${GATE_KEYS.filter((key) => attempt.checks?.[key]).length} of 4 yes`
+                            : attempt.scores
+                              ? `C${attempt.scores.concept} · I${attempt.scores.implementation} · X${attempt.scores.craft} · D${attempt.scores.debugging}`
                               : 'attempt saved'}
                         </p>
                       </div>

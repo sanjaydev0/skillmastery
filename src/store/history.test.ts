@@ -67,7 +67,7 @@ describe('scoped resets', () => {
     const taskId = week.checklist[0]!.id
     const store = useAppStore.getState()
     store.toggleChecklist(week.id, taskId)
-    store.saveGate(week.id, { concept: 4, implementation: 4, craft: 4, debugging: 4 })
+    store.saveGate(week.id, { explain: true, build: true, finish: true, debug: true })
 
     const result = useAppStore.getState().resetProgress('week', week.id)
     expect(result.ok).toBe(true)

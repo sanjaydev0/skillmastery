@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { MasteryScores } from '../types/schema'
+import type { GateChecks } from '../types/schema'
 import { isWeekAvailable } from '../engine/gating'
 import { PROOF_INTERVALS } from '../engine/proofs'
 import { startOfLocalDay } from '../lib/dates'
@@ -7,7 +7,7 @@ import { toBackupJson } from '../lib/utils'
 import { parseBackupJson } from '../services/validation'
 import { getStoredAppData, useAppStore } from './AppStore'
 
-const pass: MasteryScores = { concept: 4, implementation: 4, craft: 4, debugging: 4 }
+const pass: GateChecks = { explain: true, build: true, finish: true, debug: true }
 
 function activeSubject() {
   const state = useAppStore.getState()
@@ -29,7 +29,7 @@ describe('gate integration', () => {
     expect(isWeekAvailable(week2, after.weeks, useAppStore.getState().overrides)).toBe(true)
 
     const firstPass = passedWeek.gate.passedAt
-    useAppStore.getState().saveGate(week1.id, { ...pass, concept: 5 })
+    useAppStore.getState().saveGate(week1.id, { ...pass })
     expect(activeSubject().weeks.find((week) => week.id === week1.id)!.gate.passedAt).toBe(firstPass)
   })
 })
