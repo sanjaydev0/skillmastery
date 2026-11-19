@@ -38,6 +38,28 @@ export function dayIsProved(subject: Subject, weekId: string, day: DaySlot): boo
 }
 
 /**
+ * The highest course day that carries evidence: a day proof or a checked task.
+ * Evidence is stored per week slot, so it converts to a real course day here.
+ * Returns 0 when the record is empty.
+ */
+export function recordDay(subject: Subject): number {
+  const weekNumber = new Map(subject.weeks.map((week) => [week.id, week.weekNumber]))
+  let highest = 0
+  for (const proof of subject.dayProofs) {
+    const number = weekNumber.get(proof.weekId)
+    if (number) highest = Math.max(highest, (number - 1) * 7 + proof.day)
+  }
+  for (const week of subject.weeks) {
+    for (const item of week.checklist) {
+      if (item.done && item.day) {
+        highest = Math.max(highest, (week.weekNumber - 1) * 7 + item.day)
+      }
+    }
+  }
+  return highest
+}
+
+/**
  * The checkpoint. Four questions, each answerable with an honest yes or no:
  * explain it, build it, finish it, fix it. All four yes clears the week.
  */

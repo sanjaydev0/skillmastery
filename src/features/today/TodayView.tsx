@@ -24,7 +24,7 @@ import {
 import { dueCards } from '../../engine/srs'
 import { dueTodayTotal } from '../../engine/concepts'
 import { weekStatus } from '../../engine/gating'
-import { dayProofFor } from '../../engine/proofs'
+import { dayProofFor, recordDay } from '../../engine/proofs'
 import { gameStatsFor } from '../../engine/gamification'
 import { navigate } from '../../lib/router'
 import { formatShortDate } from '../../lib/dates'
@@ -46,6 +46,7 @@ import {
 } from '../../components/ui/primitives'
 import { DAY_SLOTS, dayName, modeLabel, shortDayName } from '../plan/dayPlan'
 import { DayProofCard } from './DayProofCard'
+import { WeekReviewCard } from './WeekReviewCard'
 import { paragraphs } from '../../content/style'
 
 const COURSE_DAYS = 168
@@ -111,6 +112,11 @@ export function TodayView() {
   }, [subject])
 
   const showPauseNudge = !paused && daysSinceActivity !== null && daysSinceActivity >= 2
+
+  // The calendar and the record are two different clocks. A gap is not a
+  // failure; it is information the learner can only get by seeing both.
+  const recordedDay = useMemo(() => recordDay(subject), [subject])
+  const drift = !paused && clockDay !== null && clockDay - recordedDay > 2
 
   const setPause = () => {
     const result = paused ? resumeCourse() : pauseCourse()
@@ -288,7 +294,28 @@ export function TodayView() {
         </section>
       ) : null}
 
-      {showPauseNudge && (
+      {drift ? (
+        <section
+          className="mt-4 flex flex-col gap-2 rounded-xl border border-line bg-s2 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+          aria-label="Calendar and record"
+        >
+          <div>
+            <p className="text-[12.5px] font-semibold">
+              {recordedDay === 0
+                ? `The calendar says Day ${clockDay}. Your record has no days yet.`
+                : `The calendar says Day ${clockDay}. Your record says Day ${recordedDay}.`}
+            </p>
+            <p className="faint mt-0.5 text-[11.5px]">
+              The calendar moves; the record only moves when you do. Nothing is lost, and you can start again today.
+            </p>
+          </div>
+          <a className="link flex-none text-[11.5px]" href="#/start">
+            Open Day 0
+          </a>
+        </section>
+      ) : null}
+
+      {showPauseNudge && !drift && (
         <section
           className="mt-4 flex flex-col gap-2 rounded-xl border border-line bg-s2 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
           aria-label="Pause suggestion"
@@ -493,6 +520,8 @@ export function TodayView() {
           </div>
         </section>
       )}
+
+      {slot === 7 ? <WeekReviewCard week={week} /> : null}
 
       <section className="ledger mt-6" aria-label="Today at a glance">
         <LedgerFact

@@ -38,6 +38,7 @@ import {
   WeekBadge,
 } from '../../components/ui/primitives'
 import { WeekSheet } from '../curriculum/WeekSheet'
+import { WeekReviewCard } from '../today/WeekReviewCard'
 import { GenerateWeekPanel } from './GenerateWeekPanel'
 import { DAY_SLOTS, dayName, modeLabel } from './dayPlan'
 
@@ -237,6 +238,8 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
           })}
         </div>
       </section>
+
+      <WeekReviewCard week={week} />
 
       <details className="card mt-4 overflow-hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3.5 [&::-webkit-details-marker]:hidden">

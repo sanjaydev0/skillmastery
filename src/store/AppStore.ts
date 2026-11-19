@@ -90,6 +90,7 @@ interface AppStore extends AppData {
   setConceptNote: (conceptId: string, note: string) => void
   saveDayProof: (weekId: string, day: DaySlot, outcome: ProofOutcome, note?: string) => ActionResult
   clearDayProof: (weekId: string, day: DaySlot) => void
+  saveWeekReview: (weekId: string, note: string) => ActionResult
   addCard: (input: {
     front: string
     back: string
@@ -826,6 +827,33 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         now(),
       ),
     ),
+
+  saveWeekReview: (weekId, note) => {
+    const state = get()
+    const subject = activeSubjectOf(state)
+    const week = subject?.weeks.find((entry) => entry.id === weekId)
+    if (!subject || !week) return { ok: false, message: 'That week is not in the active track.' }
+    const at = now()
+    const trimmed = note.trim().slice(0, 240)
+    set({
+      ...patchSubject(
+        state,
+        (current) => ({
+          ...current,
+          weeks: current.weeks.map((entry) =>
+            entry.id === weekId
+              ? { ...entry, review: trimmed ? { at, note: trimmed } : undefined }
+              : entry,
+          ),
+        }),
+        at,
+      ),
+    })
+    return {
+      ok: true,
+      message: trimmed ? 'One sentence saved for next week.' : 'Review note cleared.',
+    }
+  },
 
   addCard: (input) => {
     const state = get()
