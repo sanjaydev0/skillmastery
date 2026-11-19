@@ -100,12 +100,14 @@ export function HelpView() {
 
         <Faq id="capacity" title="How do I change my available time?" icon={<Gauge size={15} />}>
           <p>
-            Open <a className="link" href="#/plan">Plan → Daily capacity</a>. Set weekday and weekend minutes for
-            active work (building, debugging, testing) and passive work (reading, notes, videos).
+            Set your weekly hours in <strong>Settings → Weekly capacity</strong> (press Manage, change the two sliders,
+            then OK) or during Day 0. There are only two numbers: active hours (building, debugging, testing) and
+            passive hours (reading, notes, videos).
           </p>
           <p className="mt-2">
-            Capacity belongs to this device and is never replaced by an imported backup. Sunday is the default
-            buffer day.
+            The week is spread across seven study days, so there is no weekday/weekend split and no buffer day.
+            Capacity belongs to this device and is never replaced by an imported backup. It never appears on the Plan
+            page.
           </p>
         </Faq>
 
@@ -147,11 +149,40 @@ export function HelpView() {
           </p>
         </Faq>
 
+        <Faq id="proof" title="What counts as proof?" icon={<ShieldCheck size={15} />}>
+          <p>
+            Two things, and both are answers you give after doing the work. First, a daily proof: close the docs, do
+            one thing from today&apos;s card, then answer <strong>Without notes</strong>, <strong>With notes</strong> or{' '}
+            <strong>Not yet</strong>. Only a without-notes answer counts as proved and moves a concept&apos;s review
+            date forward.
+          </p>
+          <p className="mt-2">
+            Second, the weekly checkpoint: four yes/no questions — explain it, build it, finish it on the phone, fix it
+            when it breaks. All four yes clears the week. A score you guess is never evidence.
+          </p>
+          <p className="mt-2">
+            Everything else in the app is derived from those two: the record, the review queue, XP and progress marks.
+            Checking a task records that you did it; a proof records that you can do it again.
+          </p>
+        </Faq>
+
+        <Faq id="no-streak" title="Why is there no streak?" icon={<Timer size={15} />}>
+          <p>
+            A streak punishes an ordinary bad week and rewards opening the app over doing the work. This course is six
+            months long, so missing a day is normal.
+          </p>
+          <p className="mt-2">
+            The Overview shows <strong>days recorded</strong>, a plain count of days with evidence. Consistency is a
+            ratio: a missed day lowers it a little, and it never resets to zero. You can pause the course when life
+            interrupts; the course day freezes and nothing is taken away.
+          </p>
+        </Faq>
+
         <Faq id="game" title="How does the game layer work?" icon={<Trophy size={15} />}>
           <p>
             The game layer is a second reading of the same evidence. A checked task is 10 XP, a day with one active
-            task adds 15 XP, a cleared checkpoint adds 120 XP and a finished week adds 200 XP. XP never comes from
-            opening the app, so it cannot be farmed.
+            task adds 15 XP, a without-notes day proof adds 40 XP, a cleared checkpoint adds 120 XP and a finished week
+            adds 200 XP. XP never comes from opening the app, so it cannot be farmed.
           </p>
           <p className="mt-2">
             <strong>Levels</strong> start at 100 XP and rise on a fixed table. Your level and today&apos;s XP appear at

@@ -19,16 +19,17 @@ SkillMastery is an offline-first React PWA that acts as a control centre for a s
 
 It is **not** a course player, code editor, terminal, or cloud account. It stores progress locally, shows the next real task, keeps estimates honest, and points at external docs, GitHub and AnkiDroid.
 
-Two 24-week tracks are bundled (Flutter and Full-Stack Web). The Flutter track is the active teaching track. Week 1 is fully authored as seven day cards written for a 13-year-old. Week 2 keeps its authored task list. Weeks 2–24 draw their weekly brief from the blueprint; only Week 1 has authored day cards.
+One 24-week track is bundled (Flutter, Dart and High-Craft UI/UX). Week 1 is fully authored as seven day cards written for a 13-year-old. Week 2 keeps its authored task list. Weeks 2–24 draw their weekly brief from the blueprint; only Week 1 has authored day cards.
 
-The guided course adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v5.
+The guided course adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v6. The record book is a linear route, a read-only concept index, and two kinds of proof: the daily answer and the four-question weekly checkpoint.
 
 **Current state (October 2026):**
 
 - Phases 1–5 are shipped: local-first foundation, estimates, the seven-view shell, the reviewed Week 1 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
 - The board-and-paper design pass is shipped (`53e8cab`).
 - Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy, exact AnkiDroid TSV guidance and the last sub-11px fixes.
-- Phase 6 (guided course) is built and covered by tests, pending one deployment: Day 0 and the start clock, pause and resume, schema v5 day slots, seven authored Week 1 cards, AI week generation with a reviewed draft, the three-thread syllabus, optional progress marks, and a restorable trash with a UI.
+- Phase 6 (guided course) is built and covered by tests, pending one deployment: Day 0 and the start clock, pause and resume, schema v6 day slots, seven authored Week 1 cards, AI week generation with a reviewed draft, the three-thread syllabus, optional progress marks, and a restorable trash with a UI.
+- The record-book pass replaced the knowledge graph with a derived concept index, a daily proof, a four-question checkpoint, a review queue and a readable Markdown export.
 - The native Android/AnkiDroid companion is later. There is no Android project in this repo yet.
 
 ---
@@ -54,7 +55,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 230 tests across 31 files
+npm test           # Vitest, currently 260 tests across 37 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -83,12 +84,12 @@ src/
     ui/                  Primitives, Sheet, Toaster
   content/               The day-card style standard and its executable checker
   data/
-    tracks/              Authored subjects: weeks, nodes, cards, resources
+    tracks/              Authored subject: weeks, concepts, cards, resources
     curriculum/          blueprint.ts: the static 24-week Flutter route
     seedData.ts          Fresh AppData seed
     prompts.ts           Editable prompt-skill templates
     books.ts, rhythm.ts  Shared canon and daily rhythm
-  engine/                Pure logic: estimates, gating, SRS, FIRe, mastery, remediation
+  engine/                Pure logic: estimates, gating, concepts, proofs, mastery, SRS, search
   features/              One folder per view: today, plan, map, practice, library, progress, help
   hooks/                 History-depth and AI-key hooks
   lib/                   Router, dates, utilities (Anki export, downloads, cn/percent)
@@ -100,7 +101,7 @@ public/                  Icons, manifest assets
 docs/source/             Long-form course source (not shipped)
 ```
 
-**Routing** is hash-based in `src/lib/router.ts`. The canonical views are `today`, `plan`, `map`, `practice`, `library`, `progress`, `help`. Legacy hashes (`overview`, `curriculum`, `nodes`, `recall`, `vault`) must keep working. Week detail is `#/plan/<weekId>`; node detail is `#/map` with a node sheet.
+**Routing** is hash-based in `src/lib/router.ts`. The canonical views are `today`, `plan`, `map`, `practice`, `library`, `progress`, `help`. Legacy hashes (`overview`, `curriculum`, `nodes`, `recall`, `vault`) must keep working. Week detail is `#/plan/<weekId>`; concept detail is `#/concept/<id>`, and `#/map` is the concept index (the old `#/node/<id>` hash still opens the same record).
 
 **State** is one Zustand store (`AppStore`) plus a small UI store for sheets, palette and toasts. Engine functions are pure and independently tested. Do not put derived totals into storage.
 
@@ -112,7 +113,7 @@ Schema: `SCHEMA_VERSION = 5`, `SEED_VERSION = 5` in `src/types/schema.ts`.
 
 `AppData` contains:
 
-- `subjects[]` — each with phases, weeks, nodes, cards and resources.
+- `subjects[]` — each with phases, weeks, concepts, day proofs, cards and resources.
 - `books[]` — the shared 30-minute canon.
 - `dailyLog`, `overrides`, `prefs`, `planner`.
 - `promptOverrides` — edited prompt skills keyed by authored prompt id. Included in backups.
@@ -127,15 +128,15 @@ Rules:
 2. **Completion credit.** Checking a task adds its full estimate range to the completed total for the day, week and course. The planned total stays fixed; unchecking removes the credit. Do not add a separate “actual time” field.
 3. **Weekdays and day slots.** `Weekday` is `0 = Sunday … 6 = Saturday`, matching `Date.getDay()`, and is used by the planner. `ChecklistItem.day` and `DayPlan.day` are day slots 1–7 inside the course week, so Day 1 stays Day 1 even when it is a Wednesday. Derive the real weekday with `weekdayOfSlot(journey.startWeekday, slot)`. Display strips are Monday-first; use `weekdayOf()` / the ordered helpers. Do not flip these by hand.
 4. **Capacity** lives in `planner` and is device-local. It is two weekly totals (`weeklyActiveMinutes`, `weeklyPassiveMinutes`) split across `studyDays`; `dailyCapacity()` is the only divisor. Importing a backup must not replace it. `resetToSeed` keeps the current planner and theme. The default is 720 active / 420 passive over seven days: 103 / 60 per day.
-5. **Gating.** A week opens when the previous week's gate passed, or when an audited override exists. A gate passes at average ≥ 4.0 with no category below 3. Never add a silent bypass.
-6. **Mastery** is earned through the gate or a node review, not by checking a box. `markNodeMastered` must keep validating the gate.
+5. **Gating.** A week opens when the previous week's checkpoint passed, or when an audited override exists. The checkpoint passes only when all four yes/no answers are yes (`explain`, `build`, `finish`, `debug`). Never add a silent bypass.
+6. **Proof is earned, never guessed.** A concept carries only its `checks` and a review date; a day carries one `DayProof` (`cold`, `warm`, `failed`). Only `cold` advances the proof ladder (`1, 3, 7, 14, 30, 60` days). There is no 1–5 score, no manual mastery button and no second ledger.
 7. **Cards** use the fixed ladder `1 / 3 / 6 / 10 / 7 days` (`SRS_INTERVALS`). `scheduleStep` indexes it; `dueAt` is epoch ms. Review grades map through `gradeCard`.
 8. **Resources** are `docs | curriculum | article`; books are separate. Do not merge them into one entity.
 9. **Prompt skills** are authored in `src/data/prompts.ts`; learner edits live in `AppData.promptOverrides` and win a backup merge. The Velona key is not AppData: it lives only under `skillmastery:ai-key` in localStorage and never enters a backup or export.
 10. **Day cards are stored, rollups are derived.** `dayPlans[weekId]` holds the editorial layer; `summariseWeek`/`summariseSubject` are the only places that compute capacity, totals and overload. Never store a computed total.
 11. **The clock is derived, the start date is stored.** `courseDay()`, `courseWeek()` and `consistency()` in `src/lib/courseClock.ts` read `journey`. A pause starts the next calendar day, so pausing never moves the course day backwards. Consistency is a ratio, never a streak.
-12. **Marks are derived, never stored.** `milestonesFor()` in `src/engine/milestones.ts` reads checked tasks, passed gates and mastered nodes. A mark never counts days, sessions or streaks, so a pause cannot remove one. `journey.gameLayer` only hides the surface.
-13. **The game layer is derived too.** `gameStatsFor()` in `src/engine/gamification.ts` pays 10 XP per checked task, one 15 XP active-day bonus per calendar day, 120 XP per cleared gate and 200 XP per finished week. Quests and the boss restate that XP; they never pay a second time. `journey.gameLayer` hides Today's strip and the Progress panel without changing a number.
+12. **Marks are derived, never stored.** `milestonesFor()` in `src/engine/milestones.ts` reads checked tasks, passed checkpoints and proved concepts. A mark never counts days, sessions or streaks, so a pause cannot remove one. `journey.gameLayer` only hides the surface.
+13. **The game layer is derived too.** `gameStatsFor()` in `src/engine/gamification.ts` pays 10 XP per checked task, one 15 XP active-day bonus per calendar day, 40 XP per cold day proof, 120 XP per cleared checkpoint and 200 XP per finished week. Quests and the boss restate that XP; they never pay a second time. `journey.gameLayer` hides Today's strip and the Progress panel without changing a number.
 
 ### Persistence
 
@@ -146,7 +147,7 @@ Rules:
 - Autosave debounces 500ms, flushes on `pagehide` and visibility change, and mirrors immediately.
 - Export is schema-validated on import. Replace and merge are different operations; merge keeps the higher book chapter, unions daily log items, and lets this device's prompt-skill edits win while incoming files only fill gaps.
 - Undo history is **session-only**, 50 entries, and excludes preferences and navigation. It includes prompt-skill edits. Persisted reset checkpoints are a future feature; do not claim they exist.
-- Undo also covers the course clock, day cards, track deletion and restore. Deleting a week records its nodes, cards and pruned graph edges in `trash`, so a restore reconnects the prerequisite graph.
+- Undo also covers the course clock, day cards, track deletion and restore. Deleting a week records its concepts, cards and day proofs in `trash`, so a restore returns the record as it was.
 - Seed upgrades are non-destructive: `refreshSeedContent()` refreshes authored weeks, preserves checks, gate attempts, notes, overrides and user-added weeks/items, and appends new seed resources without touching reading status or user-added links. Authored seed ids ending in `-cN` are replaced by matching day + active/passive task. Removed seed resources are never deleted.
 
 ### Migrations
@@ -155,6 +156,7 @@ Rules:
 - Schema v2 predates `promptOverrides`; migration adds `{}` without touching the rest of the payload. A v1 backup still gets estimates and planner defaults in the same pass.
 - Schema v4 folds the four per-day capacity fields into two weekly totals, and adds `journey`, `dayPlans` and `trash`. A v3 payload keeps its real capacity; a payload with no planner gets today's defaults, not a conversion of old defaults. Seven study days force `bufferDay: null`.
 - Schema v5 turns `ChecklistItem.day` into a day slot 1–7. A v4 payload stored Sunday as weekday `0`, so the migration maps `0 → 7`; a v5 payload keeps a missing day missing, and does not invent one.
+- Schema v6 adds `Concept`, `ProofCheck`, `DayProof`, `GateChecks` and `WeekReview`. Concept records are derived on seed; a v5 payload converts mastered nodes into carried concept checks, folds numeric gate scores into yes/no answers, and keeps the old values only as import-only fields. Do not drop a legacy `node` trash entry: accept it and discard it.
 - Authored content change → bump `SEED_VERSION` and update `refreshSeedContent` + `seedUpgrade.test.ts`. Do not wipe checks to refresh copy. New resources are additive; do not replace the resource array.
 - Never reuse an old seed id for a different task or resource.
 
@@ -170,7 +172,7 @@ Rules:
 - Estimates must fit the default capacity: 720 active / 420 passive per week across seven days, which is 103 / 60 per day. A week that cannot fit is a content bug, not a UI warning.
 - Technical terms are defined on first use. “Go deeper” carries the compiler/runtime detail.
 - `docs/source/flutter-24-week-plan.txt` is reference material. `src/data/curriculum/blueprint.ts` is the executable 24-week summary; keep them aligned when changing the route.
-- The Full-Stack track follows the same schema and UI, but its copy may be more technical. Do not silently rewrite it while editing Flutter content.
+- The track follows the same schema and UI. Keep the Flutter copy plain for a 13-year-old; technical depth belongs behind “Go deeper”.
 
 ---
 
@@ -194,7 +196,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **230 tests / 31 files** (October 2026).
+- Baseline: **260 tests / 37 files** (November 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
@@ -270,6 +272,7 @@ When adding a view, update the router, the shell navigation, the command palette
 | — | Board-and-paper design pass | Shipped (`53e8cab`) |
 | 5 | Help expansion, resource library, AI proxy + prompt runner, legibility | Shipped |
 | 6 | Guided course: start clock, pause, day cards, generation, syllabus, marks, trash | Built; deploy pending |
+| — | Record book: concept index, daily proof, four-question checkpoint, review note, Markdown record | Built; deploy with phase 6 |
 | 7 | Android/AnkiDroid companion and exact device setup | Later |
 | — | Release signing and store delivery | Course content, Week 17; not app infrastructure |
 

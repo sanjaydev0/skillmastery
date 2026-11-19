@@ -4,35 +4,37 @@ An offline-first command centre for a six-month Flutter, Dart and UI/UX course. 
 
 **Live app:** <https://skillmastery-jay.vercel.app/>
 
-Two 24-week tracks are bundled — **Flutter, Dart & High-Craft UI/UX** and **Full-Stack Web, Product Design & Systems** — and you can add a custom track for anything else. Progress lives only in your browser.
+One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and you can add a custom track for anything else. Progress lives only in your browser.
 
 ## What it does
 
-- **Today** — the current week, only today's tasks, one clear "up next" action, review count, and a seven-day completion strip.
-- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and a syllabus that names the Dart, Flutter and design thread of every week. Weekly capacity lives in Settings, under Study week.
-- **Week pages** — seven day cards for every day slot, a plain-language "you build" brief, the three threads, the git habit, outcomes, and the checkpoint. Week 1 is authored; a later week can be written from its blueprint, reviewed and then saved.
-- **Map** — a prerequisite knowledge graph with Primitive → Concept → Failure Mode points, freshness and repair drills.
-- **Practice** — the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
+- **Today** — the current week, only today's tasks, one clear "up next" action, today's proof, review count, and a seven-day completion strip.
+- **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and a syllabus that names the Dart, Flutter and design thread of every week. Weekly capacity lives in Settings and Day 0, never on the Plan page.
+- **Week pages** — seven day cards for every day slot, a plain-language "you build" brief, the three threads, the git habit, outcomes, the checkpoint and the weekly review. Week 1 is authored; a later week can be written from its blueprint, reviewed and then saved.
+- **Concepts** — a read-only index of the terms the route actually teaches, one record per term, with the proof history and the date of the next review.
+- **Practice** — one due queue for concepts and cards, the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
 - **Library** — docs, the shared 30-minute canon, reading progress, saved links and a six-step open-source pathway from a public repository to a v1.0.0 release.
-- **Progress** — completed estimate ranges, phase rollups, checkpoints, concept mastery, and the optional game layer.
-- **Game layer** — a level, XP, today's quests and a weekly boss, all counted from the same evidence. XP is 10 per checked task, 15 for an active day, 120 per cleared checkpoint and 200 per finished week. It is a second reading of the work, never a separate score, and Settings turns the whole surface off without losing a number.
-- **Progress marks** — optional evidence marks (first checkpoint, ten tasks, ten concepts) that never count days or streaks. Turn them off in Settings.
-- **Recently deleted** — every week or track you delete waits in a 20-item trash. Restore brings back its concepts, cards and graph edges; removal there is permanent.
+- **Progress** — completed estimate ranges, phase rollups, checkpoints, concept proofs, and the optional game layer.
+- **Proof, not scores** — a daily answer (without notes, with notes, not yet) and a four-question checkpoint. A cold day proof and all four yes answers are the only things the record treats as proof.
+- **Game layer** — a level, XP, today's quests and a weekly boss, all counted from the same evidence. XP is 10 per checked task, 15 for an active day, 40 for a without-notes day proof, 120 per cleared checkpoint and 200 per finished week. It is a second reading of the work, never a separate score, and Settings turns the whole surface off without losing a number.
+- **Progress marks** — optional evidence marks (first checkpoint, ten tasks, ten concepts proved) that never count days or streaks. Turn them off in Settings.
+- **Recently deleted** — every week or track you delete waits in a 20-item trash. Restore brings back its concepts, cards and day cards; removal there is permanent.
+- **The record** — Settings exports `skillmastery-record.md`: each week's days, concepts, checkpoint and review note in plain Markdown. It is readable, not importable.
 - **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups, undo, exact AnkiDroid TSV import steps and the optional AI helper.
-- **Command palette** — `Cmd/Ctrl+K` searches weeks, nodes, cards, resources and books across every track.
+- **Command palette** — `Cmd/Ctrl+K` searches weeks, concepts, cards, resources and books across every track.
 - **Installable PWA** — offline app shell, cached routes, maskable icons and explicit Android install steps.
 
 ### Planning rules, not timers
 
 - Every task carries an estimate range. Checking it credits the whole range to the day, week and course; unchecking removes it. No timer runs in the background.
 - The checklist is the evidence layer: its `day` fields place every task. A stored day card supplies the explanation, the steps and the design note. Only a checked task earns credit.
-- A day over capacity is flagged instead of silently stretched. Capacity is two weekly totals split across your study days, stored on the device and never overwritten by an imported backup.
-- The course has a real clock: Day 1 is the date you press Start. Pausing freezes the day count until you resume, so a missed week never makes the course jump ahead.
-- The week has a shape: Days 1–2 orient, 3–4 build and debug, 5 test, 6 apply, 7 buffer and checkpoint.
+- A day over capacity is flagged instead of silently stretched. Capacity is two weekly totals split across seven study days, stored on the device and never overwritten by an imported backup.
+- The course has a real clock: Day 1 is the date you press Start. Pausing freezes the day count until you resume, so a missed week never makes the course jump ahead. When the calendar and the record drift apart, Today says so without blame.
+- The week has a shape: Days 1–2 orient, 3–4 build and debug, 5 test, 6 apply, 7 buffer and checkpoint. Every week ends with a one-sentence review.
 - Every passive block is paired with an active output; the active share rises from roughly 45/55 to 70/30 over six months.
-- A week opens only after the previous week's blind checkpoint passes, or an audited override is recorded.
-- A checkpoint passes at an average of **≥ 4.0** with no category below **3**.
-- Deleting is recoverable. A week or track goes to Recently deleted, and restoring it reconnects the prerequisite graph. Only an explicit permanent delete removes it.
+- A week opens only after the previous week's checkpoint passes, or an audited override is recorded.
+- A checkpoint is four yes/no questions: explain it, build it without the notes, finish it on the phone, debug it when it breaks. All four must be yes.
+- Deleting is recoverable. A week or track goes to Recently deleted, and restoring it brings back its concepts, cards and day cards. Only an explicit permanent delete removes it.
 
 ## Project docs
 
@@ -63,7 +65,7 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 
 - `src/data/tracks/flutterWeeks1to6.ts` — Week 1 is fully authored: 15 tasks and seven day cards for a 13-year-old. Week 2 keeps its authored task list; Weeks 3–6 keep the technical authoring.
 - `src/data/curriculum/blueprint.ts` — the 24-week route: three threads (Dart, Flutter, design), knowledge points, project, git habit, checkpoint and seven day focuses. Week 1 is backed by real checklists and day cards; later weeks use the blueprint as the locked brief for AI generation.
-- `src/data/tracks/` — the remaining Flutter and full-stack weeks, nodes, cards and resources.
+- `src/data/tracks/` — the remaining Flutter weeks, cards and resources.
 - Git is part of the course, not an afterthought: Week 1 ends with a first push, Week 2 with a branch and pull request, every later week with a commit and push, and Week 24 with a signed release tag.
 
 ## Local-first data
@@ -74,7 +76,7 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 - JSON backups are schema-validated before import and can replace all data or merge by id. They include prompt-skill edits; they never include the Velona key.
 - A seed-version upgrade refreshes authored curriculum text, day plans and new resources without wiping checks, checkpoint history, notes, reading status or user-added weeks and links.
 - Upgrading from the pre-rename build? The old namespace is detected and migrated on first boot.
-- Obsidian export writes Markdown frontmatter, phases, weeks, knowledge nodes, recall cards, canon progress and resources.
+- Obsidian export writes Markdown frontmatter, phases, weeks, concepts with their proofs, recall cards, canon progress and resources.
 
 The optional AI key is stored separately under `skillmastery:ai-key` in this browser. It is sent only to the same-origin `/api/chat` proxy when you press **Run prompt** or, on a later week, **Write the seven cards**; **Forget key** removes it.
 
@@ -100,8 +102,8 @@ api/
 src/
   components/       layout, sheets, primitives
   data/             seed tracks, 24-week blueprint, books, prompts
-  engine/           estimates, gating, FIRe, remediation, mastery, SRS, search
-  features/         today, plan, nodes, recall, vault, progress, help
+  engine/           estimates, gating, concepts, proofs, mastery, SRS, search
+  features/         today, plan, concepts, recall, vault, progress, help
   lib/              hash router, dates, export utilities
   services/         storage, validation, seed upgrades, history, save status, AI client
   store/            Zustand state and persisted actions

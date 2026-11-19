@@ -273,7 +273,8 @@ These are product rules as much as visual ones.
 - **Ranges stay ranges.** Use `formatEstimate` for a task, `formatTotal` for any sum. A `0 min` total is allowed; do not render `0–0 min`.
 - **A day over capacity is a warning, not a failure.** Use `--warn`, not `--bad`. Say “over today's budget by 20 min”, never “failed”.
 - **Locked means prerequisite, not punishment.** Use the neutral badge and explain the rule in one sentence.
-- **The checkpoint is a blind rebuild.** Copy should say “without notes”, not “exam” or “quiz”.
+- **The checkpoint is four yes/no questions.** Copy asks “can you explain it, build it without the notes, finish it on the phone, fix it when it breaks?”. Never “exam”, “quiz” or a 1–5 score.
+- **Proof is an answer, not a rating.** A daily proof offers three plain answers: Without notes, With notes, Not yet. Only “Without notes” is proof. Never ask the learner to guess a number.
 - **Passive work always has an active output.** When showing a day, pair the read with the build. Do not let a day become all consumption.
 - **The course total is an estimate range.** Label it “Estimate range, not a countdown”.
 - **Consistency is a ratio, not a streak.** Show `18 of 24 days` or a progress bar. A missed day lowers the ratio; nothing resets to zero, and there is no flame or broken chain.
@@ -335,11 +336,19 @@ These are product rules as much as visual ones.
 - “Go deeper” is a closed disclosure at the bottom, not a wall of technical text above the fold.
 - Git is a first-class line in every week: “Git habit” / “You build”.
 
-### Map
+### Concepts
 
-- Nodes are graph entries, not marketing cards. Show status, week, prerequisites and knowledge points.
-- Mastery is earned by a blind gate. Never show a manual “Mark mastered” button without the gate.
-- Locked nodes explain the prerequisite; repair flags use `--bad` and a concrete drill.
+- Concepts are record entries, not marketing cards. Show the term, the week, the last proof and the next review date.
+- The index is read-only: there is no “Mark mastered” control. A concept advances only when its own proof is cold.
+- A week with no concepts says so in one neutral line; do not invent filler entries.
+- `#/map` is the old hash for this view. Keep it working, but label the view **Concepts**.
+
+### Today's proof and the weekly review
+
+- The proof card asks one question and offers three answers. It is not a quiz and has no score.
+- A stale proof (“the tasks changed since you proved this”) is a neutral warning with one action: Prove it again.
+- The weekly review restates two short lists (what I proved, what is still due) and asks for one optional sentence. Never require it.
+- When the calendar is more than two days ahead of the record, say it plainly and without blame, link to Day 0, and never show the line while paused.
 
 ### Practice
 
@@ -413,7 +422,7 @@ Before calling a UI change done:
 
 - The boot screen, browser chrome and PWA splash use duplicated colours: inline styles in `index.html`, the theme-colour update in `AppShell`, and `theme_color` / `background_color` in `vite.config.ts`. They are aligned with the board palette now, but must be changed together with the tokens.
 - The Help FAQ is still a two-column card grid. It is acceptable for disclosure rows, but a ruled index is the preferred direction if it grows.
-- Map and Library node cards keep a small number of rounded item surfaces. Do not add more without a reason.
+- Concepts and Library item cards keep a small number of rounded item surfaces. Do not add more without a reason.
 - The AI runner has no streaming and no conversation history. Adding either means re-verifying the abort path and the token caps (1,200 for a prompt skill, 8,000 for the week writer); do not fake a chat UI in the meantime.
 
 ---
