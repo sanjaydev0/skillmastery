@@ -55,7 +55,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 260 tests across 37 files
+npm test           # Vitest, currently 262 tests across 38 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -196,7 +196,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **260 tests / 37 files** (November 2026).
+- Baseline: **262 tests / 38 files** (November 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
