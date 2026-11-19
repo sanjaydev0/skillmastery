@@ -10,6 +10,7 @@ import {
   KeyRound,
   Laptop,
   Moon,
+  NotebookPen,
   RotateCcw,
   ShieldCheck,
   Smartphone,
@@ -32,7 +33,7 @@ import {
   storageEstimate,
   type StorageEstimate,
 } from '../../services/storage'
-import { exportBackupJson, exportObsidianMarkdown } from '../../services/exports'
+import { exportBackupJson, exportObsidianMarkdown, exportRecordMarkdown } from '../../services/exports'
 import { formatBytes } from '../../lib/utils'
 import { formatTotal, dailyCapacity } from '../../engine/estimates'
 import { formatDateTime } from '../../lib/dates'
@@ -170,6 +171,11 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       'success',
       5200,
     )
+  }
+
+  const runRecord = () => {
+    exportRecordMarkdown()
+    toast('The record downloaded as skillmastery-record.md. It is readable, not a backup.', 'success', 5600)
   }
 
   const protect = async () => {
@@ -657,7 +663,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 <p className="text-[12px] font-semibold">Full JSON backup</p>
               </div>
               <p className="muted mt-1 text-[11px] leading-relaxed">
-                Every track, week, node, card, SRS state, daily check-in, override and preference.
+                Every track, week, concept, card, SRS state, daily proof, checkpoint attempt, override and preference.
               </p>
               <Button size="sm" variant="primary" className="mt-2 w-full" icon={<Download size={13} />} onClick={runBackup}>
                 Export backup
@@ -673,6 +679,30 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               </p>
               <Button size="sm" variant="outline" className="mt-2 w-full" icon={<Download size={13} />} onClick={runObsidian}>
                 Export .md
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-2 rounded-xl border border-line bg-s1 p-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="flex min-w-0 items-start gap-2">
+                <NotebookPen size={15} className="mt-0.5 flex-none text-good" aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold">The record</p>
+                  <p className="muted mt-1 text-[11px] leading-relaxed">
+                    A readable log of what you proved: each week&apos;s days, concepts, checkpoint and review note. It
+                    is not a backup and cannot be imported.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-none"
+                icon={<Download size={13} />}
+                onClick={runRecord}
+              >
+                Export the record
               </Button>
             </div>
           </div>
