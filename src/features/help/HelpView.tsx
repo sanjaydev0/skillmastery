@@ -121,29 +121,29 @@ export function HelpView() {
           </p>
           <p className="mt-2">
             A deleted week or track is also kept in <strong>Settings → Recently deleted</strong>, even after a reload.
-            Restore brings back its concepts, cards and graph edges. Removing it there is permanent.
+            Restore brings back its concepts, cards and day cards. Removing it there is permanent.
           </p>
         </Faq>
 
         <Faq id="locked" title="What does “locked” mean?" icon={<Lock size={15} />}>
           <p>
-            A week or concept is locked when its prerequisites are not cleared yet. Weeks usually open after the
-            previous week's blind checkpoint passes.
+            A week is locked when the week before it has not been cleared yet. The course is one line, so Week N
+            opens when Week N−1&apos;s checkpoint passes.
           </p>
           <p className="mt-2">
-            If you deliberately want to jump ahead, open the week's <strong>Advanced workshop</strong> and unlock it.
+            If you deliberately want to jump ahead, open the week&apos;s <strong>Advanced workshop</strong> and unlock it.
             The override is visible, and clearing it restores the normal rule.
           </p>
         </Faq>
 
         <Faq id="checkpoints" title="How does a checkpoint pass?" icon={<Sparkles size={15} />}>
           <p>
-            A checkpoint is a closed-book rebuild, not a quiz. Score four areas from 1 to 5: concept,
-            implementation, craft and debugging.
+            A checkpoint is four honest yes/no questions: can you explain it, can you build it, does it look right on
+            the phone, and can you fix it when it breaks?
           </p>
           <p className="mt-2">
-            It passes when the average is at least 4.0 and no area is below 3. Attempts are logged with the date and
-            average, so you can see progress instead of guessing.
+            All four must be yes. A no is useful information, not a failure: it names exactly what to practise before
+            you try again. Every attempt is saved with its date.
           </p>
         </Faq>
 
@@ -175,7 +175,7 @@ export function HelpView() {
           </p>
           <p className="mt-2">
             A mark records a fact about work you finished: one task checked, the first checkpoint cleared, ten concepts
-            mastered. It never counts days, streaks, sessions or time in the app.
+            proved. It never counts days, streaks, sessions or time in the app.
           </p>
           <p className="mt-2">
             A missed day cannot take a mark away, and a pause does not reset one. The checklist stays the evidence; a

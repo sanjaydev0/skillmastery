@@ -48,7 +48,11 @@ describe('progress marks', () => {
 
   it('counts mastered concepts, not reviewed cards', () => {
     const subject = flutter()
-    subject.nodes[0] = { ...subject.nodes[0]!, status: 'mastered', updatedAt: 9_000 }
+    subject.concepts[0] = {
+      ...subject.concepts[0]!,
+      checks: [{ at: 9_000, outcome: 'cold' }],
+      updatedAt: 9_000,
+    }
     expect(mark(subject, 'first-concept').earned).toBe(true)
     expect(mark(subject, 'first-concept').earnedAt).toBe(9_000)
     expect(mark(subject, 'ten-concepts').earned).toBe(false)

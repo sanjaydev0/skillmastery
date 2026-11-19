@@ -183,7 +183,7 @@ export function DeckPanel() {
                         {card.source === 'mistake' ? 'Mistake' : 'Core'}
                       </Badge>
                       {weekNumber ? <span className="pill !py-0 !text-[11px]">W{weekNumber}</span> : null}
-                      {node ? <span className="faint truncate text-[11px]">· {node.title}</span> : null}
+                      {node ? <span className="faint truncate text-[11px]">· {node.term}</span> : null}
                       <span className="faint text-[11px]">· due {relativeDays(card.dueAt)}</span>
                     </div>
                     <p className="mt-1.5 text-[12.5px] font-semibold">{card.front}</p>

@@ -335,6 +335,13 @@ const trashEntrySchema = z.object({
     .default({}),
 })
 
+/**
+ * v5 trash could hold a knowledge node. The graph is gone, so a node entry is
+ * accepted on import and dropped by the migration instead of rejecting the
+ * whole backup. It was never restorable across the v6 change anyway.
+ */
+const legacyTrashEntrySchema = z.looseObject({ kind: z.literal('node') })
+
 export const appDataSchema = z.object({
   // Missing versions predate explicit versioning, so they must migrate too.
   schemaVersion: z.number().int().default(1),
@@ -351,7 +358,7 @@ export const appDataSchema = z.object({
   promptOverrides: z.record(z.string(), z.string().max(PROMPT_TEMPLATE_MAX_CHARS)).default({}),
   journey: journeySchema.default(() => ({ ...DEFAULT_JOURNEY, pauses: [] })),
   dayPlans: z.record(z.string(), z.array(dayPlanSchema)).default({}),
-  trash: z.array(trashEntrySchema).default([]),
+  trash: z.array(z.union([trashEntrySchema, legacyTrashEntrySchema])).default([]),
 })
 
 export interface ParsedBackup {
@@ -394,7 +401,8 @@ export type MigratableAppData = Omit<
   promptOverrides?: Record<string, string>
   journey?: Partial<Journey>
   dayPlans?: AppData['dayPlans']
-  trash?: TrashEntry[]
+  /** v5 trash could hold a node entry; the migration drops it. */
+  trash?: Array<TrashEntry | { kind: 'node' }>
 }
 
 const LEGACY_WEEKDAY_ACTIVE = 90

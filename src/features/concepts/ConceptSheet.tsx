@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ArrowRight, BookMarked } from 'lucide-react'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { conceptBadge } from '../../engine/concepts'
-import { PROOF_INTERVALS, proofDueAt, proofLabel } from '../../engine/proofs'
+import { PROOF_INTERVALS, proofLabel } from '../../engine/proofs'
 import { navigate } from '../../lib/router'
 import { formatShortDate, relativeDays } from '../../lib/dates'
 import { Sheet } from '../../components/ui/Sheet'
@@ -16,15 +16,9 @@ import { Button, ConceptBadgePill, SectionHead } from '../../components/ui/primi
 export function ConceptSheet({ conceptId, onClose }: { conceptId: string; onClose: () => void }) {
   const subject = useActiveSubject()
   const checkConcept = useAppStore((state) => state.checkConcept)
-  const setConceptNote = useAppStore((state) => state.setConceptNote)
   const toast = useUiStore((state) => state.toast)
 
   const concept = subject.concepts.find((entry) => entry.id === conceptId)
-  const [note, setNote] = useState(concept?.notes ?? '')
-
-  useEffect(() => {
-    setNote(concept?.notes ?? '')
-  }, [concept?.id, concept?.notes])
 
   if (!concept) {
     return (
@@ -38,7 +32,7 @@ export function ConceptSheet({ conceptId, onClose }: { conceptId: string; onClos
 
   const week = subject.weeks.find((entry) => entry.id === concept.weekId)
   const badge = conceptBadge(concept)
-  const nextDue = proofDueAt(concept.step, Date.now())
+  const scheduled = concept.dueAt > 0
 
   const answer = (outcome: 'cold' | 'warm' | 'failed') => {
     const result = checkConcept(concept.id, outcome)
@@ -93,7 +87,7 @@ export function ConceptSheet({ conceptId, onClose }: { conceptId: string; onClos
         <p className="faint mt-2 text-[11px]">
           {badge === 'new'
             ? 'A first honest recall schedules tomorrow’s review.'
-            : nextDue > 0
+            : scheduled
               ? `Next review in ${PROOF_INTERVALS[Math.min(concept.step, PROOF_INTERVALS.length - 1)]} days.`
               : 'Review tomorrow.'}
         </p>
@@ -143,18 +137,37 @@ export function ConceptSheet({ conceptId, onClose }: { conceptId: string; onClos
         </section>
       ) : null}
 
-      <section className="mt-4">
-        <SectionHead title="Your note" eyebrow="Optional" />
-        <textarea
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          onBlur={() => setConceptNote(concept.id, note)}
-          rows={3}
-          aria-label={`Note about ${concept.term}`}
-          placeholder="One line for future you"
-          className="w-full rounded-xl border border-line bg-s1 px-3 py-2 text-[12.5px] outline-none placeholder:text-t3"
-        />
-      </section>
+      <NoteEditor key={concept.id} conceptId={concept.id} term={concept.term} initial={concept.notes ?? ''} />
     </Sheet>
+  )
+}
+
+/** The optional note. Keyed by concept, so a new record starts blank instead of
+ * carrying the last note across. */
+function NoteEditor({
+  conceptId,
+  term,
+  initial,
+}: {
+  conceptId: string
+  term: string
+  initial: string
+}) {
+  const setConceptNote = useAppStore((state) => state.setConceptNote)
+  const [note, setNote] = useState(initial)
+
+  return (
+    <section className="mt-4">
+      <SectionHead title="Your note" eyebrow="Optional" />
+      <textarea
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+        onBlur={() => setConceptNote(conceptId, note)}
+        rows={3}
+        aria-label={`Note about ${term}`}
+        placeholder="One line for future you"
+        className="w-full rounded-xl border border-line bg-s1 px-3 py-2 text-[12.5px] outline-none placeholder:text-t3"
+      />
+    </section>
   )
 }

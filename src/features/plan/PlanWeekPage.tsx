@@ -14,7 +14,8 @@ import {
 import type { DayPlan, DaySlot, Week } from '../../types/schema'
 import { useActiveSubject, useAppStore, useActiveWeek } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
-import { nodeBadge, weekStatus } from '../../engine/gating'
+import { weekStatus } from '../../engine/gating'
+import { conceptBadge, conceptsForWeek } from '../../engine/concepts'
 import type { DaySummary } from '../../engine/estimates'
 import {
   estimateOf,
@@ -32,7 +33,7 @@ import {
   Badge,
   Button,
   CheckRow,
-  NodeBadgePill,
+  ConceptBadgePill,
   ProgressBar,
   WeekBadge,
 } from '../../components/ui/primitives'
@@ -60,7 +61,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
 
   const status = weekStatus(week, subject.weeks, overrides)
   const phase = subject.phases.find((entry) => entry.id === week.phaseId)
-  const nodes = subject.nodes.filter((node) => node.weekId === week.id)
+  const concepts = conceptsForWeek(subject.concepts, week.weekNumber)
   const today = schemaWeekday()
   const clockDay = courseDay(journey)
   const clockWeek = clockDay === null ? null : courseWeek(clockDay)
@@ -269,19 +270,18 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
             <p className="muted mt-1 text-[12.5px]">{week.bookFocus}</p>
           </section>
 
-          {nodes.length > 0 ? (
+          {concepts.length > 0 ? (
             <section>
               <p className="eyebrow">Concepts behind the tasks</p>
               <div className="mt-1.5 space-y-1.5">
-                {nodes.map((node) => (
-                  <div key={node.id} className="rounded-xl border border-line bg-s1 p-2.5">
+                {concepts.map((concept) => (
+                  <div key={concept.id} className="rounded-xl border border-line bg-s1 p-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-[12.5px] font-semibold">{node.title}</p>
-                      <NodeBadgePill status={nodeBadge(node, subject, overrides)} />
+                      <p className="text-[12.5px] font-semibold">{concept.term}</p>
+                      <ConceptBadgePill status={conceptBadge(concept)} />
                     </div>
                     <p className="faint mt-1 text-[11px]">
-                      {node.knowledgePoints.length} recall point{node.knowledgePoints.length === 1 ? '' : 's'}
-                      {node.tags.length > 0 ? `, ${node.tags.slice(0, 3).join(', ')}` : ''}
+                      {concept.checks.length} proof{concept.checks.length === 1 ? '' : 's'} recorded
                     </p>
                   </div>
                 ))}
@@ -289,7 +289,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
               <button
                 type="button"
                 className="link mt-2 inline-flex items-center gap-1 text-[11.5px]"
-                onClick={() => navigate(`#/node/${nodes[0]!.id}`)}
+                onClick={() => navigate(`#/concept/${concepts[0]!.id}`)}
               >
                 Open the first concept <ExternalLink size={11} aria-hidden />
               </button>

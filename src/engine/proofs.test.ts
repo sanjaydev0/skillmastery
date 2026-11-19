@@ -23,7 +23,6 @@ function subjectWithProofs(): Subject {
     accent: 'sky',
     phases: [],
     weeks: [],
-    nodes: [],
     concepts: [],
     dayProofs: [
       { weekId: 'w1', day: 1, at: 100, outcome: 'cold' },

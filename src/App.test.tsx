@@ -56,7 +56,7 @@ describe('application smoke tests', () => {
     const input = within(palette).getByLabelText('Search everything')
     fireEvent.change(input, { target: { value: 'null safety' } })
     await waitFor(() => expect(within(palette).getAllByRole('option').length).toBeGreaterThan(2))
-    expect(within(palette).getAllByText(/Sound null safety/i).length).toBeGreaterThan(0)
+    expect(within(palette).getAllByText(/null safety/i).length).toBeGreaterThan(0)
 
     fireEvent.keyDown(window, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument())

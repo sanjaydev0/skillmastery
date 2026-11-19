@@ -11,7 +11,8 @@ import {
 } from 'lucide-react'
 import type { Week } from '../../types/schema'
 import { useActiveSubject, useAppStore } from '../../store/AppStore'
-import { overallMastery, weekStatus } from '../../engine/gating'
+import { weekStatus } from '../../engine/gating'
+import { overallProof } from '../../engine/concepts'
 import { formatTotal, summariseSubject, summariseWeek } from '../../engine/estimates'
 import { dueCards } from '../../engine/srs'
 import { milestonesFor } from '../../engine/milestones'
@@ -30,7 +31,9 @@ export function ProgressView() {
   const gameLayer = journey.gameLayer
 
   const course = useMemo(() => summariseSubject(subject), [subject])
-  const mastered = subject.nodes.filter((node) => node.status === 'mastered').length
+  const proved = subject.concepts.filter(
+    (concept) => concept.checks[concept.checks.length - 1]?.outcome === 'cold',
+  ).length
   const cleared = subject.weeks.filter((week) => week.gate.passedAt).length
   const due = useMemo(() => dueCards(subject.cards).length, [subject.cards])
   const taskRatio = course.items > 0 ? course.doneItems / course.items : 0
@@ -107,8 +110,8 @@ export function ProgressView() {
         <ProgressStat label="Checkpoints" value={`${cleared} of ${orderedWeeks.length}`} meta="Cleared without notes" />
         <ProgressStat
           label="Concepts"
-          value={`${mastered} of ${subject.nodes.length}`}
-          meta={`${percent(overallMastery(subject.nodes))}% mastered`}
+          value={`${proved} of ${subject.concepts.length}`}
+          meta={`${percent(overallProof(subject.concepts))}% proved without notes`}
         />
       </section>
 

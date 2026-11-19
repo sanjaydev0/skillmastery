@@ -6,7 +6,6 @@ import {
   CalendarCheck2,
   CheckCircle2,
   CircleDot,
-  Flame,
   GitBranch,
   Library,
   Lock,
@@ -14,19 +13,18 @@ import {
   Orbit,
   Sparkles,
   Target,
-  Wrench,
 } from 'lucide-react'
-import type { WeekStatus } from '../../types/schema'
+import type { GateChecks, WeekStatus } from '../../types/schema'
 import { CORE_RHYTHM_IDS, RHYTHM_ITEMS } from '../../data/rhythm'
 import { PROMPTS, SKILL_FORMULA } from '../../data/prompts'
 import { useActiveSubject, useActiveWeek, useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
-import { activeFlags } from '../../engine/remediation'
-import { nodeBadge, overallMastery, weekProgress, weekStatus } from '../../engine/gating'
+import { weekProgress, weekStatus } from '../../engine/gating'
+import { conceptBadge, dueConcepts } from '../../engine/concepts'
 import { dueCards } from '../../engine/srs'
-import { computeStreak, recentDays } from '../../engine/streak'
+import { recentDays } from '../../engine/streak'
 import { dateKey, formatShortDate, minutesLabel } from '../../lib/dates'
-import { percent } from '../../lib/utils'
+import { percent, cn } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 import {
   Badge,
@@ -39,6 +37,13 @@ import {
   Stat,
   WeekBadge,
 } from '../../components/ui/primitives'
+
+const GATE_SHORT: Record<keyof GateChecks, string> = {
+  explain: 'Explain',
+  build: 'Build',
+  finish: 'Finish',
+  debug: 'Debug',
+}
 
 function greeting(): string {
   const hour = new Date().getHours()
@@ -60,37 +65,33 @@ export function OverviewView() {
   const openPalette = useUiStore((state) => state.openPalette)
 
   const stats = useMemo(() => {
-    const nodes = subject.nodes
-    const mastered = nodes.filter((node) => node.status === 'mastered').length
-    const badges = nodes.map((node) => nodeBadge(node, subject, overrides))
+    const badges = subject.concepts.map((concept) => conceptBadge(concept))
     const gates = subject.weeks.filter((entry) => entry.gate.passedAt).length
     const due = dueCards(subject.cards)
     const fresh = subject.cards.filter((card) => card.dueAt === 0)
-    const repair = nodes.filter(
-      (node) => node.status === 'needs-repair' || activeFlags(node).length > 0,
-    )
+    const dueConceptList = dueConcepts(subject.concepts)
+    const proved = badges.filter((badge) => badge === 'proved' || badge === 'due').length
     return {
-      mastered,
       gates,
       due,
       fresh,
-      repair,
+      dueConceptList,
+      proved,
       badgeCounts: {
-        mastered: badges.filter((badge) => badge === 'mastered').length,
+        proved,
+        due: badges.filter((badge) => badge === 'due').length,
         learning: badges.filter((badge) => badge === 'learning').length,
-        ready: badges.filter((badge) => badge === 'ready').length,
-        repair: badges.filter((badge) => badge === 'needs-repair').length,
-        locked: badges.filter((badge) => badge === 'locked').length,
+        new: badges.filter((badge) => badge === 'new').length,
       },
     }
-  }, [subject, overrides])
+  }, [subject])
 
   const today = dateKey()
   const todayItems = dailyLog[today]?.items ?? []
   const rhythmItems = RHYTHM_ITEMS.filter((item) => item.mode === mode || item.mode === 'both')
   const rhythmDone = rhythmItems.filter((item) => todayItems.includes(item.id)).length
-  const streak = computeStreak(dailyLog, CORE_RHYTHM_IDS)
   const dots = recentDays(dailyLog, CORE_RHYTHM_IDS, 7)
+  const daysRecorded = dots.filter((dot) => dot.core > 0).length
 
   const weekDay = week?.weekNumber ?? 1
   const currentBooks = books
@@ -103,11 +104,6 @@ export function OverviewView() {
   const modeDone = week?.checklist.filter((item) => item.context === mode && item.done).length ?? 0
   const modeTotal = week?.checklist.filter((item) => item.context === mode).length ?? 0
   const prompt = PROMPTS[new Date().getDay() % PROMPTS.length] ?? PROMPTS[0]!
-  const repairs = stats.repair.slice(0, 3)
-  const activeRepairCount = subject.nodes.reduce(
-    (sum, node) => sum + activeFlags(node).length,
-    0,
-  )
 
   return (
     <div>
@@ -120,7 +116,7 @@ export function OverviewView() {
           <p className="muted mt-1 text-[13px]">
             <span className="font-medium text-t1">{subject.shortName}</span>
             {week ? ` · Week ${week.weekNumber} of ${subject.weeks.length}` : ''} · {mode} mode ·{' '}
-            {streak.current}-day core streak
+            {daysRecorded} of 7 days recorded
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -133,8 +129,8 @@ export function OverviewView() {
           >
             Command palette
           </Button>
-          <Button variant="primary" size="sm" icon={<CalendarCheck2 size={14} />} onClick={() => navigate('#/curriculum')}>
-            Open curriculum
+          <Button variant="primary" size="sm" icon={<CalendarCheck2 size={14} />} onClick={() => navigate('#/plan')}>
+            Open the plan
           </Button>
         </div>
       </header>
@@ -219,22 +215,27 @@ export function OverviewView() {
                     </div>
                     <p className="muted mt-1.5 line-clamp-3 text-[12px] leading-relaxed">
                       {week.gate.notes ??
-                        'Four sliders: concept, implementation, craft, debugging. Average ≥4.0, nothing below 3.'}
+                        'Four questions: explain it, build it, finish it on the phone, fix it when it breaks.'}
                     </p>
                     <div className="mt-2.5 grid grid-cols-4 gap-1">
-                      {(['concept', 'implementation', 'craft', 'debugging'] as const).map((key) => (
-                        <div key={key} className="rounded-md bg-s2 px-1.5 py-1 text-center">
-                          <p className="faint text-[11px] tracking-wide">{key.slice(0, 4)}</p>
-                          <p className="num text-[12px] font-semibold">{week.gate.scores?.[key] ?? '—'}</p>
-                        </div>
-                      ))}
+                      {(['explain', 'build', 'finish', 'debug'] as const).map((key) => {
+                        const yes = week.gate.checks?.[key]
+                        return (
+                          <div key={key} className="rounded-md bg-s2 px-1.5 py-1 text-center">
+                            <p className="faint text-[11px]">{GATE_SHORT[key]}</p>
+                            <p className={cn('num text-[12px] font-semibold', yes ? 'text-good' : 'text-t3')}>
+                              {yes ? 'Yes' : '—'}
+                            </p>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                   <div className="mt-3 flex items-center gap-2">
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => navigate(`#/week/${week.id}`)}
+                      onClick={() => navigate(`#/plan/${week.id}`)}
                       trailingIcon={<ArrowRight size={13} />}
                     >
                       Open week {week.weekNumber}
@@ -243,9 +244,9 @@ export function OverviewView() {
                       variant="ghost"
                       size="sm"
                       icon={<Network size={13} />}
-                      onClick={() => navigate('#/nodes')}
+                      onClick={() => navigate('#/map')}
                     >
-                      Nodes
+                      Concepts
                     </Button>
                   </div>
                 </div>
@@ -256,7 +257,7 @@ export function OverviewView() {
               icon={<CalendarCheck2 size={18} />}
               title="No weeks in this track yet"
               description="Add Week 1 with outcomes, checks and a blind gate to start the engine."
-              action={<Button variant="primary" onClick={() => navigate('#/curriculum')}>Open curriculum</Button>}
+              action={<Button variant="primary" onClick={() => navigate('#/plan')}>Open the plan</Button>}
             />
           )}
         </section>
@@ -267,12 +268,12 @@ export function OverviewView() {
             <div>
               <p className="eyebrow">Daily rhythm · {mode}</p>
               <h2 className="h2 mt-1 flex items-baseline gap-2">
-                <span className="num text-[1.55rem]">{streak.current}</span>
-                <span className="muted text-[12px] font-medium">day core streak</span>
+                <span className="num text-[1.55rem]">{daysRecorded}</span>
+                <span className="muted text-[12px] font-medium">of 7 days recorded</span>
               </h2>
             </div>
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-warn-soft text-warn" aria-hidden>
-              <Flame size={17} />
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-s2 text-t2" aria-hidden>
+              <CalendarCheck2 size={17} />
             </span>
           </div>
 
@@ -318,12 +319,12 @@ export function OverviewView() {
         {/* stats */}
         <div className="col-span-1 lg:col-span-3">
           <Stat
-            label="Graph mastery"
-            value={`${percent(overallMastery(subject.nodes))}%`}
-            meta={`${stats.mastered}/${subject.nodes.length} nodes proven`}
+            label="Concepts proved"
+            value={`${percent(subject.concepts.length ? stats.proved / subject.concepts.length : 0)}%`}
+            meta={`${stats.proved}/${subject.concepts.length} recalled without notes`}
             icon={<GitBranch size={14} />}
             tone="accent"
-            onClick={() => navigate('#/nodes')}
+            onClick={() => navigate('#/map')}
           />
         </div>
         <div className="col-span-1 lg:col-span-3">
@@ -333,7 +334,7 @@ export function OverviewView() {
             meta={`${subject.weeks.length - stats.gates} weeks remaining`}
             icon={<Lock size={14} />}
             tone="good"
-            onClick={() => navigate('#/curriculum')}
+            onClick={() => navigate('#/plan')}
           />
         </div>
         <div className="col-span-1 lg:col-span-3">
@@ -343,53 +344,52 @@ export function OverviewView() {
             meta={`${stats.fresh.length} new cards unscheduled`}
             icon={<BrainCircuit size={14} />}
             tone="info"
-            onClick={() => navigate('#/recall')}
+            onClick={() => navigate('#/practice')}
           />
         </div>
         <div className="col-span-1 lg:col-span-3">
           <Stat
-            label="Repair drills"
-            value={stats.repair.length}
-            meta={`${activeRepairCount} active prerequisite flag${activeRepairCount === 1 ? '' : 's'}`}
-            icon={<Wrench size={14} />}
-            tone={stats.repair.length ? 'bad' : 'neutral'}
-            onClick={() => navigate('#/nodes')}
+            label="Concepts due"
+            value={stats.dueConceptList.length}
+            meta={stats.dueConceptList.length > 0 ? 'Open Practice to review' : 'Nothing due today'}
+            icon={<CalendarCheck2 size={14} />}
+            tone={stats.dueConceptList.length ? 'bad' : 'neutral'}
+            onClick={() => navigate('#/practice')}
           />
         </div>
 
-        {/* graph pulse */}
+        {/* concept pulse */}
         <section className="card card-pad col-span-2 lg:col-span-4">
           <SectionHead
-            title="Graph pulse"
-            eyebrow="Knowledge state"
+            title="Concept pulse"
+            eyebrow="What the proofs say"
             action={
-              <button type="button" className="link text-[11.5px]" onClick={() => navigate('#/nodes')}>
-                Open graph
+              <button type="button" className="link text-[11.5px]" onClick={() => navigate('#/map')}>
+                Open the index
               </button>
             }
           />
-          {subject.nodes.length === 0 ? (
+          {subject.concepts.length === 0 ? (
             <EmptyState
               compact
               icon={<Orbit size={16} />}
-              title="The graph is empty"
-              description="Create a primitive → concept → failure-mode node in the first week."
-              action={<Button size="sm" variant="soft" onClick={() => navigate('#/nodes')}>Add a node</Button>}
+              title="No concepts recorded yet"
+              description="Concepts come from the route. Generate a week and it adds its own."
+              action={<Button size="sm" variant="soft" onClick={() => navigate('#/plan')}>Open the plan</Button>}
             />
           ) : (
             <>
               <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-s2" aria-hidden>
                 {(
                   [
-                    ['mastered', 'var(--good)'],
+                    ['proved', 'var(--good)'],
+                    ['due', 'var(--accent)'],
                     ['learning', 'var(--info)'],
-                    ['ready', 'var(--accent)'],
-                    ['repair', 'var(--bad)'],
-                    ['locked', 'var(--surface-3)'],
+                    ['new', 'var(--surface-3)'],
                   ] as const
                 ).map(([key, colour]) => {
                   const count = stats.badgeCounts[key]
-                  const width = (count / subject.nodes.length) * 100
+                  const width = (count / subject.concepts.length) * 100
                   return width > 0 ? (
                     <span key={key} style={{ width: `${width}%`, background: colour }} title={`${key}: ${count}`} />
                   ) : null
@@ -398,11 +398,10 @@ export function OverviewView() {
               <div className="mt-3 grid grid-cols-2 gap-1.5">
                 {(
                   [
-                    ['Mastered', stats.badgeCounts.mastered, 'text-good', <CheckCircle2 key="m" size={13} />],
-                    ['Learning', stats.badgeCounts.learning, 'text-info', <CircleDot key="l" size={13} />],
-                    ['Ready', stats.badgeCounts.ready, 'text-accent', <Sparkles key="r" size={13} />],
-                    ['Repair', stats.badgeCounts.repair, 'text-bad', <Wrench key="x" size={13} />],
-                    ['Locked', stats.badgeCounts.locked, 'text-t3', <Lock key="k" size={13} />],
+                    ['Proved', stats.badgeCounts.proved, 'text-good', <CheckCircle2 key="m" size={13} />],
+                    ['Due', stats.badgeCounts.due, 'text-accent', <CalendarCheck2 key="d" size={13} />],
+                    ['Shaky', stats.badgeCounts.learning, 'text-info', <CircleDot key="l" size={13} />],
+                    ['Not proved', stats.badgeCounts.new, 'text-t3', <Lock key="k" size={13} />],
                   ] as const
                 ).map(([label, count, colour, icon]) => (
                   <div key={label} className="flex items-center gap-1.5 text-[11.5px]">
@@ -414,9 +413,9 @@ export function OverviewView() {
               </div>
               <div className="mt-3 rounded-lg border border-line bg-s2 px-2.5 py-2">
                 <p className="faint text-[11.5px]">
-                  {stats.badgeCounts.mastered === subject.nodes.length
-                    ? 'Every node proven. This graph is closed — defend it blind.'
-                    : `${subject.nodes.length - stats.badgeCounts.mastered} nodes remain unproven. Only a blind gate clears a week.`}
+                  {stats.proved === subject.concepts.length
+                    ? 'Every concept proved. Defend them blind on the checkpoint.'
+                    : `${subject.concepts.length - stats.proved} concepts await their first proof. A proof is your answer, not a guess.`}
                 </p>
               </div>
             </>
@@ -429,7 +428,7 @@ export function OverviewView() {
             title="The 30-minute canon"
             eyebrow="Passive input"
             action={
-              <button type="button" className="link text-[11.5px]" onClick={() => navigate('#/vault')}>
+              <button type="button" className="link text-[11.5px]" onClick={() => navigate('#/library')}>
                 Vault
               </button>
             }
@@ -475,7 +474,7 @@ export function OverviewView() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('#/vault')}
+            onClick={() => navigate('#/library')}
             className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-line py-1.5 text-[11px] text-t3 hover:border-line-strong hover:text-t2"
           >
             <Library size={12} /> Manage the canon
@@ -510,7 +509,7 @@ export function OverviewView() {
                 size="sm"
                 className="w-full"
                 icon={<Sparkles size={13} />}
-                onClick={() => navigate('#/recall')}
+                onClick={() => navigate('#/practice')}
               >
                 Open prompt hub
               </Button>
@@ -518,40 +517,38 @@ export function OverviewView() {
           </div>
         </section>
 
-        {/* repair or formula */}
-        {repairs.length > 0 ? (
-          <section className="card card-pad col-span-2 border-bad/25 lg:col-span-8">
+        {/* due reviews or formula */}
+        {stats.dueConceptList.length > 0 ? (
+          <section className="card card-pad col-span-2 border-accent/25 lg:col-span-8">
             <SectionHead
-              title="30-minute repair drills needed"
-              eyebrow="Two failures on a knowledge point"
+              title="Concepts due today"
+              eyebrow="From your proofs only"
               action={
-                <Button size="sm" variant="outline" onClick={() => navigate('#/nodes')} trailingIcon={<ArrowRight size={12} />}>
-                  Repair queue
+                <Button size="sm" variant="outline" onClick={() => navigate('#/practice')} trailingIcon={<ArrowRight size={12} />}>
+                  Review queue
                 </Button>
               }
             />
             <p className="muted mb-3 text-[12.5px]">
-              A second failure flags every direct prerequisite for an explicit drill. Clear the flag only after
-              a closed-book repair, never by checking a box.
+              These came back on the schedule your own answers set. Answer honestly; the ladder follows.
             </p>
             <div className="grid gap-2 sm:grid-cols-3">
-              {repairs.map((node) => {
-                const flags = activeFlags(node)
-                const weekOf = subject.weeks.find((entry) => entry.id === node.weekId)
+              {stats.dueConceptList.slice(0, 6).map((concept) => {
+                const last = concept.checks[concept.checks.length - 1]
                 return (
                   <button
-                    key={node.id}
+                    key={concept.id}
                     type="button"
-                    onClick={() => navigate(`#/node/${node.id}`)}
+                    onClick={() => navigate(`#/concept/${concept.id}`)}
                     className="card card-hover rounded-xl p-3 text-left"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="eyebrow">W{weekOf?.weekNumber ?? '?'}</span>
-                      <Wrench size={13} className="text-bad" aria-hidden />
+                      <span className="eyebrow">W{concept.weekNumber}</span>
+                      <CalendarCheck2 size={13} className="text-accent" aria-hidden />
                     </div>
-                    <p className="mt-1 line-clamp-2 text-[12px] font-semibold">{node.title}</p>
+                    <p className="mt-1 line-clamp-2 text-[12px] font-semibold">{concept.term}</p>
                     <p className="faint mt-1 text-[11.5px]">
-                      {node.status === 'needs-repair' ? 'Second failure on this node' : `${flags.length} repair flag${flags.length === 1 ? '' : 's'} active`}
+                      {last?.outcome === 'cold' ? 'last recalled without notes' : 'needs another cold recall'}
                     </p>
                   </button>
                 )
@@ -571,7 +568,7 @@ export function OverviewView() {
                 ['1', 'Primitive', 'Name it from memory'],
                 ['2', 'Generate', 'Paper before IDE'],
                 ['3', 'Break', 'Trigger the failure'],
-                ['4', 'Gate', 'Closed book, no AI'],
+                ['4', 'Prove', 'Closed book, no notes'],
               ].map(([n, title, detail]) => (
                 <div key={n} className="rounded-lg border border-line bg-s2 p-2">
                   <span className="num text-[11px] font-bold text-accent">{n}</span>

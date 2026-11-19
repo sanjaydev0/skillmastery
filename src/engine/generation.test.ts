@@ -38,15 +38,17 @@ function fixture(): string {
 }
 
 describe('week brief', () => {
-  it('carries the earlier week gate, artefact and mastered nodes', () => {
+  it('carries the earlier week gate, artefact and proved concepts', () => {
     const earlier = subject.weeks.find((entry) => entry.weekNumber === 1)!
-    const node = subject.nodes.find((entry) => entry.weekId === earlier.id)!
-    node.status = 'mastered'
-    node.knowledgePoints[0] = { ...node.knowledgePoints[0]!, fails: 2 }
+    const proved = subject.concepts.find((entry) => entry.weekId === earlier.id)!
+    const shaky = subject.concepts.find(
+      (entry) => entry.weekId === earlier.id && entry.id !== proved.id,
+    )!
+    proved.checks = [{ at: journey.startedAt!, outcome: 'cold' }]
+    shaky.checks = [{ at: journey.startedAt!, outcome: 'failed' }]
     earlier.gate.attempts.push({
       at: journey.startedAt!,
-      scores: { concept: 4, implementation: 4, craft: 4, debugging: 4 },
-      average: 4,
+      checks: { explain: true, build: true, finish: true, debug: true },
       passed: true,
     })
 
@@ -54,11 +56,11 @@ describe('week brief', () => {
     expect(brief.week.weekNumber).toBe(2)
     expect(brief.history.map((entry) => entry.weekNumber)).toContain(1)
     const first = brief.history.find((entry) => entry.weekNumber === 1)!
-    expect(first.gate).toMatch(/5|passed/)
-    expect(first.mastered).toContain(node.title)
-    expect(first.failures.join(' ')).toContain(node.knowledgePoints[0]!.failureMode)
-    expect(brief.mastered).toContain(node.title)
-    expect(brief.failures.join(' ')).toContain(node.knowledgePoints[0]!.failureMode)
+    expect(first.gate).toMatch(/passed/)
+    expect(first.mastered).toContain(proved.term)
+    expect(first.failures.join(' ')).toContain(shaky.failureMode)
+    expect(brief.mastered).toContain(proved.term)
+    expect(brief.failures.join(' ')).toContain(shaky.failureMode)
   })
 
   it('lists the checklist against its day slot, not a weekday', () => {

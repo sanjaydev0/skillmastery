@@ -42,11 +42,14 @@ export const flutterSubject: Subject = {
   // Concepts are derived from the blueprint, never hand-built.
   concepts: buildConcepts(FLUTTER_BLUEPRINT, (weekNumber) => `fl-w${weekNumber}`),
   dayProofs: [],
+  // Seeded cards predate the concept index, so their old node ids would point
+  // at nothing. The week link already carries their context, and a learner can
+  // link a card to a concept in the card form.
   cards: [
     ...flutterFoundation.cards,
     ...flutterArchitecture.cards,
     ...flutterSystems.cards,
-  ],
+  ].map((card) => ({ ...card, nodeId: undefined })),
   resources: [
     ...flutterFoundation.resources,
     ...flutterArchitecture.resources,

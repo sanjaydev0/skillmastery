@@ -85,16 +85,26 @@ describe('scoped resets', () => {
     expect(restored.gate.attempts).toHaveLength(1)
   })
 
-  it('returns nodes in the reset week to locked without deleting them', () => {
+  it('clears the week’s concept proofs and restores them through undo', () => {
     const week = firstWeek()
-    const node = useAppStore.getState().subjects[0]!.nodes.find((entry) => entry.weekId === week.id)!
-    useAppStore.getState().startNode(node.id)
-    expect(useAppStore.getState().subjects[0]!.nodes.find((entry) => entry.id === node.id)!.status).toBe('learning')
+    const concept = useAppStore
+      .getState()
+      .subjects[0]!.concepts.find((entry) => entry.weekId === week.id)!
+    expect(useAppStore.getState().checkConcept(concept.id, 'cold', 'from memory').ok).toBe(true)
+    expect(
+      useAppStore.getState().subjects[0]!.concepts.find((entry) => entry.id === concept.id)!.checks,
+    ).toHaveLength(1)
 
     useAppStore.getState().resetProgress('week', week.id)
-    const after = useAppStore.getState().subjects[0]!.nodes.find((entry) => entry.id === node.id)!
-    expect(after.status).toBe('locked')
-    expect(after.id).toBe(node.id)
+    const after = useAppStore.getState().subjects[0]!.concepts.find((entry) => entry.id === concept.id)!
+    expect(after.checks).toEqual([])
+    expect(after.step).toBe(-1)
+    expect(after.dueAt).toBe(0)
+
+    useAppStore.getState().undo()
+    expect(
+      useAppStore.getState().subjects[0]!.concepts.find((entry) => entry.id === concept.id)!.checks,
+    ).toHaveLength(1)
   })
 
   it('resets a whole subject while keeping the planner and theme', () => {

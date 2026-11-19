@@ -31,7 +31,21 @@ describe('Anki export', () => {
     const subject = seed.subjects[0]!
     const tsv = toAnkiTsv([card], {
       deck: 'SkillMastery::Flutter',
-      nodes: subject.nodes,
+      concepts: [
+        {
+          id: card.nodeId!,
+          weekId: card.weekId!,
+          weekNumber: 1,
+          term: 'Value semantics: final, const and the heap',
+          definition: '',
+          failureMode: '',
+          checks: [],
+          step: -1,
+          dueAt: 0,
+          createdAt: 0,
+          updatedAt: 0,
+        },
+      ],
       weeks: subject.weeks,
     })
     expect(tsv).toContain('#separator:tab')
@@ -46,7 +60,7 @@ describe('Anki export', () => {
   })
 
   it('writes quoted CSV rows with a proper header', () => {
-    const csv = toAnkiCsv([card], { deck: 'SkillMastery', nodes: [], weeks: [] })
+    const csv = toAnkiCsv([card], { deck: 'SkillMastery', concepts: [], weeks: [] })
     expect(csv).toContain('#separator:Comma')
     expect(csv).toContain('"Front","Back","Tags","Source","Context"')
     expect(csv).toContain('"What is ""null safety""?"')
@@ -55,7 +69,7 @@ describe('Anki export', () => {
 })
 
 describe('Obsidian export', () => {
-  it('includes frontmatter, phase/week hierarchy, nodes, cards, canon and resources', () => {
+  it('includes frontmatter, phase/week hierarchy, concepts, cards, canon and resources', () => {
     const seed = createSeedData()
     const subject = seed.subjects[0]!
     const markdown = toObsidianMarkdown(subject, seed.books)
@@ -64,8 +78,8 @@ describe('Obsidian export', () => {
     expect(markdown).toContain('source: SkillMastery')
     expect(markdown).toContain('## Phase 1 · Foundations')
     expect(markdown).toContain('### Week 01 — Your first Dart program: money, types and null')
-    expect(markdown).toContain('#### Knowledge nodes')
-    expect(markdown).toContain('**Primitive:**')
+    expect(markdown).toContain('#### Concepts')
+    expect(markdown).toContain('Proved: **not yet**')
     expect(markdown).toContain('**Q:**')
     expect(markdown).toContain('## Canon progress')
     expect(markdown).toContain('## Resource vault')
@@ -82,7 +96,7 @@ describe('backup envelope', () => {
     expect(Number.isNaN(Date.parse(parsedJSON.exportedAt))).toBe(false)
 
     const parsed = parseBackupJson(raw)
-    expect(parsed.data.subjects).toHaveLength(2)
+    expect(parsed.data.subjects).toHaveLength(1)
     expect(parsed.exportedAt).toBe(parsedJSON.exportedAt)
     expect(parsed.data.subjects[0]?.weeks).toHaveLength(24)
   })
@@ -102,7 +116,7 @@ describe('backup envelope', () => {
       data: seed,
     })
     const parsed = parseBackupJson(raw)
-    expect(parsed.data.subjects).toHaveLength(2)
+    expect(parsed.data.subjects).toHaveLength(1)
   })
 
   it('rejects invalid URLs and corrupt structures', () => {

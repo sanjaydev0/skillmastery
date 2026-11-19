@@ -35,50 +35,49 @@ function dayPlans(): DayPlan[] {
 }
 
 describe('trash round trip', () => {
-  it('restores a week with its nodes, cards, graph edges and day cards', () => {
+  it('restores a week with its concepts, cards and day cards', () => {
     const target = week(2)
     const dependent = week(3)
-    // The authored seed keeps node prerequisites inside one week, so make a
-    // real cross-week edge and prove the delete undoes it.
+    // Make a real cross-week link and prove the delete undoes it.
     useAppStore.setState({
       subjects: useAppStore.getState().subjects.map((subject) =>
         subject.id !== 'flutter'
           ? subject
           : {
               ...subject,
-              nodes: subject.nodes.map((node) =>
-                node.id === 'fl-w3-n1' ? { ...node, prerequisiteIds: ['fl-w2-n3'] } : node,
+              weeks: subject.weeks.map((entry) =>
+                entry.id === dependent.id
+                  ? { ...entry, prerequisiteWeekIds: [...entry.prerequisiteWeekIds, target.id] }
+                  : entry,
               ),
             },
       ),
     })
     expect(useAppStore.getState().saveDayPlans(target.id, dayPlans(), 'authored').ok).toBe(true)
 
-    const nodeIds = new Set(
+    const conceptIds = new Set(
       flutter()
-        .nodes.filter((node) => node.weekId === target.id)
-        .map((node) => node.id),
+        .concepts.filter((concept) => concept.weekId === target.id)
+        .map((concept) => concept.id),
     )
-    expect(nodeIds.size).toBeGreaterThan(0)
+    expect(conceptIds.size).toBeGreaterThan(0)
+    const cardCount = flutter().cards.filter((card) => card.weekId === target.id).length
 
     useAppStore.getState().deleteWeek(target.id)
 
     const afterDelete = flutter()
     expect(afterDelete.weeks.some((entry) => entry.id === target.id)).toBe(false)
-    expect(afterDelete.nodes.some((node) => node.weekId === target.id)).toBe(false)
+    expect(afterDelete.concepts.some((concept) => concept.weekId === target.id)).toBe(false)
     expect(afterDelete.cards.some((card) => card.weekId === target.id)).toBe(false)
     expect(
       afterDelete.weeks.find((entry) => entry.id === dependent.id)!.prerequisiteWeekIds,
     ).not.toContain(target.id)
-    expect(afterDelete.nodes.find((node) => node.id === 'fl-w3-n1')!.prerequisiteIds).not.toContain(
-      'fl-w2-n3',
-    )
     // Day cards survive the delete in place, so the restore has nothing to rebuild.
     expect(useAppStore.getState().dayPlans[target.id]).toHaveLength(7)
 
     const entry = useAppStore.getState().trash[0]!
     expect(entry.kind).toBe('week')
-    expect(entry.counts).toEqual({ nodes: nodeIds.size, cards: 5, days: 7 })
+    expect(entry.counts).toEqual({ concepts: conceptIds.size, dayProofs: 0, cards: cardCount, days: 7 })
 
     const restored = useAppStore.getState().restoreTrash(entry.id)
     expect(restored.ok).toBe(true)
@@ -87,12 +86,11 @@ describe('trash round trip', () => {
     expect(after.weeks.map((item) => item.weekNumber)).toEqual(
       Array.from({ length: 24 }, (_, index) => index + 1),
     )
-    expect(after.nodes.filter((node) => node.weekId === target.id)).toHaveLength(nodeIds.size)
-    expect(after.cards.filter((card) => card.weekId === target.id)).toHaveLength(5)
+    expect(after.concepts.filter((concept) => concept.weekId === target.id)).toHaveLength(conceptIds.size)
+    expect(after.cards.filter((card) => card.weekId === target.id)).toHaveLength(cardCount)
     expect(after.weeks.find((item) => item.id === dependent.id)!.prerequisiteWeekIds).toContain(
       target.id,
     )
-    expect(after.nodes.find((node) => node.id === 'fl-w3-n1')!.prerequisiteIds).toContain('fl-w2-n3')
     expect(useAppStore.getState().dayPlans[target.id]).toHaveLength(7)
     expect(useAppStore.getState().trash).toHaveLength(0)
   })
@@ -147,7 +145,8 @@ describe('trash round trip', () => {
   it('drops the day cards of a week that is purged, not restored', () => {
     const target = week(2)
     useAppStore.getState().saveDayPlans(target.id, dayPlans(), 'authored')
-    // A card outside the deleted week that points at one of its nodes.
+    // A card outside the deleted week that points at one of its concepts.
+    const conceptId = flutter().concepts.find((concept) => concept.weekId === target.id)!.id
     useAppStore.setState({
       subjects: useAppStore.getState().subjects.map((subject) =>
         subject.id !== 'flutter'
@@ -155,7 +154,7 @@ describe('trash round trip', () => {
           : {
               ...subject,
               cards: subject.cards.map((card) =>
-                card.id === 'fl-c1-1' ? { ...card, nodeId: 'fl-w2-n1' } : card,
+                card.id === 'fl-c1-1' ? { ...card, nodeId: conceptId } : card,
               ),
             },
       ),
@@ -185,23 +184,6 @@ describe('trash round trip', () => {
 })
 
 describe('single-item undo', () => {
-  it('restores a deleted concept and reconnects the nodes that pointed at it', () => {
-    const dependent = flutter().nodes.find((node) => node.prerequisiteIds.length > 0)!
-    const targetId = dependent.prerequisiteIds[0]!
-    const target = flutter().nodes.find((node) => node.id === targetId)!
-
-    const trashId = useAppStore.getState().deleteNode(targetId)
-    expect(trashId).toBeTruthy()
-    expect(flutter().nodes.some((node) => node.id === targetId)).toBe(false)
-    expect(flutter().nodes.find((node) => node.id === dependent.id)!.prerequisiteIds).not.toContain(targetId)
-
-    const result = useAppStore.getState().restoreTrash(trashId!)
-    expect(result.ok).toBe(true)
-    expect(flutter().nodes.some((node) => node.id === targetId)).toBe(true)
-    expect(flutter().nodes.find((node) => node.id === dependent.id)!.prerequisiteIds).toContain(targetId)
-    expect(target.title).toBeTruthy()
-  })
-
   it('restores a deleted resource', () => {
     const resource = flutter().resources[0]!
     const trashId = useAppStore.getState().deleteResource(resource.id)

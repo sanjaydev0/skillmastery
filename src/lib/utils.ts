@@ -173,7 +173,7 @@ export function toObsidianMarkdown(subject: Subject, books: Book[], now = new Da
       .filter((week) => week.phaseId === phase.id)
       .sort((a, b) => a.weekNumber - b.weekNumber)
     for (const week of weeks) {
-      const gate = week.gate.passedAt ? 'Mastered' : week.gate.scores ? 'Attempted' : 'Open'
+      const gate = week.gate.passedAt ? 'Mastered' : week.gate.attempts.length > 0 ? 'Attempted' : 'Open'
       lines.push(`### Week ${String(week.weekNumber).padStart(2, '0')} — ${week.title}`, '')
       lines.push(`**First-principles anchor:** ${week.anchor}`, '')
       lines.push(`**Mastery gate:** ${gate}${week.gate.passedAt ? ` · ${formatDateTime(week.gate.passedAt)}` : ''}`, '')

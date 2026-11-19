@@ -121,7 +121,7 @@ interface AppStore extends AppData {
   deleteBook: (bookId: string) => void
   toggleDailyItem: (itemId: string) => void
   unlockWeek: (weekId: string) => void
-  clearOverride: (kind: 'week', id: string) => void
+  clearOverride: (id: string) => void
   importData: (data: AppData, mode: 'replace' | 'merge') => void
   resetToSeed: () => void
   resetChecklistItem: (weekId: string, itemId: string) => void
@@ -251,7 +251,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       rabbitHoles: ['Tools, frameworks and optimisations that are not on the critical path yet'],
       bookFocus: 'Choose one timeless book and assign 30 minutes per day',
       prerequisiteWeekIds: [],
-      encompassedNodeIds: [],
       checklist: makeChecklist(weekId, 'Orientation & first principles'),
       gate: { attempts: [], notes: 'Design a 60-minute, closed-book challenge that proves the core primitive without notes or AI.' },
       detail: 'compact',
@@ -264,7 +263,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       accent: input.accent,
       phases,
       weeks: [week],
-      nodes: [],
       concepts: [],
       dayProofs: [],
       cards: [],
@@ -634,7 +632,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       rabbitHoles: [],
       bookFocus: '',
       prerequisiteWeekIds: [],
-      encompassedNodeIds: [],
       checklist: makeChecklist(id, input.title || `Week ${number}`),
       gate: { attempts: [] },
       detail: 'compact',
@@ -967,7 +964,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       updatedAt: now(),
     })),
 
-  clearOverride: (kind, id) =>
+  clearOverride: (id) =>
     set((state) => {
       const weeks = { ...state.overrides.weeks }
       delete weeks[id]

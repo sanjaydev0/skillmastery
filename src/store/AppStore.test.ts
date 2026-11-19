@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { MasteryScores } from '../types/schema'
-import { isWeekAvailable, nodeBadge } from '../engine/gating'
+import { isWeekAvailable } from '../engine/gating'
+import { PROOF_INTERVALS } from '../engine/proofs'
+import { startOfLocalDay } from '../lib/dates'
 import { toBackupJson } from '../lib/utils'
 import { parseBackupJson } from '../services/validation'
 import { getStoredAppData, useAppStore } from './AppStore'
@@ -12,7 +14,7 @@ function activeSubject() {
   return state.subjects.find((subject) => subject.id === state.activeSubjectId)!
 }
 
-describe('gate and FIRe integration', () => {
+describe('gate integration', () => {
   it('clears a gate, unlocks the next week and keeps the first passed timestamp', () => {
     const subject = activeSubject()
     const week1 = subject.weeks.find((week) => week.weekNumber === 1)!
@@ -30,71 +32,53 @@ describe('gate and FIRe integration', () => {
     useAppStore.getState().saveGate(week1.id, { ...pass, concept: 5 })
     expect(activeSubject().weeks.find((week) => week.id === week1.id)!.gate.passedAt).toBe(firstPass)
   })
-
-  it('FIRe-credits encompassed nodes on a gate pass without marking them mastered', () => {
-    const subject = activeSubject()
-    const weeks = [...subject.weeks].sort((a, b) => a.weekNumber - b.weekNumber)
-    for (const week of weeks.slice(0, 2)) {
-      expect(useAppStore.getState().saveGate(week.id, pass).ok).toBe(true)
-    }
-    const week3 = weeks[2]!
-    const encompassed = week3.encompassedNodeIds
-    expect(encompassed.length).toBeGreaterThan(0)
-
-    const result = useAppStore.getState().saveGate(week3.id, pass)
-    expect(result.ok).toBe(true)
-    expect(result.credits).toBe(encompassed.length)
-    const after = activeSubject()
-    for (const nodeId of encompassed) {
-      const node = after.nodes.find((entry) => entry.id === nodeId)!
-      expect(node.srs.strength).toBeGreaterThan(0)
-      expect(node.srs.implicitReviews).toBeGreaterThan(0)
-      expect(node.status).not.toBe('mastered')
-    }
-  })
 })
 
-describe('node mastery and remediation', () => {
-  it('blocks a node with unmet prerequisites, then allows an audited override', () => {
+describe('concept proofs', () => {
+  function firstConcept() {
     const subject = activeSubject()
-    const target = subject.nodes.find((node) => node.prerequisiteIds.length > 0)!
-    const blocked = useAppStore.getState().markNodeMastered(target.id)
-    expect(blocked.ok).toBe(false)
-    expect(blocked.message).toMatch(/prerequisites/i)
+    const week = subject.weeks.find((entry) => entry.weekNumber === 1)!
+    return subject.concepts.find((concept) => concept.weekId === week.id)!
+  }
 
-    useAppStore.getState().unlockNode(target.id)
-    const allowed = useAppStore.getState().markNodeMastered(target.id)
-    expect(allowed.ok).toBe(true)
-    const mastered = activeSubject().nodes.find((node) => node.id === target.id)!
-    expect(mastered.status).toBe('mastered')
-    expect(mastered.srs.strength).toBe(1)
-    expect(nodeBadge(mastered, activeSubject(), useAppStore.getState().overrides)).toBe('mastered')
+  it('advances the ladder and schedules the next review on a cold proof', () => {
+    const concept = firstConcept()
+    const result = useAppStore.getState().checkConcept(concept.id, 'cold', 'said it out loud')
+    expect(result.ok).toBe(true)
+    const after = activeSubject().concepts.find((entry) => entry.id === concept.id)!
+    expect(after.checks).toHaveLength(1)
+    expect(after.checks[0]).toMatchObject({ outcome: 'cold', note: 'said it out loud' })
+    expect(after.step).toBe(0)
+    expect(after.dueAt).toBeGreaterThan(after.checks[0]!.at)
+    expect(after.dueAt).toBe(
+      startOfLocalDay(new Date(after.checks[0]!.at)) + PROOF_INTERVALS[0]! * 86_400_000,
+    )
   })
 
-  it('flags direct prerequisites and schedules 30-minute repair after two failures', () => {
-    const subject = activeSubject()
-    const target = subject.nodes.find((node) => node.prerequisiteIds.length > 0)!
-    const prereqId = target.prerequisiteIds[0]!
-    const kpId = target.knowledgePoints[0]!.id
+  it('steps back on a warm proof and resets on a failed one', () => {
+    const concept = firstConcept()
+    useAppStore.getState().checkConcept(concept.id, 'cold')
+    useAppStore.getState().checkConcept(concept.id, 'cold')
+    expect(activeSubject().concepts.find((entry) => entry.id === concept.id)!.step).toBe(1)
 
-    const first = useAppStore.getState().failKnowledgePoint(target.id, kpId)
-    expect(first.ok).toBe(true)
-    expect(first.message).toMatch(/1\/2/)
-    expect(activeSubject().nodes.find((node) => node.id === prereqId)!.repairFlags).toHaveLength(0)
+    useAppStore.getState().checkConcept(concept.id, 'warm')
+    expect(activeSubject().concepts.find((entry) => entry.id === concept.id)!.step).toBe(0)
 
-    const second = useAppStore.getState().failKnowledgePoint(target.id, kpId)
-    expect(second.ok).toBe(true)
-    const after = activeSubject()
-    const failed = after.nodes.find((node) => node.id === target.id)!
-    const prereq = after.nodes.find((node) => node.id === prereqId)!
-    expect(failed.status).toBe('needs-repair')
-    expect(prereq.repairFlags.some((flag) => flag.fromNodeId === target.id && !flag.clearedAt)).toBe(true)
+    useAppStore.getState().checkConcept(concept.id, 'failed', 'forgot the rule')
+    const failed = activeSubject().concepts.find((entry) => entry.id === concept.id)!
+    expect(failed.step).toBe(0)
+    expect(failed.checks[failed.checks.length - 1]).toMatchObject({
+      outcome: 'failed',
+      note: 'forgot the rule',
+    })
+  })
 
-    const flag = prereq.repairFlags.find((entry) => !entry.clearedAt)!
-    useAppStore.getState().clearRepair(prereq.id, flag.id)
-    const cleared = activeSubject().nodes.find((node) => node.id === prereq.id)!
-    expect(cleared.repairFlags.find((entry) => entry.id === flag.id)?.clearedAt).toBeTypeOf('number')
-    expect(cleared.srs.strength).toBe(1)
+  it('keeps a note on the concept without inventing a proof', () => {
+    const concept = firstConcept()
+    useAppStore.getState().setConceptNote(concept.id, 'Read the language tour again')
+    const after = activeSubject().concepts.find((entry) => entry.id === concept.id)!
+    expect(after.notes).toBe('Read the language tour again')
+    expect(after.checks).toEqual([])
   })
 })
 
@@ -114,14 +98,14 @@ describe('track lifecycle and backup import', () => {
     expect(custom.name).toBe('Rust Systems')
     expect(custom.phases).toHaveLength(4)
     expect(custom.weeks).toHaveLength(1)
-    expect(custom.nodes).toHaveLength(0)
+    expect(custom.concepts).toHaveLength(0)
     expect(custom.accent).toBe('amber')
 
     useAppStore.getState().setTheme('light')
     useAppStore.getState().setMode('passive')
     useAppStore.getState().resetToSeed()
     const reset = useAppStore.getState()
-    expect(reset.subjects).toHaveLength(2)
+    expect(reset.subjects).toHaveLength(1)
     expect(reset.activeSubjectId).toBe(reset.subjects[0]!.id)
     expect(reset.prefs.theme).toBe('light')
     expect(reset.prefs.mode).toBe('passive')
@@ -142,7 +126,7 @@ describe('track lifecycle and backup import', () => {
     useAppStore.getState().importData(backup, 'replace')
     const replaced = useAppStore.getState()
     expect(replaced.subjects[0]!.name).toBe('Renamed Flutter')
-    expect(replaced.subjects).toHaveLength(3)
+    expect(replaced.subjects).toHaveLength(2)
     expect(replaced.prefs.theme).toBe('light')
   })
 

@@ -65,7 +65,7 @@ export function ConceptsView() {
           all: conceptsForWeek(rows, week.weekNumber),
           shown: conceptsForWeek(filtered, week.weekNumber),
         })),
-    [subject.weeks, filtered, maxConceptWeek],
+    [subject.weeks, rows, filtered, maxConceptWeek],
   )
 
   return (

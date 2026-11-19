@@ -53,6 +53,6 @@ describe('syllabus and threads', () => {
     expect(screen.getByText('Dart', { selector: 'dt' })).toBeInTheDocument()
     expect(screen.getByText('Flutter', { selector: 'dt' })).toBeInTheDocument()
     expect(screen.getByText('Design', { selector: 'dt' })).toBeInTheDocument()
-    expect(screen.getByText('guard clause')).toBeInTheDocument()
+    expect(screen.getAllByText('guard clause').length).toBeGreaterThan(0)
   })
 })

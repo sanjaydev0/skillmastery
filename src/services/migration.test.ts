@@ -335,7 +335,7 @@ describe('schema v6: the record book', () => {
       ],
       books: [],
       dailyLog: {},
-      overrides: { weeks: {}, nodes: {} },
+      overrides: { weeks: {} },
       prefs: { theme: 'dark', mode: 'active', sidebarCollapsed: false, localStorageThresholdMB: 4 },
       promptOverrides: {},
       journey: { startedAt: null, startWeekday: 1, pauses: [], gameLayer: true, onboardedAt: null },
@@ -398,7 +398,7 @@ describe('schema v6: the record book', () => {
   it('drops concept trash entries from an old backup', () => {
     const payload = v5Payload()
     payload.trash = [
-      { id: 't1', kind: 'node', deletedAt: 1, label: 'x', subjectId: 'flutter', subjectName: 'Flutter', payload: {} as never, counts: {} },
+      { kind: 'node' },
     ]
     expect(migrateAppData(payload).trash).toEqual([])
   })

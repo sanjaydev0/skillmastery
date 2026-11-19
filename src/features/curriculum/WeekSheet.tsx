@@ -527,7 +527,7 @@ export function WeekSheet({ weekId, onClose }: { weekId: string; onClose: () => 
                       variant="outline"
                       className="mt-2"
                       onClick={() => {
-                        clearOverride('week', week.id)
+                        clearOverride(week.id)
                         toast('Week override removed.', 'info')
                       }}
                     >

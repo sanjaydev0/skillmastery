@@ -116,7 +116,7 @@ describe('seed content refresh', () => {
         subjectId: 'flutter',
         subjectName: 'Flutter',
         payload: data.subjects[0]!.weeks[8]!,
-        counts: { nodes: 3, cards: 5, days: 0 },
+        counts: { concepts: 3, cards: 5, days: 0 },
       },
     ]
     data.planner = {

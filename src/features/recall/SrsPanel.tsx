@@ -187,7 +187,7 @@ export function SrsPanel() {
               {currentCard.source === 'mistake' ? 'Mistake log' : 'Core concept'}
             </Badge>
             {week ? <span className="pill !py-0.5 !text-[11px]">Week {week.weekNumber}</span> : null}
-            {node ? <span className="faint truncate text-[11.5px]">· {node.title}</span> : null}
+            {node ? <span className="faint truncate text-[11.5px]">· {node.term}</span> : null}
             <span className="faint ml-auto text-[11px]">{relativeDays(currentCard.dueAt)}</span>
           </div>
 
