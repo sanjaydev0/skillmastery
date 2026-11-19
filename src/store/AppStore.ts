@@ -7,6 +7,7 @@ import type {
   Concept,
   DayPlan,
   DayPlanOrigin,
+  DayProof,
   DaySlot,
   Flashcard,
   Mode,
@@ -86,6 +87,8 @@ interface AppStore extends AppData {
   /** Append one proof to a concept and reschedule its next review. */
   checkConcept: (conceptId: string, outcome: ProofOutcome, note?: string) => ActionResult
   setConceptNote: (conceptId: string, note: string) => void
+  saveDayProof: (weekId: string, day: DaySlot, outcome: ProofOutcome, note?: string) => ActionResult
+  clearDayProof: (weekId: string, day: DaySlot) => void
   addCard: (input: {
     front: string
     back: string
@@ -753,6 +756,55 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           concepts: subject.concepts.map((entry) =>
             entry.id === conceptId ? { ...entry, notes: note.trim() || undefined, updatedAt: now() } : entry,
           ),
+        }),
+        now(),
+      ),
+    ),
+
+  saveDayProof: (weekId, day, outcome, note) => {
+    const state = get()
+    const subject = activeSubjectOf(state)
+    const week = subject?.weeks.find((entry) => entry.id === weekId)
+    if (!subject || !week) return { ok: false, message: 'That week is not in the active track.' }
+    const at = now()
+    const proof: DayProof = {
+      weekId,
+      day,
+      at,
+      outcome,
+      ...(note?.trim() ? { note: note.trim().slice(0, 200) } : {}),
+    }
+    set({
+      ...patchSubject(
+        state,
+        (current) => ({
+          ...current,
+          dayProofs: [
+            ...current.dayProofs.filter((entry) => !(entry.weekId === weekId && entry.day === day)),
+            proof,
+          ],
+        }),
+        at,
+      ),
+    })
+    return {
+      ok: true,
+      message:
+        outcome === 'cold'
+          ? `Day ${day} proved without notes.`
+          : outcome === 'warm'
+            ? `Day ${day} recorded with notes. Prove it cold when you can.`
+            : `Day ${day} recorded as not yet. That is an honest answer.`,
+    }
+  },
+
+  clearDayProof: (weekId, day) =>
+    set((state) =>
+      patchSubject(
+        state,
+        (subject) => ({
+          ...subject,
+          dayProofs: subject.dayProofs.filter((entry) => !(entry.weekId === weekId && entry.day === day)),
         }),
         now(),
       ),

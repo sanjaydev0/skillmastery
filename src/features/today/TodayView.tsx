@@ -23,6 +23,7 @@ import {
 } from '../../engine/estimates'
 import { dueCards } from '../../engine/srs'
 import { weekStatus } from '../../engine/gating'
+import { dayProofFor } from '../../engine/proofs'
 import { gameStatsFor } from '../../engine/gamification'
 import { navigate } from '../../lib/router'
 import { formatShortDate } from '../../lib/dates'
@@ -43,6 +44,7 @@ import {
   WeekBadge,
 } from '../../components/ui/primitives'
 import { DAY_SLOTS, dayName, modeLabel, shortDayName } from '../plan/dayPlan'
+import { DayProofCard } from './DayProofCard'
 import { paragraphs } from '../../content/style'
 
 const COURSE_DAYS = 168
@@ -590,6 +592,15 @@ export function TodayView() {
         </section>
 
         <div className="space-y-3">
+          {todayItems.length > 0 ? (
+            <DayProofCard
+              week={week}
+              slot={slot}
+              items={todayItems}
+              proof={dayProofFor(subject, week.id, slot)}
+            />
+          ) : null}
+
           <section className="card p-3.5" aria-labelledby="week-strip-heading">
             <div className="flex items-center justify-between gap-2">
               <div>

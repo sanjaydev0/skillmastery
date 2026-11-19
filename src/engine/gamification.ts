@@ -19,6 +19,8 @@ export const XP = {
   task: 10,
   /** Day with at least one active task checked. */
   activeDay: 15,
+  /** One closed-book day proof, paid once per day and only when cold. */
+  proof: 40,
   /** Week's checkpoint (gate) cleared. */
   gate: 120,
   /** Whole week's checklist done. */
@@ -246,6 +248,8 @@ function totalXp(subject: Subject): number {
     }
   }
   xp += activeDays.size * XP.activeDay
+  // One payment per cold day proof, however many times it is edited.
+  xp += subject.dayProofs.filter((proof) => proof.outcome === 'cold').length * XP.proof
   return xp
 }
 
@@ -261,6 +265,9 @@ function xpToday(subject: Subject, now: number): number {
     }
   }
   if (hasActiveToday) xp += XP.activeDay
+  xp += subject.dayProofs.filter(
+    (proof) => proof.outcome === 'cold' && proof.at >= floor,
+  ).length * XP.proof
   return xp
 }
 
@@ -282,6 +289,9 @@ function xpThisWeek(subject: Subject, journey: Journey, now: number): number {
     }
   }
   xp += activeDaysThisWeek.size * XP.activeDay
+  xp += subject.dayProofs.filter(
+    (proof) => proof.outcome === 'cold' && proof.weekId === week.id,
+  ).length * XP.proof
 
   return xp
 }
