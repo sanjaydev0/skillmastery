@@ -110,3 +110,13 @@ export function dueConcepts(concepts: Concept[], now = Date.now()): Concept[] {
     .filter((concept) => concept.dueAt > 0 && concept.dueAt <= end)
     .sort((a, b) => a.dueAt - b.dueAt)
 }
+
+/** One queue for the day: every due concept and every due card. */
+export function dueTodayTotal(
+  subject: { concepts: Concept[]; cards: { dueAt: number }[] },
+  now = Date.now(),
+): number {
+  const end = endOfLocalDay(new Date(now))
+  const cards = subject.cards.filter((card) => card.dueAt > 0 && card.dueAt <= end).length
+  return dueConcepts(subject.concepts, now).length + cards
+}

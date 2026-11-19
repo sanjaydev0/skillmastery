@@ -22,6 +22,7 @@ import {
   sumItems,
 } from '../../engine/estimates'
 import { dueCards } from '../../engine/srs'
+import { dueTodayTotal } from '../../engine/concepts'
 import { weekStatus } from '../../engine/gating'
 import { dayProofFor } from '../../engine/proofs'
 import { gameStatsFor } from '../../engine/gamification'
@@ -74,6 +75,7 @@ export function TodayView() {
   )
   const course = useMemo(() => summariseSubject(subject), [subject])
   const due = useMemo(() => dueCards(subject.cards).length, [subject.cards])
+  const reviewCount = useMemo(() => dueTodayTotal(subject), [subject])
   const stats = useMemo(
     () => consistency(journey, dailyLog, [subject]),
     [journey, dailyLog, subject],
@@ -264,6 +266,11 @@ export function TodayView() {
               <span className="faint text-[11.5px]">
                 {questsEarned} of {gameStats.quests.length} quests earned
               </span>
+            ) : null}
+            {reviewCount > 0 ? (
+              <a className="link text-[11.5px]" href="#/practice">
+                {reviewCount} to review
+              </a>
             ) : null}
           </div>
           <div className="mt-2 flex items-center gap-2">
@@ -502,9 +509,9 @@ export function TodayView() {
         />
         <LedgerFact
           label="Reviews due"
-          value={String(due)}
-          meta={due === 0 ? 'Nothing waiting' : 'Cards ready to recall'}
-          tone={due > 0 ? 'accent' : undefined}
+          value={String(reviewCount)}
+          meta={reviewCount === 0 ? 'Nothing waiting' : 'Concepts and cards'}
+          tone={reviewCount > 0 ? 'accent' : undefined}
         />
         <LedgerFact
           label="Course"
