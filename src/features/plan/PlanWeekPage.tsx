@@ -104,7 +104,7 @@ export function PlanWeekPage({ weekId }: { weekId: string }) {
           >
             Advanced workshop
           </Button>
-          <Button variant="primary" size="sm" onClick={() => navigate('#/today')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('#/today')}>
             Back to today
           </Button>
         </div>

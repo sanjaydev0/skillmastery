@@ -51,12 +51,33 @@ describe('week generation panel', () => {
 
     expect(await screen.findByText(/Draft ready: 7 cards/)).toBeInTheDocument()
     expect(screen.getByText(/All seven cards meet the prose standard/)).toBeInTheDocument()
+    // The learner can read the draft before saving it.
+    expect(screen.getByText(/Today you run your first Dart file/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Save the seven cards' }))
     await waitFor(() => {
       expect(useAppStore.getState().dayPlans['fl-w2']).toHaveLength(7)
     })
     expect(useAppStore.getState().dayPlans['fl-w2']!.every((plan) => plan.origin === 'ai')).toBe(true)
+  })
+
+  it('shows the exact prompt in the preview and copies it', async () => {
+    setAiKey('test-key-not-real')
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+
+    render(<PlanWeekPage weekId="fl-w2" />)
+    fireEvent.click(screen.getByRole('button', { name: /Write the seven cards/ }))
+
+    expect(await screen.findByText('This is what will be sent to the AI:')).toBeInTheDocument()
+    expect(screen.getByText(/Read the exact prompt/).textContent).toMatch(/of 120,000 characters/)
+    expect(screen.getByText(/Output cap: 8,000 tokens/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy prompt' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
   })
 
   it('blocks saving a draft that fails the prose standard', async () => {

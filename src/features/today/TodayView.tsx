@@ -189,6 +189,7 @@ export function TodayView() {
     todayItems.find((item) => !item.done) ?? week.checklist.find((item) => !item.done)
   const nextIsToday = nextTask ? nextTask.day === slot : false
   const phase = subject.phases.find((entry) => entry.id === week.phaseId)
+  const nextWeek = subject.weeks.find((entry) => entry.weekNumber === week.weekNumber + 1)
   const overBy = todaySummary.overBy.active + todaySummary.overBy.passive
   const weekRatio = summary.planned.max > 0 ? summary.done.max / summary.planned.max : 0
   const courseRatio = course.items > 0 ? course.doneItems / course.items : 0
@@ -490,7 +491,7 @@ export function TodayView() {
         </section>
       )}
 
-      {slot === 5 && week.weekNumber < 24 && !dayPlans[subject.weeks.find(w => w.weekNumber === week.weekNumber + 1)?.id || ''] && (
+      {slot === 5 && nextWeek && !dayPlans[nextWeek.id] && (
         <section className="card mt-4 border-l-[3px] border-accent p-3.5 sm:p-4" aria-label="Prepare next week">
           <div className="flex items-start gap-3">
             <div className="flex-none grid h-10 w-10 place-items-center rounded-lg bg-accent-soft text-accent">
@@ -500,21 +501,18 @@ export function TodayView() {
               <p className="eyebrow">Day {slot} checkpoint</p>
               <h3 className="mt-0.5 text-[13px] font-semibold">Prepare Week {week.weekNumber + 1}</h3>
               <p className="faint mt-1 text-[12px] leading-relaxed">
-                You're on Day 5. Next week starts in two days, but it has no day cards yet. Write them now so you're ready when Monday arrives.
+                You're on Day 5. Week {nextWeek.weekNumber} opens after this week's checkpoint, but it has no day cards yet. Write them now so the week is ready.
               </p>
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 <Button
                   variant="primary"
                   size="sm"
                   icon={<ArrowRight size={13} />}
-                  onClick={() => {
-                    const nextWeek = subject.weeks.find(w => w.weekNumber === week.weekNumber + 1)
-                    if (nextWeek) navigate(`#/plan/${nextWeek.id}`)
-                  }}
+                  onClick={() => navigate(`#/plan/${nextWeek.id}`)}
                 >
                   Write next week
                 </Button>
-                <span className="faint text-[11px]">Takes about 2 minutes</span>
+                <span className="faint text-[11px]">Usually a few minutes</span>
               </div>
             </div>
           </div>
@@ -670,13 +668,13 @@ export function TodayView() {
                   >
                     <span
                       className={cn(
-                        'block truncate text-[10.5px]',
+                        'block truncate text-[11px]',
                         isToday ? 'text-accent-strong' : 'text-t3',
                       )}
                     >
                       Day {entrySlot}
                     </span>
-                    <span className="faint mt-0.5 block truncate text-[10px]">
+                    <span className="faint mt-0.5 block truncate text-[11px]">
                       {shortDayName(daySummary.weekday)}
                     </span>
                     <span className="num mt-0.5 block text-[11.5px] font-semibold">

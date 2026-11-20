@@ -5,8 +5,14 @@ import { useAppStore } from '../../store/AppStore'
 import { useUiStore } from '../../store/uiStore'
 import { useAiKey } from '../../hooks/useAiKey'
 import { blueprintFor } from '../../data/curriculum/blueprint'
-import { buildWeekBrief } from '../../engine/generation'
+import {
+  buildGenerationPrompt,
+  buildWeekBrief,
+  GENERATION_MAX_TOKENS,
+  GENERATION_PROMPT_MAX_CHARS,
+} from '../../engine/generation'
 import { AiError } from '../../services/ai'
+import { paragraphs } from '../../content/style'
 import {
   cancelGeneration,
   checkInterruptedGeneration,
@@ -64,6 +70,17 @@ export function GenerateWeekPanel({
   }
 
   const blocked = result !== null && result.issues.length > 0
+  const prompt = previewBrief ? buildGenerationPrompt(previewBrief) : ''
+
+  const copyPrompt = async () => {
+    if (!prompt) return
+    try {
+      await navigator.clipboard.writeText(prompt)
+      toast('Prompt copied. Paste it into OpenCode to write this week.', 'success', 4000)
+    } catch {
+      toast('Could not copy. Select the prompt text and copy it yourself.', 'error', 5000)
+    }
+  }
 
   // Wake lock for mobile resilience during generation
   useEffect(() => {
@@ -286,6 +303,23 @@ export function GenerateWeekPanel({
                   </div>
                 )}
               </div>
+              <details className="mt-2 rounded-lg border border-line bg-s1 p-2.5">
+                <summary className="link cursor-pointer text-[11.5px]">
+                  Read the exact prompt ({prompt.length.toLocaleString()} of{' '}
+                  {GENERATION_PROMPT_MAX_CHARS.toLocaleString()} characters)
+                </summary>
+                <p className="faint mt-1.5 text-[11px]">
+                  Output cap: {GENERATION_MAX_TOKENS.toLocaleString()} tokens. Nothing is sent until you press Generate.
+                </p>
+                <pre className="scroll-thin mt-2 max-h-[40vh] overflow-y-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-t2">
+                  {prompt}
+                </pre>
+                <div className="mt-2">
+                  <Button variant="outline" size="sm" onClick={() => void copyPrompt()}>
+                    Copy prompt
+                  </Button>
+                </div>
+              </details>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Button variant="primary" size="sm" onClick={() => void run()}>
                   Generate the week
@@ -313,16 +347,65 @@ export function GenerateWeekPanel({
                 Draft ready: {result.plans.length} cards, {result.plans.reduce((total, plan) => total + plan.estMinutes, 0)}{' '}
                 minutes planned.
               </p>
-              <ul className="mt-1.5 divide-y divide-line rounded-lg border border-line">
+              <div className="mt-1.5 divide-y divide-line rounded-lg border border-line">
                 {result.plans.map((plan) => (
-                  <li key={plan.day} className="flex items-start justify-between gap-2 px-2.5 py-1.5">
-                    <span className="min-w-0 text-[11.5px]">
-                      <span className="num text-t3">Day {plan.day}</span> {plan.title}
-                    </span>
-                    <span className="faint num flex-none text-[11px]">{plan.estMinutes} min</span>
-                  </li>
+                  <details key={plan.day} className="p-2.5">
+                    <summary className="flex cursor-pointer items-start justify-between gap-2 text-[11.5px]">
+                      <span className="min-w-0">
+                        <span className="num text-t3">Day {plan.day}</span> {plan.title}
+                      </span>
+                      <span className="faint num flex-none text-[11px]">{plan.estMinutes} min</span>
+                    </summary>
+                    <div className="mt-2 space-y-2 text-[11.5px] leading-relaxed">
+                      <div>
+                        <p className="eyebrow">Summary</p>
+                        {paragraphs(plan.summary).map((paragraph, index) => (
+                          <p key={index} className="muted mt-1">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                      <div>
+                        <p className="eyebrow">Tasks</p>
+                        <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+                          {plan.tasks.map((task, index) => (
+                            <li key={index}>{task}</li>
+                          ))}
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="eyebrow">Do this, not that</p>
+                        <p className="muted mt-1">{plan.direction}</p>
+                      </div>
+                      <div>
+                        <p className="eyebrow">Design note</p>
+                        <p className="muted mt-1">{plan.designNote}</p>
+                      </div>
+                      <div>
+                        <p className="eyebrow">Resources</p>
+                        <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                          {plan.resources.map((resource) => (
+                            <li key={`${resource.label}-${resource.url ?? ''}`}>
+                              {resource.url ? (
+                                <a
+                                  className="link text-[11.5px]"
+                                  href={resource.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {resource.label}
+                                </a>
+                              ) : (
+                                <span className="faint text-[11.5px]">{resource.label}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </details>
                 ))}
-              </ul>
+              </div>
 
               {blocked ? (
                 <div className="mt-2">

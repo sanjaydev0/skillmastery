@@ -449,7 +449,7 @@ function Promise({ children }: { children: string }) {
 function Rule({ n, title, children }: { n: number; title: string; children: string }) {
   return (
     <li className="flex items-start gap-2.5">
-      <span className="num mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border border-line bg-s2 text-[10.5px] font-semibold text-t3">
+      <span className="num mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border border-line bg-s2 text-[11px] font-semibold text-t3">
         {n}
       </span>
       <div>
