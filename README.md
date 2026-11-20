@@ -68,6 +68,17 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 - `src/data/tracks/` — the remaining Flutter weeks, cards and resources.
 - Git is part of the course, not an afterthought: Week 1 ends with a first push, Week 2 with a branch and pull request, every later week with a commit and push, and Week 24 with a signed release tag.
 
+### Writing a week
+
+One authored week lives in one folder: `src/data/weeks/week-02/index.ts`. The app discovers every `week-*/index.ts` automatically, so adding a week does not change the seed, the track, the storage migration or the router.
+
+```bash
+npm run content:brief -- 2   # blueprint, checklist, earlier cards, source section, exact prompt
+npm run content:check        # prose, day alignment, capacity, links and ids
+```
+
+Open this project in OpenCode and run `/generate-week 2`, or simply ask for "week 2 content". The week-writer skill reads the brief, writes the single module and runs the checks. The checklist stays the evidence layer; a day card only explains the day.
+
 ## Local-first data
 
 - IndexedDB is the primary store; localStorage is a second copy and a last-chance mirror on `pagehide`, capped at 5 MB by the browser.

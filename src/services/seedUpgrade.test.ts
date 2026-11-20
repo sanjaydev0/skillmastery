@@ -157,6 +157,21 @@ describe('seed content refresh', () => {
     expect(cards[1]!.origin).toBe('ai')
   })
 
+  it('adds authored week cards to a v6 payload and keeps a user card', () => {
+    const data = createSeedData()
+    data.seedVersion = 6
+    const fresh = createSeedData().dayPlans['fl-w1']!
+    data.dayPlans = { 'fl-w1': [{ ...fresh[0]!, title: 'My own day one', origin: 'user' }] }
+
+    const { data: refreshed } = refreshSeedContent(data)
+    expect(refreshed.seedVersion).toBe(SEED_VERSION)
+    const cards = refreshed.dayPlans['fl-w1']!
+    expect(cards).toHaveLength(7)
+    expect(cards[0]!.title).toBe('My own day one')
+    expect(cards[0]!.origin).toBe('user')
+    expect(cards.slice(1).every((plan) => plan.origin === 'authored')).toBe(true)
+  })
+
   it('is a no-op once the seed version is current', () => {
     const data = createSeedData()
     const { data: same, changed } = refreshSeedContent(data)

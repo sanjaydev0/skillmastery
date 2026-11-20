@@ -55,7 +55,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 262 tests across 38 files
+npm test           # Vitest, currently 272 tests across 39 files
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -110,7 +110,7 @@ docs/source/             Long-form course source (not shipped)
 
 ## 5. Data model and invariants
 
-Schema: `SCHEMA_VERSION = 6`, `SEED_VERSION = 6` in `src/types/schema.ts` (bumped to 7 when authored week modules are added).
+Schema: `SCHEMA_VERSION = 6`, `SEED_VERSION = 7` in `src/types/schema.ts`.
 
 `AppData` contains:
 
@@ -197,7 +197,7 @@ When adding a view, update the router, the shell navigation, the command palette
 ## 8. Testing
 
 - Engine logic, store actions, migrations, seed upgrades, storage, exports and the main smoke flow are covered. Keep it that way.
-- Baseline: **262 tests / 38 files** (November 2026).
+- Baseline: **272 tests / 39 files** (November 2026).
 - Add tests for:
   - every new pure engine function;
   - every schema/seed migration;
@@ -297,3 +297,25 @@ A change is done when:
 - [ ] `README.md` or `DESIGN.md` is updated if behaviour or visual rules changed.
 
 Commit style: imperative sentence, no prefix, explain the learner-visible change. Example: `Give SkillMastery a board-and-paper visual identity`.
+
+---
+
+## 13. Generating one week
+
+One authored week is one folder: `src/data/weeks/week-NN/index.ts` (zero-padded). The registry auto-discovers `week-*/index.ts`, so adding a week never touches `seedData.ts`, `tracks/flutter.ts`, `seedUpgrade.ts` or the router.
+
+A module default-exports `WeekContent` from `src/data/weeks/types.ts`:
+
+- `weekId` (`fl-wN`) and `weekNumber` are required.
+- `dayPlans` is required: seven cards, days 1–7, `origin: 'authored'`.
+- `checklist` is optional. Omit it when the canonical checklist is already authored; provide it to replace a generic checklist, with stable `fl-wN-dXa` ids.
+- `resources` and `cards` are optional and additive; their ids must be unique.
+
+Workflow:
+
+```bash
+npm run content:brief -- 2   # full context pack for Week 2
+npm run content:check        # validates every authored week module
+```
+
+In OpenCode, run `/generate-week 2`, or just ask for "week 2 content": the `skillmastery-week` skill loads and follows the same workflow. Week 1 stays hand-authored; a seed-content change bumps `SEED_VERSION`. Authored cards are additive on upgrade: a user's edited card or an AI-generated card always wins.
