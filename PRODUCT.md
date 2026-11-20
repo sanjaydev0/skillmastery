@@ -13,10 +13,6 @@ Flutter CLI and a physical Android phone. He studies at home, seven days a week,
 and may miss 2–6 days in a month. When that happens he pauses the course instead
 of pretending the missed days did not happen.
 
-The app also carries a second, more technical Full-Stack Web track. That track
-uses the same product model but is not the active teaching track. *(Inferred from
-the bundled seed data; confirmed in the build brief only as "two tracks".)*
-
 ## Product Purpose
 
 SkillMastery is a local-first control centre for a 168-day apprenticeship in
@@ -39,9 +35,10 @@ one idea, one mechanism and one failure; the checklist is the only evidence that
 earns credit. All of that runs on the device. There is no account, no cloud sync,
 no analytics and no curriculum fetched at runtime.
 
-Week 1 is authored. Every later week is generated one week at a time from the
-24-week blueprint and the learner's own history, then reviewed before it becomes
-canonical. A neighbouring course player could copy the screens; it could not
+Week 1 is authored: tasks and seven day cards. Week 2 has an authored task list
+and gains authored day cards. Every later week is written one week at a time
+from the 24-week blueprint and the learner's own history, then reviewed before
+it becomes canonical. A neighbouring course player could copy the screens; it could not
 truthfully copy a course that is already written into the same local data model
 as the learner's evidence.
 
@@ -79,7 +76,7 @@ as the learner's evidence.
 - AI generation is one request per week, on demand, with an explicit preview and
   cancel. Generated content must pass `checkDayPlans()` and the written standard
   in `docs/CONTENT-STYLE.md` before it is canonical.
-- Schema v5. Migrations are additive and preserve checks, notes, estimates,
+- Schema v6. Migrations are additive and preserve checks, notes, estimates,
   planner settings, journey, day cards and trash.
 - No accounts, telemetry, cloud sync, background daemons or runtime curriculum
   fetch. The only server-side surface is `/api/chat`.

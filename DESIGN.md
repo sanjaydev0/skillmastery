@@ -2,7 +2,7 @@
 
 This is the visual and interaction contract for the SkillMastery web app. Read it before adding a screen, a component, or a new colour. The executable source of truth is `src/index.css`; this document explains the intent and the rules behind those tokens.
 
-**Last reviewed:** October 2026 (Phase 5: AI helper, editable prompt skills, AnkiDroid guidance).
+**Last reviewed:** November 2026 (Phase 6: guided course, record book, week writer).
 
 ---
 

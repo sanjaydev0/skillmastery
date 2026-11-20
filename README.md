@@ -10,7 +10,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 
 - **Today** — the current week, only today's tasks, one clear "up next" action, today's proof, review count, and a seven-day completion strip.
 - **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and a syllabus that names the Dart, Flutter and design thread of every week. Weekly capacity lives in Settings and Day 0, never on the Plan page.
-- **Week pages** — seven day cards for every day slot, a plain-language "you build" brief, the three threads, the git habit, outcomes, the checkpoint and the weekly review. Week 1 is authored; a later week can be written from its blueprint, reviewed and then saved.
+- **Week pages** — seven day slots, a plain-language "you build" brief, the three threads, the git habit, outcomes, the checkpoint and the weekly review. Week 1 is authored; a later week is written from its blueprint, reviewed and then saved.
 - **Concepts** — a read-only index of the terms the route actually teaches, one record per term, with the proof history and the date of the next review.
 - **Practice** — one due queue for concepts and cards, the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
 - **Library** — docs, the shared 30-minute canon, reading progress, saved links and a six-step open-source pathway from a public repository to a v1.0.0 release.
@@ -63,7 +63,7 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 
 ## Content layout
 
-- `src/data/tracks/flutterWeeks1to6.ts` — Week 1 is fully authored: 15 tasks and seven day cards for a 13-year-old. Week 2 keeps its authored task list; Weeks 3–6 keep the technical authoring.
+- `src/data/tracks/flutterWeeks1to6.ts` — Week 1 has a fully authored task list and seven day cards; Week 2 has an authored task list. Weeks 3–24 carry a blueprint-driven standard checklist until a week module adds authored content.
 - `src/data/curriculum/blueprint.ts` — the 24-week route: three threads (Dart, Flutter, design), knowledge points, project, git habit, checkpoint and seven day focuses. Week 1 is backed by real checklists and day cards; later weeks use the blueprint as the locked brief for AI generation.
 - `src/data/tracks/` — the remaining Flutter weeks, cards and resources.
 - Git is part of the course, not an afterthought: Week 1 ends with a first push, Week 2 with a branch and pull request, every later week with a commit and push, and Week 24 with a signed release tag.

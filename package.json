@@ -39,7 +39,7 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5"
   },
-  "description": "Offline-first command center for learning any skill, with mastery gates, spaced repetition and a prerequisite knowledge graph.",
+  "description": "Offline-first control centre for a 24-week Dart, Flutter and UI/UX course, with honest estimates, proof-based mastery and spaced recall.",
   "engines": {
     "node": ">=22.12.0"
   }

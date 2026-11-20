@@ -27,7 +27,7 @@ The guided course adds a start-date clock, pausable progress, weekly capacity, r
 
 - Phases 1–5 are shipped: local-first foundation, estimates, the seven-view shell, the reviewed Week 1 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
 - The board-and-paper design pass is shipped (`53e8cab`).
-- Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy, exact AnkiDroid TSV guidance and the last sub-11px fixes.
+- Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy and exact AnkiDroid TSV guidance.
 - Phase 6 (guided course) is built and covered by tests, pending one deployment: Day 0 and the start clock, pause and resume, schema v6 day slots, seven authored Week 1 cards, AI week generation with a reviewed draft, the three-thread syllabus, optional progress marks, and a restorable trash with a UI.
 - The record-book pass replaced the knowledge graph with a derived concept index, a daily proof, a four-question checkpoint, a review queue and a readable Markdown export.
 - The native Android/AnkiDroid companion is later. There is no Android project in this repo yet.
@@ -86,11 +86,12 @@ src/
   data/
     tracks/              Authored subject: weeks, concepts, cards, resources
     curriculum/          blueprint.ts: the static 24-week Flutter route
+    weeks/               One folder per authored week; day cards and optional checklist
     seedData.ts          Fresh AppData seed
     prompts.ts           Editable prompt-skill templates
     books.ts, rhythm.ts  Shared canon and daily rhythm
   engine/                Pure logic: estimates, gating, concepts, proofs, mastery, SRS, search
-  features/              One folder per view: today, plan, map, practice, library, progress, help
+  features/              One folder per view; concepts/recall/vault map to map/practice/library
   hooks/                 History-depth and AI-key hooks
   lib/                   Router, dates, utilities (Anki export, downloads, cn/percent)
   services/              Storage, migrations, seed upgrade, history, exports, validation, install, AI client
@@ -109,7 +110,7 @@ docs/source/             Long-form course source (not shipped)
 
 ## 5. Data model and invariants
 
-Schema: `SCHEMA_VERSION = 5`, `SEED_VERSION = 5` in `src/types/schema.ts`.
+Schema: `SCHEMA_VERSION = 6`, `SEED_VERSION = 6` in `src/types/schema.ts` (bumped to 7 when authored week modules are added).
 
 `AppData` contains:
 
