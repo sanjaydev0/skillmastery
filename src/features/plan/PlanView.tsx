@@ -229,9 +229,12 @@ function Syllabus({ subject }: { subject: ReturnType<typeof useActiveSubject> })
   const active = useActiveWeek()
 
   const stateOf = (week: Week): { label: string; tone: 'good' | 'info' | 'neutral' } => {
-    if (week.weekNumber === 1) return { label: 'Written', tone: 'good' }
     const plans = dayPlans[week.id]
-    if (plans?.length) return { label: 'Generated', tone: 'info' }
+    if (plans?.length) {
+      return plans[0]?.origin === 'authored'
+        ? { label: 'Written', tone: 'good' }
+        : { label: 'Generated', tone: 'info' }
+    }
     return { label: 'Outline', tone: 'neutral' }
   }
 

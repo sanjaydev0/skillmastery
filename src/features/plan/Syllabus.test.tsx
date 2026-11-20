@@ -17,7 +17,8 @@ describe('syllabus and threads', () => {
 
   it('marks each week with the state of its cards', () => {
     render(<PlanView />)
-    expect(screen.getAllByText('Written', { selector: '.badge' }).length).toBeGreaterThan(0)
+    // Weeks 1 and 2 ship authored cards; the rest are still outlines.
+    expect(screen.getAllByText('Written', { selector: '.badge' }).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText('Outline', { selector: '.badge' }).length).toBeGreaterThan(0)
     expect(screen.queryAllByText('Generated', { selector: '.badge' })).toHaveLength(0)
   })

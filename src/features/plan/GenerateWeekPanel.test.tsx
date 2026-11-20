@@ -39,12 +39,12 @@ describe('week generation panel', () => {
     setAiKey('test-key-not-real')
     vi.mocked(generateWeekFor).mockResolvedValue(draft())
 
-    render(<PlanWeekPage weekId="fl-w2" />)
+    render(<PlanWeekPage weekId="fl-w3" />)
     expect(screen.getByRole('heading', { name: 'Write this week' })).toBeInTheDocument()
-    
+
     // Click "Write the seven cards" to show preview
     fireEvent.click(screen.getByRole('button', { name: /Write the seven cards/ }))
-    
+
     // Click "Generate the week" in the preview to actually run generation
     expect(await screen.findByText('This is what will be sent to the AI:')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Generate the week' }))
@@ -56,9 +56,9 @@ describe('week generation panel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save the seven cards' }))
     await waitFor(() => {
-      expect(useAppStore.getState().dayPlans['fl-w2']).toHaveLength(7)
+      expect(useAppStore.getState().dayPlans['fl-w3']).toHaveLength(7)
     })
-    expect(useAppStore.getState().dayPlans['fl-w2']!.every((plan) => plan.origin === 'ai')).toBe(true)
+    expect(useAppStore.getState().dayPlans['fl-w3']!.every((plan) => plan.origin === 'ai')).toBe(true)
   })
 
   it('shows the exact prompt in the preview and copies it', async () => {
@@ -69,7 +69,7 @@ describe('week generation panel', () => {
       value: { writeText },
     })
 
-    render(<PlanWeekPage weekId="fl-w2" />)
+    render(<PlanWeekPage weekId="fl-w3" />)
     fireEvent.click(screen.getByRole('button', { name: /Write the seven cards/ }))
 
     expect(await screen.findByText('This is what will be sent to the AI:')).toBeInTheDocument()
@@ -88,18 +88,18 @@ describe('week generation panel', () => {
       }),
     )
 
-    render(<PlanWeekPage weekId="fl-w2" />)
-    
+    render(<PlanWeekPage weekId="fl-w3" />)
+
     // Click "Write the seven cards" to show preview
     fireEvent.click(screen.getByRole('button', { name: /Write the seven cards/ }))
-    
+
     // Click "Generate the week" in the preview to actually run generation
     expect(await screen.findByText('This is what will be sent to the AI:')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Generate the week' }))
 
     expect(await screen.findByText('Fix these before saving')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save the seven cards' })).toBeDisabled()
-    expect(useAppStore.getState().dayPlans['fl-w2']).toBeUndefined()
+    expect(useAppStore.getState().dayPlans['fl-w3']).toBeUndefined()
   })
 
   it('asks before replacing saved cards', () => {
