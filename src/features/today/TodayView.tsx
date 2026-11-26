@@ -27,7 +27,7 @@ import { weekStatus } from '../../engine/gating'
 import { dayProofFor, recordDay } from '../../engine/proofs'
 import { gameStatsFor } from '../../engine/gamification'
 import { navigate } from '../../lib/router'
-import { formatShortDate } from '../../lib/dates'
+import { dateKey, formatShortDate } from '../../lib/dates'
 import {
   consistency,
   courseDay,
@@ -254,6 +254,11 @@ export function TodayView() {
           >
             {paused ? 'Resume course' : 'Pause course'}
           </Button>
+          {reviewCount > 0 ? (
+            <a className="link self-center text-[12px]" href="#/practice?quick=5">
+              Quick recall
+            </a>
+          ) : null}
         </div>
       </header>
 
@@ -514,6 +519,8 @@ export function TodayView() {
           </p>
         </section>
       )}
+
+      <BugLog />
 
       {slot === 5 && nextWeek && !dayPlans[nextWeek.id] && (
         <section className="card mt-4 border-l-[3px] border-accent p-3.5 sm:p-4" aria-label="Prepare next week">
@@ -798,5 +805,82 @@ function LedgerFact({
       </p>
       <p className="faint mt-1 text-[11px]">{meta}</p>
     </div>
+  )
+}
+
+/**
+ * One line a day about what broke and what fixed it. The note is saved locally
+ * and can become a mistake card in the same deck as everything else.
+ */
+function BugLog() {
+  const bugLog = useAppStore((state) => state.bugLog)
+  const saveBugNote = useAppStore((state) => state.saveBugNote)
+  const addCard = useAppStore((state) => state.addCard)
+  const toast = useUiStore((state) => state.toast)
+  const key = dateKey()
+  const saved = bugLog[key] ?? ''
+  const [draft, setDraft] = useState(saved)
+  const [madeCard, setMadeCard] = useState(false)
+  const trimmed = draft.trim()
+
+  const save = () => {
+    saveBugNote(draft)
+    toast(trimmed ? 'Bug note saved for today.' : 'Bug note cleared.', 'success', 3000)
+  }
+
+  const turnIntoCard = () => {
+    if (!trimmed) return
+    const result = addCard({
+      front: 'What broke today, and what fixed it?',
+      back: trimmed,
+      tags: 'bug, debugging',
+      source: 'mistake',
+    })
+    if (!result.ok) {
+      toast(result.message, 'error', 3200)
+      return
+    }
+    saveBugNote(draft)
+    setMadeCard(true)
+    toast('Card added to the deck.', 'success', 3200)
+  }
+
+  return (
+    <section className="card mt-4 p-3.5" aria-labelledby="bug-log-heading">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="eyebrow" id="bug-log-heading">
+            What broke today
+          </p>
+          <p className="faint mt-0.5 text-[11.5px]">
+            One line: the error and the fix. It becomes a card you review later.
+          </p>
+        </div>
+        {saved ? <span className="text-[11px] text-good">Saved</span> : null}
+      </div>
+      <label className="mt-2 block">
+        <span className="sr-only">What broke today</span>
+        <input
+          type="text"
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            setMadeCard(false)
+          }}
+          placeholder="RenderFlex overflowed; wrapped the row in Expanded"
+          maxLength={280}
+          className="input w-full text-[12.5px]"
+        />
+      </label>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={save}>
+          Save note
+        </Button>
+        <Button variant="soft" size="sm" onClick={turnIntoCard} disabled={!trimmed}>
+          Turn into a card
+        </Button>
+        {madeCard ? <span className="text-[11px] text-good">Card added</span> : null}
+      </div>
+    </section>
   )
 }

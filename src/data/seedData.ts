@@ -24,6 +24,7 @@ export function createSeedData(): AppData {
     subjects: clone([flutterSubject]),
     books: clone(seedBooks),
     dailyLog: {},
+    bugLog: {},
     overrides: { weeks: {} },
     prefs: {
       theme: 'dark',

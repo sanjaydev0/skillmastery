@@ -85,6 +85,7 @@ describe('schema v4 migration', () => {
     })
     expect(migrated.dayPlans).toEqual({})
     expect(migrated.trash).toEqual([])
+    expect(migrated.bugLog).toEqual({})
   })
 
   it('keeps day cards that a v3 payload already carried', () => {

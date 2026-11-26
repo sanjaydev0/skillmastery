@@ -125,6 +125,7 @@ interface AppStore extends AppData {
   }) => void
   deleteBook: (bookId: string) => void
   toggleDailyItem: (itemId: string) => void
+  saveBugNote: (note: string) => void
   unlockWeek: (weekId: string) => void
   clearOverride: (id: string) => void
   importData: (data: AppData, mode: 'replace' | 'merge') => void
@@ -1055,6 +1056,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }
     }),
 
+  saveBugNote: (note) =>
+    set((state) => {
+      const key = dateKey()
+      const trimmed = note.trim().slice(0, 280)
+      const bugLog = { ...state.bugLog }
+      if (trimmed) bugLog[key] = trimmed
+      else delete bugLog[key]
+      return { bugLog, updatedAt: now() }
+    }),
+
   unlockWeek: (weekId) =>
     set((state) => ({
       overrides: { ...state.overrides, weeks: { ...state.overrides.weeks, [weekId]: now() } },
@@ -1096,6 +1107,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const currentItems = dailyLog[key]?.items ?? []
       dailyLog[key] = { items: Array.from(new Set([...currentItems, ...value.items])) }
     }
+    // A merge fills missing days from the file; this device wins a shared date.
+    const bugLog = { ...incoming.bugLog, ...state.bugLog }
     const books = state.books.map((book) => {
       const incomingBook = incoming.books.find((entry) => entry.id === book.id)
       if (!incomingBook) return book
@@ -1108,6 +1121,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       subjects,
       books,
       dailyLog,
+      bugLog,
       overrides: {
         weeks: { ...incoming.overrides.weeks, ...state.overrides.weeks },
       },
@@ -1316,6 +1330,7 @@ export function getStoredAppData(): AppData {
     subjects: state.subjects,
     books: state.books,
     dailyLog: state.dailyLog,
+    bugLog: state.bugLog,
     overrides: state.overrides,
     prefs: state.prefs,
     planner: state.planner,

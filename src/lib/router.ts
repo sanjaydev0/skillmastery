@@ -13,6 +13,8 @@ export type ViewName =
 export interface Route {
   view: ViewName
   detail?: { kind: 'week' | 'concept'; id: string }
+  /** `#/practice?quick=5` opens a five-card burst on a phone. */
+  quick?: number
 }
 
 /**
@@ -51,7 +53,8 @@ function getHash(): string {
 }
 
 export function parseHash(hash: string): Route {
-  const path = hash.replace(/^#\/?/, '').split('?')[0] ?? ''
+  const [rawPath, rawQuery = ''] = hash.replace(/^#\/?/, '').split('?')
+  const path = rawPath ?? ''
   const [head, id] = path.split('/')
   if ((head === 'week' || head === 'plan') && id) return { view: 'plan', detail: { kind: 'week', id } }
   // `#/node/<id>` is the v5 link shape; concept ids match the old node ids,
@@ -60,7 +63,10 @@ export function parseHash(hash: string): Route {
   if (head === 'start') return { view: 'start' }
   if (head && LEGACY_VIEWS[head]) return { view: LEGACY_VIEWS[head] }
   const view = VIEWS.find((entry) => entry.id === head)?.id ?? 'today'
-  return { view }
+  const requested = Number(new URLSearchParams(rawQuery).get('quick'))
+  const quick =
+    Number.isFinite(requested) && requested > 0 ? Math.min(20, Math.floor(requested)) : undefined
+  return quick && view === 'practice' ? { view, quick } : { view }
 }
 
 export function useHashRoute(): Route {

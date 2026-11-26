@@ -4,7 +4,7 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 export const SEED_VERSION = 12
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
@@ -387,6 +387,8 @@ export interface AppData {
   /** The 30-min passive canon is shared across tracks. */
   books: Book[]
   dailyLog: Record<string, DayLog>
+  /** One line per local date: what broke and how it was fixed. */
+  bugLog: Record<string, string>
   overrides: Overrides
   prefs: AppPrefs
   planner: PlannerSettings

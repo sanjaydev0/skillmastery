@@ -353,6 +353,7 @@ export const appDataSchema = z.object({
   subjects: z.array(subjectSchema).min(1),
   books: z.array(bookSchema).default([]),
   dailyLog: z.record(z.string(), dayLogSchema).default({}),
+  bugLog: z.record(z.string(), z.string().max(280)).default({}),
   overrides: overridesSchema.default({ weeks: {} }),
   prefs: prefsSchema.default({ theme: 'dark', mode: 'active', sidebarCollapsed: false, localStorageThresholdMB: 4 }),
   planner: plannerSchema.default(() => ({ ...DEFAULT_PLANNER, studyDays: [...DEFAULT_PLANNER.studyDays] })),
@@ -382,7 +383,7 @@ export function parseBackupJson(raw: string): ParsedBackup {
  */
 export type MigratableAppData = Omit<
   AppData,
-  'planner' | 'promptOverrides' | 'journey' | 'dayPlans' | 'trash' | 'subjects'
+  'planner' | 'promptOverrides' | 'journey' | 'dayPlans' | 'trash' | 'subjects' | 'bugLog'
 > & {
   /**
    * Pre-v6 payloads carry no concepts or day proofs and may still carry the v5
@@ -400,6 +401,7 @@ export type MigratableAppData = Omit<
     weekendPassiveMinutes?: number
   }
   promptOverrides?: Record<string, string>
+  bugLog?: Record<string, string>
   journey?: Partial<Journey>
   dayPlans?: AppData['dayPlans']
   /** v5 trash could hold a node entry; the migration drops it. */
@@ -664,6 +666,9 @@ export function migrateAppData(input: MigratableAppData): AppData {
   )
   const journey = normaliseJourney(input.journey)
   const dayPlans = normaliseDayPlans(input.dayPlans)
+  // Schema v8: a one-line bug log, keyed by local date. Older payloads simply
+  // start empty rather than being rejected.
+  const bugLog = input.bugLog ?? {}
   // Concept trash entries died with the graph; a deleted week keeps its own
   // concepts inside its payload.
   const trash = (input.trash ?? [])
@@ -678,7 +683,7 @@ export function migrateAppData(input: MigratableAppData): AppData {
   )
 
   if (input.schemaVersion >= SCHEMA_VERSION) {
-    return { ...input, subjects, planner, promptOverrides, journey, dayPlans, trash }
+    return { ...input, subjects, planner, promptOverrides, journey, dayPlans, trash, bugLog }
   }
 
   return {
@@ -689,6 +694,7 @@ export function migrateAppData(input: MigratableAppData): AppData {
     journey,
     dayPlans,
     trash,
+    bugLog,
     subjects,
   }
 }

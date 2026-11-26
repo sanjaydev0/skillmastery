@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { GateChecks } from '../types/schema'
 import { isWeekAvailable } from '../engine/gating'
 import { PROOF_INTERVALS } from '../engine/proofs'
-import { startOfLocalDay } from '../lib/dates'
+import { startOfLocalDay, dateKey } from '../lib/dates'
 import { toBackupJson } from '../lib/utils'
 import { parseBackupJson } from '../services/validation'
 import { getStoredAppData, useAppStore } from './AppStore'
@@ -166,5 +166,31 @@ describe('track lifecycle and backup import', () => {
     expect(merged.subjects).toHaveLength(base.subjects.length)
     expect(merged.subjects[0]!.name).toBe('Merged Flutter')
     expect(merged.books[0]!.currentChapter).toBe(incoming.books[0]!.currentChapter)
+  })
+})
+
+describe('bug log', () => {
+  it('saves one line for today and clears a blank note', () => {
+    const key = dateKey()
+    useAppStore.getState().saveBugNote('RenderFlex overflowed; wrapped the row in Expanded')
+    expect(useAppStore.getState().bugLog[key]).toBe(
+      'RenderFlex overflowed; wrapped the row in Expanded',
+    )
+
+    useAppStore.getState().saveBugNote('   ')
+    expect(useAppStore.getState().bugLog[key]).toBeUndefined()
+  })
+
+  it('keeps this device on a shared date during a merge', () => {
+    const key = dateKey()
+    useAppStore.getState().saveBugNote('local fix')
+    const incoming = structuredClone(getStoredAppData())
+    incoming.bugLog[key] = 'incoming fix'
+    incoming.bugLog['2026-01-01'] = 'older day'
+
+    useAppStore.getState().importData(incoming, 'merge')
+    const merged = useAppStore.getState()
+    expect(merged.bugLog[key]).toBe('local fix')
+    expect(merged.bugLog['2026-01-01']).toBe('older day')
   })
 })

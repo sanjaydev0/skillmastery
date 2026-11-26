@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowRight, CalendarCheck2 } from 'lucide-react'
-import { useActiveSubject } from '../../store/AppStore'
+import { useActiveSubject, useAppStore } from '../../store/AppStore'
 import { dueCards } from '../../engine/srs'
 import { dueConcepts } from '../../engine/concepts'
 import { cn } from '../../lib/utils'
@@ -12,10 +12,11 @@ import { ConceptSheet } from '../concepts/ConceptSheet'
 
 type RecallTab = 'study' | 'deck' | 'prompts'
 
-export function RecallView() {
+export function RecallView({ quick }: { quick?: number } = {}) {
   const subject = useActiveSubject()
   const [tab, setTab] = useState<RecallTab>('study')
   const [openConcept, setOpenConcept] = useState<string | null>(null)
+  if (quick) return <QuickRecall count={quick} />
   const due = dueCards(subject.cards).length
   const dueList = dueConcepts(subject.concepts)
   const fresh = subject.cards.filter((card) => card.dueAt === 0).length
@@ -134,6 +135,99 @@ function RecallStat({
     <div>
       <p className="eyebrow truncate">{label}</p>
       <p className={cn('num mt-1 text-[19px] leading-none font-semibold', colour)}>{value}</p>
+    </div>
+  )
+}
+
+/**
+ * `#/practice?quick=5` is the phone shortcut: a short burst of due cards with
+ * no tabs, no stats and no deck management. The deck is captured once so a
+ * grade cannot shift the card under the learner's thumb.
+ */
+function QuickRecall({ count }: { count: number }) {
+  const subject = useActiveSubject()
+  const reviewCard = useAppStore((state) => state.reviewCard)
+  const [deck] = useState(() => dueCards(subject.cards).slice(0, count))
+  const [index, setIndex] = useState(0)
+  const [shown, setShown] = useState(false)
+  const card = deck[index]
+
+  if (deck.length === 0) {
+    return (
+      <div>
+        <header>
+          <p className="eyebrow">Quick recall</p>
+          <h1 className="h1 mt-1">Nothing due right now</h1>
+          <p className="muted mt-2 max-w-[60ch] text-[13px]">
+            The queue is clear. Open Practice to add a card or read the deck.
+          </p>
+        </header>
+        <section className="card mt-4 p-4">
+          <a className="link text-[12.5px]" href="#/practice">
+            Back to Practice
+          </a>
+        </section>
+      </div>
+    )
+  }
+
+  if (!card) {
+    return (
+      <div>
+        <header>
+          <p className="eyebrow">Quick recall</p>
+          <h1 className="h1 mt-1">Burst done</h1>
+          <p className="muted mt-2 max-w-[60ch] text-[13px]">
+            You reviewed {deck.length} card{deck.length === 1 ? '' : 's'}. The next review dates are set.
+          </p>
+        </header>
+        <section className="card mt-4 p-4">
+          <a className="link text-[12.5px]" href="#/practice">
+            Back to Practice
+          </a>
+        </section>
+      </div>
+    )
+  }
+
+  const grade = (value: 'again' | 'good') => {
+    reviewCard(card.id, value)
+    setShown(false)
+    setIndex((current) => current + 1)
+  }
+
+  return (
+    <div>
+      <header>
+        <p className="eyebrow">Quick recall</p>
+        <h1 className="h1 mt-1">A short burst</h1>
+        <p className="muted mt-2 max-w-[60ch] text-[13px]">
+          Card {index + 1} of {deck.length}. Answer from memory, then reveal.
+        </p>
+      </header>
+      <section className="card mt-4 p-4" aria-live="polite">
+        <p className="display text-[1.3rem] leading-snug font-medium">{card.front}</p>
+        {shown ? <p className="muted mt-3 text-[13.5px] leading-relaxed">{card.back}</p> : null}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {shown ? (
+            <>
+              <Button variant="outline" onClick={() => grade('again')}>
+                Not yet
+              </Button>
+              <Button variant="primary" onClick={() => grade('good')}>
+                Got it
+              </Button>
+            </>
+          ) : (
+            <Button variant="primary" onClick={() => setShown(true)}>
+              Show answer
+            </Button>
+          )}
+          <a className="link ml-auto text-[11.5px]" href="#/practice">
+            Leave
+          </a>
+        </div>
+      </section>
     </div>
   )
 }

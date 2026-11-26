@@ -128,7 +128,7 @@ export default function App() {
           )
         ) : null}
         {route.view === 'map' ? <ConceptsView /> : null}
-        {route.view === 'practice' ? <RecallView /> : null}
+        {route.view === 'practice' ? <RecallView quick={route.quick} /> : null}
         {route.view === 'library' ? <VaultView /> : null}
         {route.view === 'progress' ? <ProgressView /> : null}
         {route.view === 'help' ? <HelpView /> : null}
