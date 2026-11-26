@@ -56,7 +56,7 @@ export const flutterSubject: Subject = {
   shortName: 'Flutter',
   tagline:
     'A 24-week mastery track: Dart primitives, design systems, three-tree fluency, reactive architecture, offline sync, and production delivery.',
-  accent: 'sky',
+  accent: 'cobalt',
   phases: [
     {
       id: 'fl-p1',

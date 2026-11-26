@@ -73,7 +73,7 @@ describe('authored week modules', () => {
     }
   })
 
-  it('opens each card with a paragraph a 13-year-old can read in one go', () => {
+  it('opens each card with a paragraph a beginner can read in one go', () => {
     for (const content of WEEK_CONTENT) {
       for (const plan of plansByWeek[content.weekId] ?? []) {
         const first = paragraphs(plan.summary)[0] ?? ''

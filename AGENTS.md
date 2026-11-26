@@ -19,30 +19,29 @@ SkillMastery is an offline-first React PWA that acts as a control centre for a s
 
 It is **not** a course player, code editor, terminal, or cloud account. It stores progress locally, shows the next real task, keeps estimates honest, and points at external docs, GitHub and AnkiDroid.
 
-One 24-week track is bundled (Flutter, Dart and High-Craft UI/UX). Week 1 is fully authored as seven day cards written for a 13-year-old. Week 2 keeps its authored task list. Weeks 2–24 draw their weekly brief from the blueprint; only Week 1 has authored day cards.
+One 24-week track is bundled (Flutter, Dart and High-Craft UI/UX). Weeks 1 and 2 are fully authored as seven day cards each. Weeks 3–24 draw their weekly brief from the blueprint and gain day cards when a week module is written.
 
 The guided course adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v6. The record book is a linear route, a read-only concept index, and two kinds of proof: the daily answer and the four-question weekly checkpoint.
 
-**Current state (October 2026):**
+**What is built:**
 
-- Phases 1–5 are shipped: local-first foundation, estimates, the seven-view shell, the reviewed Week 1 curriculum, Help expansion, resource additions, and the optional AI prompt runner.
-- The board-and-paper design pass is shipped (`53e8cab`).
-- Phase 5 added editable prompt skills in `AppData`, a device-local Velona key, the stateless `/api/chat` proxy and exact AnkiDroid TSV guidance.
-- Phase 6 (guided course) is built and covered by tests, pending one deployment: Day 0 and the start clock, pause and resume, schema v6 day slots, seven authored Week 1 cards, AI week generation with a reviewed draft, the three-thread syllabus, optional progress marks, and a restorable trash with a UI.
-- The record-book pass replaced the knowledge graph with a derived concept index, a daily proof, a four-question checkpoint, a review queue and a readable Markdown export.
-- The native Android/AnkiDroid companion is later. There is no Android project in this repo yet.
+- Local-first foundation, honest estimates, the seven-view shell, the command palette and the mobile shell.
+- Authored Weeks 1–2, the 24-week blueprint, Help, the resource library and the optional AI prompt runner.
+- Guided course: Day 0 and the start clock, pause and resume, the day-card layer, a reviewed draft flow for AI week generation, the three-thread syllabus, derived progress marks and a restorable trash.
+- The record book: a derived concept index, the daily proof, the four-question weekly checkpoint, the review queue and the Markdown export.
+- **Not built:** optional cloud sync, a native Android companion, and a second language track. Do not assume any of them exists.
 
 ---
 
 ## 2. Non-negotiables
 
 - **Vercel only.** No GitHub Pages workflow, no `gh-pages` branch, no second host. The live alias is `skillmastery-jay.vercel.app`.
-- **Local-first.** No account, analytics, telemetry, cloud sync or runtime curriculum fetch. Progress lives in IndexedDB with a localStorage mirror.
+- **Local-first.** The app works with no account, no analytics, no telemetry and no runtime curriculum fetch. Progress lives in IndexedDB with a localStorage mirror. Optional cloud sync is a later phase: do not build it, import it, or claim it exists before its own spec is approved.
 - **No time tracking.** No timers, stopwatches, elapsed time, session countdowns or “time remaining”. Estimates are ranges; checking a task credits the whole range.
 - **Two layers, one truth.** `checklist` items carry `day` and are the evidence layer. `dayPlans[weekId]` carries the editorial card: title, summary, tasks, direction and design note. Checking a task is the only thing that earns credit; a day card never claims progress.
-- **Week 1 is hand-authored.** Do not replace it with generated copy. Weeks 2–24 may be generated only through the blueprint brief, must pass `checkDayPlans`, and must be reviewed before they are canonical.
+- **Authored weeks are protected.** Do not replace Weeks 1–2 or any reviewed module with generated copy. Weeks 3–24 may be generated only through the blueprint brief, must pass `checkDayPlans`, and must be reviewed before they are canonical.
 - **Zed + Flutter CLI + physical phone.** Do not reintroduce Android Studio, an emulator, or an IDE-specific workflow into the course or Help.
-- **The learner is 13.** Plain language in the learner-facing path; technical depth belongs behind “Go deeper”.
+- **Plain first, depth on demand.** Write for an adult beginner who has never programmed. Define every term the first time it appears. Runtime, compiler and architecture detail belongs behind “Go deeper”, never in the first paragraph.
 - **Never commit secrets.** The Velona API key is device-local. It must never appear in `AppData`, an export, a fixture, a screenshot, a log, or `vercel.json`.
 - **Do not delete user data to fix a bug.** Backups and storage migrations must be additive or explicitly confirmed by the user.
 
@@ -55,7 +54,7 @@ Node `>=22.12.0` (`.nvmrc` pins 22).
 ```bash
 npm install
 npm run dev        # Vite dev server, http://127.0.0.1:5173
-npm test           # Vitest, currently 272 tests across 39 files
+npm test           # Vitest suite
 npm run lint       # oxlint
 npx tsc -b         # type-check without emitting (also runs inside build)
 npm run build      # tsc -b + Vite production build into dist/
@@ -68,7 +67,7 @@ Before every push:
 npx tsc -b && npm test && npm run lint && npm run build
 ```
 
-`npm run lint` currently reports 13 pre-existing warnings and zero errors. Do not add new warnings. Do not silence a warning with a blanket disable.
+`npm run lint` must report zero errors. Do not add new warnings. Do not silence a warning with a blanket disable.
 
 ---
 
@@ -165,15 +164,16 @@ Rules:
 
 ## 6. Content authoring
 
-- Flutter Week 1: 15 tasks spread across all seven days, with seven authored day cards, written for a 13-year-old. Each day pairs passive input with active output.
+- Flutter Week 1: 15 tasks spread across all seven days, with seven authored day cards, written for an adult beginner. Each day pairs passive input with active output.
 - Every day card follows `docs/CONTENT-STYLE.md`: one idea, a five-minute start, one concrete example, a named failure and an observable check. `checkDayPlans()` in `src/content/style.ts` enforces the mechanical rules in tests.
+- Every day card names one idea that outlives Flutter. `transferNote` is one sentence, at most 25 words, in the shape “This is <mechanism>; you meet it again in <another language or domain>”. Name the mechanism, never the API.
 - Week shape: Days 1–2 orient, 3–4 build/debug, 5 test, 6 apply, 7 buffer + checkpoint.
 - Every week names an artefact (“You build”), a git habit, a one-sentence anchor, outcomes, rabbit holes, and a blind checkpoint. The blueprint carries three threads (Dart, Flutter, design) for all 24 weeks; a week page shows all three, and the Plan syllabus lists them together. A coding week without a design thread is a content bug.
 - Git is threaded through the whole course: Week 1 first push, Week 2 branch + PR, every later week commit + push, Week 24 signed release tag.
 - Estimates must fit the default capacity: 720 active / 420 passive per week across seven days, which is 103 / 60 per day. A week that cannot fit is a content bug, not a UI warning.
 - Technical terms are defined on first use. “Go deeper” carries the compiler/runtime detail.
 - `docs/source/flutter-24-week-plan.txt` is reference material. `src/data/curriculum/blueprint.ts` is the executable 24-week summary; keep them aligned when changing the route.
-- The track follows the same schema and UI. Keep the Flutter copy plain for a 13-year-old; technical depth belongs behind “Go deeper”.
+- The track follows the same schema and UI. Keep the copy plain for an adult beginner; technical depth belongs behind “Go deeper”.
 
 ---
 
@@ -181,12 +181,13 @@ Rules:
 
 `DESIGN.md` is the contract. The short version:
 
-- Board and paper. Fraunces for the one loud statement; Instrument Sans for everything else.
+- Calm Studio. Plus Jakarta Sans for the one loud statement and section headings; Inter for everything else; system monospace for code only.
 - One accent action per screen. If two elements are accent-filled, fix one.
 - Related stats use `.ledger`; nested stats use `.mini-ledger`. Do not add a second layer of cards.
+- Day cards use four callouts only: One idea, Common failure, Design note, What transfers.
 - 11px minimum text. No ALL-CAPS eyebrows. No middle-dot meta strings. No `→` appended to links.
 - No gradients, glows, glass, hover lifts or fake urgency.
-- 44px touch targets below 768px; visible focus states; icon-only buttons need `aria-label`.
+- 48px touch targets below 768px; visible focus states; icon-only buttons need `aria-label`.
 - Use tokens from `src/index.css`; never hard-code a hex value in a component.
 - Use `cn()` for conditional classes, `percent()` for ratios, `formatEstimate`/`formatTotal` for time.
 
@@ -251,7 +252,7 @@ When adding a view, update the router, the shell navigation, the command palette
 8. **Book merge direction.** Merge keeps the higher `currentChapter`; never move a learner backwards.
 9. **PWA weight.** The precache is ~1.1 MB after fonts. Adding another font family or a large icon set will slow first install on the phone. Check the build output.
 10. **`logo-mark` has no CSS rule.** It is a positioning hook, not a tile. Do not assume it paints a background.
-11. **Boot and PWA colours are duplicated.** The inline boot styles in `index.html`, the theme-colour update in `AppShell`, and the manifest colours in `vite.config.ts` are not generated from CSS. When a palette token changes, update all three in the same commit.
+11. **Boot and PWA colours are duplicated.** The inline boot styles in `index.html`, the theme-colour update in `AppShell`, and the manifest colours in `vite.config.ts` are not generated from CSS. When a palette token changes, update all three in the same commit. The Calm Studio values are `#f8fafc` for light and `#0b0f17` for dark.
 12. **Old view aliases.** Removing `overview`, `curriculum`, `nodes`, `recall` or `vault` from the router breaks saved links and command-palette results.
 13. **Do not edit `dist/`.** It is generated. Rebuild instead.
 14. **Local preview port.** `npm run preview` uses `4173`; the dev server uses `5173`. Do not confuse them when testing the service worker.
@@ -259,6 +260,7 @@ When adding a view, update the router, the shell navigation, the command palette
 16. **The AI key is not data.** It lives in localStorage under `skillmastery:ai-key`. Never put it in `AppData`, a seed, a test fixture, a screenshot or an export; never log it in the proxy.
 17. **`/api/chat` must stay outside the SPA rewrite.** A rewrite of `/(.*)` makes the function unreachable. Keep `/((?!api/).*)` and test the 401 after every deployment.
 18. **AnkiDroid takes TSV/CSV, not JSON.** JSON is only for re-importing generated cards into SkillMastery. Help and empty states must keep that distinction.
+19. **A Firestore rule cannot measure bytes.** `request.resource.data.size()` counts top-level fields, not payload size. The 1 MB document limit is enforced by splitting documents and by a client-side cap, never by a rule such as `size() <= 50`.
 
 ---
 
@@ -270,10 +272,11 @@ When adding a view, update the router, the shell navigation, the command palette
 | 2 | Schema v2, estimates, planner, undo, scoped resets | Shipped |
 | 3 | Seven-view IA, command palette, mobile shell | Shipped |
 | 4 | Authored Weeks 1–2, 24-week blueprint, Vercel-only hosting | Shipped |
-| — | Board-and-paper design pass | Shipped (`53e8cab`) |
+| — | Board-and-paper design pass, later replaced by Calm Studio | Shipped (`53e8cab`) |
 | 5 | Help expansion, resource library, AI proxy + prompt runner, legibility | Shipped |
-| 6 | Guided course: start clock, pause, day cards, generation, syllabus, marks, trash | Built; deploy pending |
-| — | Record book: concept index, daily proof, four-question checkpoint, review note, Markdown record | Built; deploy with phase 6 |
+| 6 | Guided course: start clock, pause, day cards, generation, syllabus, marks, trash | Built |
+| — | Record book: concept index, daily proof, four-question checkpoint, review note, Markdown record | Built |
+| — | Calm Studio: adult-beginner contract, transfer rule, tokens and fonts | In progress |
 | 7 | Android/AnkiDroid companion and exact device setup | Later |
 | — | Release signing and store delivery | Course content, Week 17; not app infrastructure |
 
@@ -287,6 +290,7 @@ A change is done when:
 
 - [ ] It follows `DESIGN.md` and the copy rules.
 - [ ] New learner-facing content passes `checkDayPlans()` and `docs/CONTENT-STYLE.md`.
+- [ ] Every new day card names the transferable idea in `transferNote`.
 - [ ] `npx tsc -b`, `npm test`, `npm run lint` and `npm run build` pass.
 - [ ] New engine or migration behaviour has a test.
 - [ ] Existing backups, checks/notes and planner settings survive.
@@ -296,7 +300,7 @@ A change is done when:
 - [ ] The deployment is READY and the production alias serves the new bundle hash.
 - [ ] `README.md` or `DESIGN.md` is updated if behaviour or visual rules changed.
 
-Commit style: imperative sentence, no prefix, explain the learner-visible change. Example: `Give SkillMastery a board-and-paper visual identity`.
+Commit style: imperative sentence, no prefix, explain the learner-visible change. Example: `Give SkillMastery a Calm Studio visual identity`.
 
 ---
 

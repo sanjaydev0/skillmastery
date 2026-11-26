@@ -22,7 +22,7 @@ export interface WeekKnowledgePoint {
 export interface WeekBlueprint {
   weekNumber: number
   phaseId: string
-  /** Plain-language theme a 13-year-old can repeat back. */
+  /** Plain-language theme a beginner can repeat back. */
   theme: string
   /** Language / runtime thread. */
   dart: string

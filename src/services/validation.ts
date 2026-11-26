@@ -234,7 +234,7 @@ const subjectSchema = z.object({
   name: z.string().min(1),
   shortName: z.string().min(1),
   tagline: z.string(),
-  accent: z.enum(['sky', 'emerald', 'violet', 'amber']),
+  accent: z.enum(['cobalt', 'sky', 'emerald', 'violet', 'amber']),
   phases: z.array(phaseSchema).min(1),
   weeks: z.array(weekSchema),
   concepts: z.array(conceptSchema).default([]),

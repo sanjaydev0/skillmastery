@@ -40,7 +40,7 @@ describe('Week 1 day cards', () => {
     }
   })
 
-  it('opens with one visible paragraph a 13-year-old can read in one go', () => {
+  it('opens with one visible paragraph a beginner can read in one go', () => {
     for (const plan of weekOneDayPlans) {
       const first = plan.summary.split('\n\n')[0]!
       expect(wordCount(first)).toBeLessThanOrEqual(60)

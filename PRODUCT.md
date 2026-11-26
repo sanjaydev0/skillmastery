@@ -8,10 +8,12 @@ web
 
 ## Users
 
-The primary learner is 13 years old. He works on an 8 GB Linux laptop with Zed, the
-Flutter CLI and a physical Android phone. He studies at home, seven days a week,
-and may miss 2–6 days in a month. When that happens he pauses the course instead
-of pretending the missed days did not happen.
+The primary learner is an adult beginner learning programming for the first time. He
+works on an 8 GB Linux laptop with Zed, the Flutter CLI and a physical Android
+phone. He studies at home, seven days a week, and may miss 2–6 days in a month.
+When that happens he pauses the course instead of pretending the missed days did
+not happen. He wants first principles he can carry to another language, not a tour
+of Flutter APIs.
 
 ## Product Purpose
 
@@ -32,11 +34,11 @@ next course day and can rebuild the week's artefact without notes.
 The product is the course, not a dashboard around a course. One start date drives
 a real 168-day clock; every day carries an authored or generated card that names
 one idea, one mechanism and one failure; the checklist is the only evidence that
-earns credit. All of that runs on the device. There is no account, no cloud sync,
-no analytics and no curriculum fetched at runtime.
+earns credit. All of that runs on the device. There is no account, no analytics and
+no curriculum fetched at runtime. Optional cloud sync is a later phase, not a
+shipped feature.
 
-Week 1 is authored: tasks and seven day cards. Week 2 has an authored task list
-and gains authored day cards. Every later week is written one week at a time
+Weeks 1 and 2 are authored: tasks and seven day cards each. Every later week is written one week at a time
 from the 24-week blueprint and the learner's own history, then reviewed before
 it becomes canonical. A neighbouring course player could copy the screens; it could not
 truthfully copy a course that is already written into the same local data model
@@ -70,7 +72,8 @@ as the learner's evidence.
 - Estimates are ranges. Checking a task credits its whole range. The app never
   measures elapsed time and never runs a per-task timer.
 - Day cards are stored editorially, keyed by week id. The checklist remains the
-  evidence layer. A day card never claims progress.
+  evidence layer. A day card never claims progress, and every card carries one
+  transferable idea in `transferNote`.
 - Deleting a week or a track is recoverable from a 20-item trash. A restore
   reconnects the prerequisite graph and the day cards.
 - AI generation is one request per week, on demand, with an explicit preview and
@@ -78,27 +81,29 @@ as the learner's evidence.
   in `docs/CONTENT-STYLE.md` before it is canonical.
 - Schema v6. Migrations are additive and preserve checks, notes, estimates,
   planner settings, journey, day cards and trash.
-- No accounts, telemetry, cloud sync, background daemons or runtime curriculum
-  fetch. The only server-side surface is `/api/chat`.
+- No accounts, telemetry, background daemons or runtime curriculum fetch today.
+  The only server-side surface is `/api/chat`. Optional cloud sync is a later
+  phase.
 
 ## Brand Commitments
 
 - The name is SkillMastery.
-- Board and paper: a deep green-black chalkboard in dark mode, warm paper and ink
-  in light mode, one highlighter accent.
+- Calm Studio: a cool-slate daylight theme and a midnight theme, each with one
+  cobalt or sky accent. Plus Jakarta Sans for headings, Inter for everything else.
 - The voice is calm, plain and specific. It speaks to one learner, uses "you",
   and prefers a full stop to an exclamation mark.
 - No hype, no fake urgency, no streak guilt, no "journey" language, no gamified
   badges that punish a missed day.
-- The learner is 13. Technical depth is allowed and expected, but it is explained
-  in plain words before the jargon appears.
+- The learner is an adult beginner. Technical depth is allowed and expected, but
+  it is explained in plain words before the jargon appears, and every card names
+  the idea that transfers to another language.
 
 ## Evidence on Hand
 
 - `docs/source/flutter-24-week-plan.txt` — the 4,247-line human course source.
 - `src/data/curriculum/blueprint.ts` — the 24-week executable route with Dart,
   Flutter and design threads.
-- `src/data/tracks/flutterWeeks1to6.ts` — the authored Week 1 tasks; Weeks 2–6
+- `src/data/tracks/flutterWeeks1to6.ts` — the authored Weeks 1–2 tasks; Weeks 3–6
   carry their task lists.
 - `docs/CONTENT-STYLE.md` and `src/content/style.ts` — the day-card standard and
   its checker.
@@ -116,14 +121,14 @@ as the learner's evidence.
    mechanism, the failure and the observable result, not when its sentences are
    long.
 4. **Local-first is a promise, not a setting.** No account, no upload, no hidden
-   sync. A key that is not needed stays unused.
+   sync today. Optional sync, when it arrives, is explicit and opt-in.
 5. **Deleting is recoverable.** Destructive actions go to a trash, and a restore
    puts the graph back together.
 
 ## Accessibility & Inclusion
 
 - 11px minimum text, WCAG AA contrast for body text, visible focus states.
-- 44px touch targets below 768px.
+- 48px touch targets below 768px.
 - Reduced motion is respected; no parallax, glow or decorative animation.
 - The interface must work at 390px and 1280px, light and dark.
 - Instructions are written for a distracted reader: one idea per card, a

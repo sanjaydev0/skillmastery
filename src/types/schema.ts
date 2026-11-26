@@ -12,7 +12,7 @@ export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
 
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export type SubjectAccent = 'sky' | 'emerald' | 'violet' | 'amber'
+export type SubjectAccent = 'cobalt' | 'sky' | 'emerald' | 'violet' | 'amber'
 
 export type WeekStatus = 'locked' | 'ready' | 'in-progress' | 'mastered'
 

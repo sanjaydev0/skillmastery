@@ -21,7 +21,7 @@ description: Create or revise one authored week of SkillMastery course content (
 
    - No invented URLs. Use the real documentation hosts already allowed by the checker.
    - No timers, streaks, "behind", countdowns, or forward references to a later week.
-   - British spelling. Keep the learner-facing copy plain for a 13-year-old.
+   - British spelling. Keep the learner-facing copy plain for an adult beginner.
    - One idea per day; 250–500 word summaries; 2–4 tasks; direction under 40 words; design note 25–100 words.
    - The checklist is the evidence layer. A day card never claims progress.
    - Do not change the schema, the AI proxy contract, or the Velona key handling.

@@ -9,8 +9,8 @@ The standard merges two sources:
 - **ASD-STE100 Simplified Technical English** for the instruction layer. Short
   sentences, active voice, imperative steps, one word for one concept.
 - **Low working-memory instructional design** for the learning layer. One idea,
-  a five-minute start, visible progress, a check you can see. This matters for a
-  13-year-old, for a tired adult, and for anyone with an attention difference.
+  a five-minute start, visible progress, a check you can see. This matters for an
+  adult beginner, for a tired reader, and for anyone with an attention difference.
 
 We take the rules, not a certificate. Literal STE100 bans metaphor, which is
 how design is taught. The split is deliberate: **instructions are STE-strict,
@@ -31,15 +31,16 @@ Three sentences, 12–18 words each, and the reader now knows the difference. A
 
 ## The fixed skeleton
 
-A day card has five fields. The order never changes.
+A day card has six fields. The order never changes.
 
 | Field | Job | Budget |
 | --- | --- | --- |
 | `title` | Name the day's one idea | ≤ 8 words |
-| `summary` | What, why, mechanism, failure | 250–500 words, ≤ 5 sentences per paragraph |
+| `summary` | What, why, mechanism, failure | 180–400 words, ≤ 5 sentences per paragraph |
 | `tasks` | Do this, then check it | 2–4 items, ≤ 20 words each |
 | `direction` | The detour this day prevents | ≤ 40 words |
 | `designNote` | One craft lesson on this week's artefact | 25–100 words |
+| `transferNote` | The idea that outlives Flutter | One sentence, ≤ 25 words |
 
 ### 1. `title`
 
@@ -86,6 +87,18 @@ may open the note, but the example must follow in the same paragraph.
   and muted. If both are 24px, the eye has no anchor.`
 - Bad: `Design is about hierarchy and balance.`
 
+### 6. `transferNote`
+
+One sentence that names the mechanism and says where else it appears. This is the
+line that makes six months of Flutter transferable to another language.
+
+- Good: `This is a rebuild that touches only what changed; React, SwiftUI and Compose each do a version of it.`
+- Bad: `Flutter uses setState.`
+
+Rules: one sentence, ≤ 25 words. Name the mechanism, never the widget or the
+method. Name at least one other language or domain. If the day teaches nothing
+transferable, the day is too narrow — rewrite the card.
+
 ## The rules
 
 1. **One idea per card.** If the day teaches two things, split it.
@@ -130,6 +143,7 @@ logic:
 - 20-word task and direction cap, 25-word summary sentence cap;
 - five-sentence paragraph cap;
 - title, summary, task-count, direction and design-note budgets;
+- transfer-note budget (one sentence, at most 25 words) when a card carries one;
 - no semicolon or em dash in a task;
 - no future tense in a task.
 

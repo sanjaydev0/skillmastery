@@ -2,7 +2,7 @@
 
 This is the visual and interaction contract for the SkillMastery web app. Read it before adding a screen, a component, or a new colour. The executable source of truth is `src/index.css`; this document explains the intent and the rules behind those tokens.
 
-**Last reviewed:** November 2026 (Phase 6: guided course, record book, week writer).
+**Last reviewed:** November 2026 (Calm Studio reframe: adult beginner, transfer rule, new tokens).
 
 ---
 
@@ -17,26 +17,26 @@ It answers four questions and then gets out of the way:
 3. What is the next real piece of work?
 4. Is the week actually finished?
 
-The learner is a 13-year-old working on an 8 GB Linux laptop with Zed, the Flutter CLI and a physical Android phone. The UI has to be legible at arm's length, honest about effort, and calm enough to open every day for six months.
+The learner is an adult beginner working on an 8 GB Linux laptop with Zed, the Flutter CLI and a physical Android phone. The UI has to be legible at arm's length, honest about effort, and calm enough to open every day for six months.
 
-The design metaphor is **board and paper**:
+The design metaphor is **Calm Studio**:
 
-- **Dark theme** — a deep green-black chalkboard with warm chalk text and one highlighter mark.
-- **Light theme** — an exercise book: warm paper, ink-green text, one highlighter mark.
+- **Daylight Studio (light)** — a crisp cool-slate canvas, clean white work surfaces, high-contrast slate ink and one cobalt focus accent.
+- **Night Focus (dark)** — a deep midnight-slate canvas, softly elevated surfaces, chalk-white text and one legible sky accent.
 
-It should feel like a well-kept workbook, not a SaaS dashboard.
+It should feel like a well-kept engineering workspace, not a game or a SaaS dashboard.
 
 ---
 
 ## 2. Principles
 
-1. **One loud statement per page.** The page title or the single next action may be set in Fraunces at display size. Everything else is quiet.
+1. **One loud statement per page.** The page title or the single next action may be set in Plus Jakarta Sans at display size. Everything else is quiet.
 2. **A ledger beats a card grid.** Related numbers share one ruled row (`.ledger`), not four identical boxes. Stats nested inside a sheet use `.mini-ledger`.
-3. **One accent mark at a time.** The highlighter is reserved for what the learner should do next: the primary button, the active nav rule, today's column, the one current week. If two things on a screen are filled with accent, one of them is wrong.
+3. **One accent mark at a time.** The accent is reserved for what the learner should do next: the primary button, the active nav rule, today's column, the one current week. If two things on a screen are filled with accent, one of them is wrong.
 4. **Show the shape of the work.** Days, ranges, capacity and checkpoints are visible. Nothing invents urgency with a timer, streak countdown, or red badge.
 5. **Honest ranges, never false precision.** A task is `25–30 min`; a week is `9.9–12.3 h`; the course is a range. Do not collapse a range to a single number in display.
 6. **The app points; it does not perform.** It links to the docs, the repo and the phone. It does not pretend to be the editor, the terminal, or AnkiDroid.
-7. **Plain words for a 13-year-old.** Short sentences, concrete verbs, technical terms defined on first use. Depth lives behind “Go deeper”, not in the first paragraph.
+7. **Plain first, depth on demand.** Write for an adult beginner who has never programmed. Short sentences, concrete verbs, technical terms defined on first use. Depth lives behind “Go deeper”, not in the first paragraph.
 8. **Material, not decoration.** No glows, gradients, glassmorphism, floating blobs or hover lifts. Borders and rules do the structural work.
 
 ---
@@ -79,28 +79,28 @@ Two families only. Both are bundled locally through Fontsource; there is no runt
 
 | Role | Family | How it is used |
 | --- | --- | --- |
-| Display | **Fraunces Variable** | The page's one loud statement: `.h1`, `.display`, a week number, the SRS ladder scale, a big empty-state title. |
-| UI / body | **Instrument Sans Variable** | Navigation, buttons, labels, tables, paragraphs, forms, metadata. Everything you read while working. |
+| Display | **Plus Jakarta Sans Variable** | The page's one loud statement: `.h1`, `.display`, a week number, the SRS ladder scale, a big empty-state title. |
+| UI / body | **Inter Variable** | Navigation, buttons, labels, tables, paragraphs, forms, metadata. Everything you read while working. |
 | Code | System mono | Only real code, CLI commands and keycaps. Not for data labels. |
 
 ### Scale
 
 | Token | Size | Notes |
 | --- | --- | --- |
-| `.h1` | `clamp(1.75rem, 1.35rem + 1.5vw, 2.4rem)` | Fraunces, weight 560, line-height 1.02, tracking `-0.022em`. One per page. |
-| `.display` | inherited | Fraunces with `SOFT 30, WONK 0`; used for the “Up next” statement and large numerals. |
-| `.h2` | `1.02rem` | Section and card titles. Instrument Sans, weight 620. |
+| `.h1` | `clamp(1.65rem, 1.3rem + 1.2vw, 2.2rem)` | Plus Jakarta Sans, weight 650, line-height 1.12, tracking `-0.025em`. One per page. |
+| `.display` | inherited | Plus Jakarta Sans, weight 620, tracking `-0.02em`; used for the “Up next” statement and large numerals. |
+| `.h2` | `1.05rem` | Section and card titles. Inter, weight 620. |
 | Body | `15px / 1.6` | Default page text. |
 | `.tiny` | `12px` | Dense metadata with a clear label. |
 | Floor | `11px` | Nothing smaller, anywhere. 11px is for uppercase-free metadata only, never body copy. |
 
 Rules:
 
-- Do not set paragraphs in Fraunces. It is a display face, not a reading face.
+- Do not set paragraphs in Plus Jakarta Sans. It is a display face, not a reading face.
 - Do not use `font-mono` for stats, IDs or labels. Use tabular numerals (`.num`) instead.
 - Keep weights between 400 and 650. The app has no black/900 weights.
 - No letter-spacing on lowercase UI text. Tracking is only for real keycaps.
-- Light theme text at 11px must use `--text-3` or darker. `--text-3` was darkened to `#69705f` for this reason.
+- Light theme text at 11px must use `--text-3` or darker. `--text-3` is `#64748b` for this reason.
 
 ---
 
@@ -110,21 +110,22 @@ All colour comes from CSS custom properties in `src/index.css`. Never hard-code 
 
 ### Core tokens
 
-| Token | Paper (light) | Board (dark) | Use |
+| Token | Daylight (light) | Night (dark) | Use |
 | --- | --- | --- | --- |
-| `--bg` | `#f4f1e7` | `#0e1411` | Page material |
-| `--surface-1` | `#fffdf6` | `#141c17` | Sheets and cards |
-| `--surface-2` | `#efebdd` | `#1a241e` | Nested rows, inputs, quiet fills |
-| `--surface-3` | `#e5dfcd` | `#223028` | Rails, pressed states, stronger fills |
-| `--border` | `#ddd6c4` | `#27332b` | Hairlines and sheet edges |
-| `--border-strong` | `#bfb5a0` | `#3b4b3f` | Input borders, emphasized edges |
-| `--text-1` | `#171b15` | `#f1efe3` | Primary text |
-| `--text-2` | `#4d564b` | `#b5beb2` | Body secondary text |
-| `--text-3` | `#69705f` | `#8a958b` | Metadata at 11px+, never body copy |
-| `--accent` | `#7a6410` | `#e7dc7f` | The highlighter |
-| `--accent-strong` | `#5f4d08` | `#f4ebb0` | Accent text on soft fills |
-| `--accent-soft` | `#f3e7a4` | `rgb(231 220 127 / 0.12)` | Selected rows, today's column |
-| `--accent-contrast` | `#fffdf6` | `#12170f` | Text on a filled accent button |
+| `--bg` | `#f8fafc` | `#0b0f17` | Page material |
+| `--surface-1` | `#ffffff` | `#111827` | Sheets and cards |
+| `--surface-2` | `#f1f5f9` | `#1a2234` | Nested rows, inputs, quiet fills |
+| `--surface-3` | `#e2e8f0` | `#273248` | Rails, pressed states, stronger fills |
+| `--border` | `#e2e8f0` | `#1f2937` | Hairlines and sheet edges |
+| `--border-strong` | `#cbd5e1` | `#334155` | Input borders, emphasized edges |
+| `--text-1` | `#0f172a` | `#f8fafc` | Primary text |
+| `--text-2` | `#475569` | `#cbd5e1` | Body secondary text |
+| `--text-3` | `#64748b` | `#94a3b8` | Metadata at 11px+, never body copy |
+| `--accent` | `#2563eb` | `#60a5fa` | The one focus accent |
+| `--accent-hover` | `#1d4ed8` | `#93c5fd` | Primary hover and pressed |
+| `--accent-strong` | `#1e40af` | `#bfdbfe` | Accent text on soft fills |
+| `--accent-soft` | `#eff6ff` | `rgb(96 165 250 / 0.14)` | Selected rows, today's column |
+| `--accent-contrast` | `#ffffff` | `#0b1120` | Text on a filled accent button |
 
 ### Semantic colours
 
@@ -135,11 +136,13 @@ All colour comes from CSS custom properties in `src/index.css`. Never hard-code 
 | `--bad` | Real failure, destructive action, repair queue | Normal incomplete work |
 | `--info` | Neutral supporting facts, new cards | Primary actions |
 
-Each has a matching `-soft` fill. On dark, soft fills are 12–13% alpha of the foreground colour; on paper they are solid tints.
+Each has a matching `-soft` fill. On dark, soft fills are 12–13% alpha of the foreground colour; in light they are solid tints.
 
 ### Accent variants
 
-The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a track. The default highlighter is the mustard yellow. Variants exist in both themes and are declared next to the core tokens. A variant changes the highlighter only; semantic colours stay fixed.
+The learner can choose `cobalt`, `sky`, `emerald`, `violet` or `amber` when creating a track. The bundled Flutter track uses cobalt. Variants exist in both themes and are declared next to the core tokens. A variant changes the accent only; semantic colours stay fixed. The three curriculum threads carry their own tokens (`--thread-dart`, `--thread-flutter`, `--thread-design`) and never borrow the accent.
+
+Every accent keeps `--accent-contrast` at 4.5:1 or better against `--accent`. Sky and emerald are the darker shades for that reason; do not lighten them back.
 
 `--swatch-sky`, `--swatch-emerald`, `--swatch-violet` and `--swatch-amber` preview each option in the create-track sheet. They are the only colour values a component may reference for a subject accent; never hard-code a variant hex in a component.
 
@@ -156,8 +159,8 @@ The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a tra
 
 | Element | Radius | Border | Shadow |
 | --- | --- | --- | --- |
-| Sheet / card (`.card`) | `10px` (`--radius-sheet`) | 1px `--border` | Paper: soft 24px ambient. Board: none. |
-| Item / input / button | `8px` (`--radius-item`) | 1px | None |
+| Sheet / card (`.card`) | `12px` (`--radius-sheet`) | 1px `--border` | Light: soft ambient. Dark: none. |
+| Item / input / button | `10px` (`--radius-item`) | 1px | None |
 | Chip / small button | `6px` (`--radius-chip`) | 1px when needed | None |
 | Modal sheet | `20px` top corners on mobile, left corners on desktop | 1px | One deep shadow |
 
@@ -165,7 +168,7 @@ The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a tra
 - `.ledger` is a single sheet with internal rules: 2 columns on mobile, 4 on ≥640px.
 - `.mini-ledger` is a ruled strip inside a sheet: 2×2 on mobile, 4 across on ≥640px.
 - No `translateY` hover lift. Hover changes `border-color` and, at most, `background`.
-- Board theme has no card shadows; the border is the elevation.
+- Dark theme has no card shadows; the border is the elevation.
 
 ---
 
@@ -186,7 +189,7 @@ The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a tra
 
 | Width | What changes |
 | --- | --- |
-| `<640px` | Two-column ledgers; single-column cards; sheets slide from the bottom; controls become 44px tall. |
+| `<640px` | Two-column ledgers; single-column cards; sheets slide from the bottom; controls become 48px tall. |
 | `≥640px` | Ledgers go 4-up; two-column card grids appear. |
 | `≥768px` | Desktop sidebar and top bar replace the mobile header. |
 | `≥1024px` | 12-column `.bento` layouts; wide two-pane views (Practice, Prompts). |
@@ -194,7 +197,7 @@ The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a tra
 
 ### Touch and focus
 
-- Below 768px, `.btn`, `.btn-sm`, `.icon-btn`, `.seg button`, `.input` and `.select` are forced to a 44px minimum height/width. Keep this override; do not “fix” a cramped mobile button by shrinking it.
+- Below 768px, `.btn`, `.btn-sm`, `.icon-btn`, `.seg button`, `.input` and `.select` are forced to a 48px minimum height/width. Keep this override; do not “fix” a cramped mobile button by shrinking it.
 - Every interactive element needs a visible focus state. The global `:focus-visible` is a 2px accent outline with 2px offset.
 - Do not hide the only action behind hover. Hover may reveal a secondary action, never the primary one.
 
@@ -212,7 +215,7 @@ The learner can choose `sky`, `emerald`, `violet` or `amber` when creating a tra
 | `.btn-ghost` | Tertiary action, inline toolbars. |
 | `.btn-danger` | Destructive confirmation only, after an armed state. |
 
-Sizes: default 38px, `.btn-sm` 30px, `.btn-lg` 44px. On mobile all become 44px tall. Icons are Lucide at 13–15px, `strokeWidth` 2 (2.4 only for the active nav icon).
+Sizes: default 38px, `.btn-sm` 30px, `.btn-lg` 48px. On mobile all become 48px tall. Icons are Lucide at 13–15px, `strokeWidth` 2 (2.4 only for the active nav icon).
 
 ### Check rows
 
@@ -223,6 +226,19 @@ Sizes: default 38px, `.btn-sm` 30px, `.btn-lg` 44px. On mobile all become 44px t
 - `.badge` — status, 11px, 4px radius, soft semantic fill. Use for `Ready`, `Locked`, `Capstone`, `Mistake`.
 - `.pill` — metadata such as a week number or tag, 11.5px, full radius. Use sparingly; never as a fake button.
 - Do not put two badges and two pills on one line unless the row is genuinely a status summary. When in doubt, use plain text separated by commas.
+
+### Day-card callouts
+
+A day card uses exactly four callout variants. Each is a block with a 2px left rule, a `surface-2` fill, a 12px label and body text. It is never a nested card and never contains a task checkbox; tasks stay in the checklist.
+
+| Variant | Token | Carries |
+| --- | --- | --- |
+| `.callout--idea` | `--accent` | One idea: the first sentence of the summary. |
+| `.callout--warn` | `--warn` | The common failure, from `direction`. |
+| `.callout--note` | `--info` | The design note. |
+| `.callout--transfer` | `--good` | What transfers, from `transferNote`. |
+
+No other callout colours, and no more than four on one card.
 
 ### Ledgers
 
@@ -280,6 +296,7 @@ These are product rules as much as visual ones.
 - **Consistency is a ratio, not a streak.** Show `18 of 24 days` or a progress bar. A missed day lowers the ratio; nothing resets to zero, and there is no flame or broken chain.
 - **A pause is neutral.** Say “Paused since 3 November”, never “You lost 6 days”.
 - **One next action.** A day card shows its first unchecked step above the fold; everything else is secondary.
+- **The game layer is quiet or absent.** XP, quests and the weekly boss are a second reading of checked evidence. Show them only inside `.mini-ledger`; never as bright RPG badges, confetti or a second primary action. It is off by default for new installs.
 
 ---
 
@@ -296,9 +313,9 @@ These are product rules as much as visual ones.
 ## 11. Accessibility
 
 - Minimum text size: **11px**. Body copy is 13.5–15px.
-- Light-theme metadata uses `--text-3: #69705f`; do not lighten it back to the old grey.
+- Light-theme metadata uses `--text-3: #64748b`; do not lighten it.
 - Maintain at least 4.5:1 for body text and 3:1 for large text. When a tinted fill is used, check the text against that fill, not against the page.
-- 44px minimum touch targets on mobile; 19px checkbox plus the full row label is acceptable because the row itself is the target.
+- 48px minimum touch targets on mobile; 19px checkbox plus the full row label is acceptable because the row itself is the target.
 - Every icon-only button has an `aria-label` and, on desktop, a `title`.
 - Do not rely on colour alone: pair `Locked` with a lock icon, `Overdue` with text, `Mistake` with a label.
 - `<details>` FAQs must keep their `<summary>` keyboard behaviour and visible focus.
@@ -322,7 +339,7 @@ These are product rules as much as visual ones.
 ### Today
 
 - The page opens on the course day from the clock. A paused course says so in one line and offers Resume.
-- `Up next` is the page's one loud statement: Fraunces, max ~46ch, accent rule in the left margin.
+- `Up next` is the page's one loud statement: Plus Jakarta Sans, max ~46ch, accent rule in the left margin.
 - Header actions are outline; `Mark done` is the only filled accent button.
 - The ledger below carries left-today, week, reviews and course.
 - Today's plan shows only today's tasks, the active/passive budget, and one sentence about estimate crediting.
@@ -405,14 +422,14 @@ These are product rules as much as visual ones.
 
 Before calling a UI change done:
 
-- [ ] Is there exactly one loud Fraunces statement on the screen?
+- [ ] Is there exactly one loud Plus Jakarta Sans statement on the screen?
 - [ ] Is there exactly one accent-filled action (or none, if the screen is read-only)?
 - [ ] Are related stats in a `.ledger`, not four cards?
 - [ ] Is any text below 11px? If yes, fix it.
 - [ ] Does every range use `formatEstimate` or `formatTotal` correctly?
 - [ ] Is there any timer, countdown, streak guilt or “session running” language?
-- [ ] Does the light theme still read on paper, and the dark theme on a board?
-- [ ] Does it work at 390px with 44px targets?
+- [ ] Does the light theme still read as daylight, and the dark theme as night?
+- [ ] Does it work at 390px with 48px targets?
 - [ ] Are focus states visible and icon-only buttons labelled?
 - [ ] Did you check it with `prefers-reduced-motion` and with the service worker cleared?
 
@@ -420,7 +437,7 @@ Before calling a UI change done:
 
 ## 16. Known gaps
 
-- The boot screen, browser chrome and PWA splash use duplicated colours: inline styles in `index.html`, the theme-colour update in `AppShell`, and `theme_color` / `background_color` in `vite.config.ts`. They are aligned with the board palette now, but must be changed together with the tokens.
+- The boot screen, browser chrome and PWA splash use duplicated colours: inline styles in `index.html`, the theme-colour update in `AppShell`, and `theme_color` / `background_color` in `vite.config.ts`. They are aligned with the Calm Studio palette now, but must be changed together with the tokens.
 - The Help FAQ is still a two-column card grid. It is acceptable for disclosure rows, but a ruled index is the preferred direction if it grows.
 - Concepts and Library item cards keep a small number of rounded item surfaces. Do not add more without a reason.
 - The AI runner has no streaming and no conversation history. Adding either means re-verifying the abort path and the token caps (1,200 for a prompt skill, 8,000 for the week writer); do not fake a chat UI in the meantime.

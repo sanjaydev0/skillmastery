@@ -352,7 +352,7 @@ export function checkDayPlans(plans: DayPlan[], glossary: string[] = []): ProseI
  */
 export const STYLE_CONTRACT = `Write in plain course English.
 
-Audience: a 13-year-old reading on a phone, once, possibly while distracted.
+Audience: an adult beginner reading on a phone, once, possibly while distracted.
 
 One idea per day card. If a card teaches two things, split it.
 

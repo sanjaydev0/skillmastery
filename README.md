@@ -10,7 +10,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 
 - **Today** — the current week, only today's tasks, one clear "up next" action, today's proof, review count, and a seven-day completion strip.
 - **Plan** — phases and weeks, per-week estimate totals, honest overload warnings, and a syllabus that names the Dart, Flutter and design thread of every week. Weekly capacity lives in Settings and Day 0, never on the Plan page.
-- **Week pages** — seven day slots, a plain-language "you build" brief, the three threads, the git habit, outcomes, the checkpoint and the weekly review. Week 1 is authored; a later week is written from its blueprint, reviewed and then saved.
+- **Week pages** — seven day slots, a plain-language "you build" brief, the three threads, the git habit, outcomes, the checkpoint and the weekly review. Weeks 1–2 are authored; a later week is written from its blueprint, reviewed and then saved.
 - **Concepts** — a read-only index of the terms the route actually teaches, one record per term, with the proof history and the date of the next review.
 - **Practice** — one due queue for concepts and cards, the SRS queue, Anki-compatible deck, and editable prompt skills. An optional Velona key enables a same-origin prompt runner.
 - **Library** — docs, the shared 30-minute canon, reading progress, saved links and a six-step open-source pathway from a public repository to a v1.0.0 release.
@@ -27,7 +27,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 ### Planning rules, not timers
 
 - Every task carries an estimate range. Checking it credits the whole range to the day, week and course; unchecking removes it. No timer runs in the background.
-- The checklist is the evidence layer: its `day` fields place every task. A stored day card supplies the explanation, the steps and the design note. Only a checked task earns credit.
+- The checklist is the evidence layer: its `day` fields place every task. A stored day card supplies the explanation, the steps, the design note and the line that says what transfers to another language. Only a checked task earns credit.
 - A day over capacity is flagged instead of silently stretched. Capacity is two weekly totals split across seven study days, stored on the device and never overwritten by an imported backup.
 - The course has a real clock: Day 1 is the date you press Start. Pausing freezes the day count until you resume, so a missed week never makes the course jump ahead. When the calendar and the record drift apart, Today says so without blame.
 - The week has a shape: Days 1–2 orient, 3–4 build and debug, 5 test, 6 apply, 7 buffer and checkpoint. Every week ends with a one-sentence review.
@@ -38,7 +38,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 
 ## Project docs
 
-- [`DESIGN.md`](DESIGN.md) — the visual and copy contract: board-and-paper palette, typography, components, data-display rules and review checklist.
+- [`DESIGN.md`](DESIGN.md) — the visual and copy contract: Calm Studio palette, typography, components, data-display rules and review checklist.
 - [`AGENTS.md`](AGENTS.md) — engineering contract for contributors and AI agents: architecture, data invariants, migrations, testing, deployment and the AI proxy contract.
 - [`docs/CONTENT-STYLE.md`](docs/CONTENT-STYLE.md) — the day-card standard: plain instructional English, low working-memory load, fixed field budgets and the executable checks.
 
@@ -46,7 +46,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 
 React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS 4 · Zustand 5 · IndexedDB (`idb-keyval`) with a localStorage mirror · Zod backup validation · `vite-plugin-pwa` · Vitest + Testing Library.
 
-The seeded content is plain TypeScript under `src/data/`. The only server-side code is a stateless `/api/chat` proxy for the optional AI helper. There is no account, analytics, telemetry or runtime curriculum request, and the AI key stays in the browser.
+The seeded content is plain TypeScript under `src/data/`. The only server-side code is a stateless `/api/chat` proxy for the optional AI helper. There is no account, analytics, telemetry or runtime curriculum request today, and the AI key stays in the browser. Optional cloud sync is a later phase; there is no sync panel and no sync code.
 
 ## Local development
 
@@ -63,7 +63,7 @@ The production build uses the relative base `./`, so `dist/` also works at a hos
 
 ## Content layout
 
-- `src/data/tracks/flutterWeeks1to6.ts` — Week 1 has a fully authored task list and seven day cards; Week 2 has an authored task list. Weeks 3–24 carry a blueprint-driven standard checklist until a week module adds authored content.
+- `src/data/tracks/flutterWeeks1to6.ts` — Weeks 1 and 2 each have a fully authored task list and seven day cards. Weeks 3–24 carry a blueprint-driven standard checklist until a week module adds authored content.
 - `src/data/curriculum/blueprint.ts` — the 24-week route: three threads (Dart, Flutter, design), knowledge points, project, git habit, checkpoint and seven day focuses. Week 1 is backed by real checklists and day cards; later weeks use the blueprint as the locked brief for AI generation.
 - `src/data/tracks/` — the remaining Flutter weeks, cards and resources.
 - Git is part of the course, not an afterthought: Week 1 ends with a first push, Week 2 with a branch and pull request, every later week with a commit and push, and Week 24 with a signed release tag.
@@ -91,7 +91,7 @@ Open this project in OpenCode and run `/generate-week 2`, or simply ask for "wee
 
 The optional AI key is stored separately under `skillmastery:ai-key` in this browser. It is sent only to the same-origin `/api/chat` proxy when you press **Run prompt** or, on a later week, **Write the seven cards**; **Forget key** removes it.
 
-Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy.
+Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy today.
 
 ## Install as an Android app
 

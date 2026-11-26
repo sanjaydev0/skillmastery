@@ -10,6 +10,7 @@ import { cn } from '../../lib/utils'
 import { navigate } from '../../lib/router'
 
 const ACCENTS: { id: SubjectAccent; label: string }[] = [
+  { id: 'cobalt', label: 'Cobalt' },
   { id: 'sky', label: 'Sky' },
   { id: 'emerald', label: 'Emerald' },
   { id: 'violet', label: 'Violet' },

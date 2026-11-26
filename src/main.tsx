@@ -28,7 +28,7 @@ function applyTheme(theme: Theme): void {
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
   document.documentElement.dataset['accent'] =
     useAppStore.getState().subjects.find((subject) => subject.id === useAppStore.getState().activeSubjectId)
-      ?.accent ?? 'sky'
+      ?.accent ?? 'cobalt'
 }
 
 function bootTheme(): void {
