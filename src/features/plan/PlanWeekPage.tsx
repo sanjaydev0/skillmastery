@@ -374,10 +374,13 @@ function DayCard({
       </div>
 
       {plan ? (
-        <div className="mt-2 border-l-2 border-accent/30 pl-2.5">
+        <div className="mt-2">
           <p className="text-[12.5px] leading-snug font-semibold">{plan.title}</p>
           {plan.direction ? (
-            <p className="faint mt-0.5 text-[11px] leading-snug">{plan.direction}</p>
+            <div className="callout callout--warn mt-1.5">
+              <span className="callout-label">Common failure</span>
+              <p>{plan.direction}</p>
+            </div>
           ) : null}
         </div>
       ) : null}

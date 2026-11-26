@@ -375,6 +375,20 @@ export function TodayView() {
               Mark done
             </Button>
           </div>
+          {plan && plan.tasks.length > 0 ? (
+            <details className="group mt-2.5">
+              <summary className="link inline-flex cursor-pointer items-center gap-1 text-[11.5px]">
+                Start with the five-minute step
+                <ArrowRight size={11} className="transition group-open:rotate-90" aria-hidden />
+              </summary>
+              <ol className="muted mt-2 list-decimal space-y-1 pl-4 text-[12.5px] leading-relaxed">
+                {plan.tasks.map((task) => (
+                  <li key={task}>{task}</li>
+                ))}
+              </ol>
+            </details>
+          ) : null}
+
           <p className="faint mt-2.5 text-[11.5px]">
             {nextIsToday
               ? 'Finishing this credits its estimate to today and the course total.'
@@ -419,7 +433,10 @@ export function TodayView() {
           </div>
 
           {lead ? (
-            <p className="muted mt-2 max-w-[68ch] text-[13px] leading-relaxed">{lead}</p>
+            <div className="callout callout--idea mt-2">
+              <span className="callout-label">One idea</span>
+              <p>{lead}</p>
+            </div>
           ) : null}
 
           {rest.length > 0 ? (
@@ -443,15 +460,15 @@ export function TodayView() {
           ) : null}
 
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-lg border border-line bg-s2 p-2.5">
-              <p className="eyebrow">Do this, not that</p>
-              <p className="mt-1 text-[12px] leading-relaxed">{plan.direction}</p>
+            <div className="callout callout--warn">
+              <span className="callout-label">Common failure</span>
+              <p>{plan.direction}</p>
             </div>
-            <div className="rounded-lg border border-accent/20 bg-accent-soft/60 p-2.5">
-              <p className="eyebrow flex items-center gap-1.5">
+            <div className="callout callout--note">
+              <span className="callout-label">
                 <Palette size={11} aria-hidden /> Design note
-              </p>
-              <p className="mt-1 text-[12px] leading-relaxed">{plan.designNote}</p>
+              </span>
+              <p>{plan.designNote}</p>
             </div>
           </div>
 
