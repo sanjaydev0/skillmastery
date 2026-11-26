@@ -18,7 +18,7 @@ const week: WeekContent = {
       title: "The eye groups before it reads",
       summary: prose(
         "Today you learn what the eye does in the first 200 milliseconds. By the end, you can explain why one screen feels calm and another feels noisy.",
-        "Gestalt is the study of how the eye groups shapes before it reads a word. Proximity is the strongest law: things close together belong together. Common region is the second: a shared background or border groups items even when they sit apart. Similarity groups by size, weight and colour.",
+        "Gestalt is the study of how the eye groups shapes before it reads a word. Proximity is the strongest law: items close together belong together. Common region is the second: a shared background or border groups items even when they sit apart. Similarity groups by size, weight and colour.",
         "Spacing does the work that borders pretend to do. A label 4px from its value reads as one unit. The same pair 24px apart reads as two groups. Before you add a line, try space.",
         "The failure this prevents is a screen where every box has a border, every title is the same size, and nothing leads. The eye has no first stop, so the user reads everything and remembers nothing.",
         "Stop when you can point to three groups on one screen and name the law that binds each one.",
@@ -150,7 +150,7 @@ const week: WeekContent = {
         "Check: the card reads as raised with no shadow visible.",
       ],
       direction:
-        "Do not invert white to black. Keep the hue and step the luminance, or the theme will look like a negative.",
+        "Do not invert white to black. Keep the hue and step the luminance, or the theme looks like a negative.",
       designNote:
         "In the dark theme, height is a lighter fill. Before: three cards with the same fill and a shadow that cannot be seen. After: canvas, then surface, then a lighter surface. The eye reads three levels without a single line.",
       transferNote:
@@ -195,7 +195,7 @@ const week: WeekContent = {
         "Start with the frame and the grid. Mark the three levels of type. Place the primary action, then the evidence beneath it. Draw the five states in the same frame, so the layout proves it can hold each one.",
         "Name every token you use. If a colour has no role, the screen is not finished. If a gap has no step, the grid is not finished.",
         "The failure this prevents is a screen that only exists as a picture. A wireframe with tokens and states can be built by someone else. A pretty sketch cannot.",
-        "Stop at 60 minutes. Compare with Day 3 and name one thing the second drawing does better.",
+        "Stop at 60 minutes. Compare with Day 3 and name one improvement in the second drawing.",
       ),
       resources: [
         { label: "Layout", url: "https://docs.flutter.dev/ui/layout", kind: "docs" },

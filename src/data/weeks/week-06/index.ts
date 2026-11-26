@@ -47,7 +47,7 @@ const week: WeekContent = {
       summary: prose(
         "Today you choose the right question: how much space do I have, or what device is this? By the end, a pane and a phone get different answers.",
         "LayoutBuilder reports the constraints at the point where it sits, so it answers the space question. MediaQuery reports the whole window, including system insets and text scale. A pane inside a desktop window can be phone-sized, and only the builder knows.",
-        "A breakpoint is a width you name once. Put it in the token file beside the spacing scale, so every screen uses the same number. Then a rule such as a width under 600 means the same thing everywhere.",
+        "A breakpoint is a width you name once. Put it in the token file beside the spacing scale, so every screen uses the same number. Then a rule such as a width under 600 means the same width everywhere.",
         "The failure this prevents is a tablet layout inside a phone-sized pane. The window is wide, the pane is narrow, and the layout picks the wrong branch.",
         "Stop when one screen chooses its arrangement from the pane and not from the window.",
       ),
@@ -66,7 +66,7 @@ const week: WeekContent = {
       designNote:
         "A breakpoint is a shared constant, not a number in a file. Before: 600 in one screen and 640 in another, so the two layouts disagree at the seam. After: one named step both screens read. The seam disappears.",
       transferNote:
-        "This is the space you actually have; every responsive system asks the pane, not the device.",
+        "This is the space you have on screen; every responsive system asks the pane, not the device.",
       estMinutes: 60,
       origin: "authored",
     },
@@ -149,7 +149,7 @@ const week: WeekContent = {
         "Check: every label reads at 2.0 and no row clips.",
       ],
       direction:
-        "Do not shrink the text to fit the box. Let the box grow, and keep fixed heights for things that do not scale.",
+        "Do not shrink the text to fit the box. Let the box grow, and keep fixed heights for icons and rails that do not scale.",
       designNote:
         "A row is a minimum, not a measure. Before: a 56-point row that clips at 2.0 text. After: a 56-point minimum that grows to 72. The list keeps its rhythm, and the sentence survives.",
       transferNote:

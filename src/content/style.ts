@@ -59,8 +59,7 @@ const FILLER: Array<{ pattern: RegExp; word: string }> = [
 ]
 
 export const TITLE_MAX_WORDS = 8
-export const SUMMARY_MIN_WORDS = 180
-export const SUMMARY_MAX_WORDS = 500
+export const SUMMARY_MAX_WORDS = 400
 export const SENTENCE_MAX_WORDS = 25
 export const INSTRUCTION_MAX_WORDS = 20
 export const PARAGRAPH_MAX_SENTENCES = 5
@@ -266,11 +265,11 @@ export function checkDayPlan(plan: DayPlan, glossary: string[] = []): ProseIssue
   }
 
   const summaryWords = wordCount(plan.summary)
-  if (summaryWords < SUMMARY_MIN_WORDS || summaryWords > SUMMARY_MAX_WORDS) {
+  if (summaryWords > SUMMARY_MAX_WORDS) {
     issues.push({
       field: 'summary',
       code: 'summary-length',
-      message: `Summary is ${summaryWords} words. Target is ${SUMMARY_MIN_WORDS}–${SUMMARY_MAX_WORDS}.`,
+      message: `Summary is ${summaryWords} words. Cap is ${SUMMARY_MAX_WORDS}.`,
     })
   }
   issues.push(...checkExplanation('summary', plan.summary))
@@ -373,7 +372,7 @@ One idea per day card. If a card teaches two things, split it.
 
 Field budgets:
 - title: 8 words or fewer.
-- summary: 180–400 words, in three paragraphs: what you can do, the mechanism with one real example, the failure this prevents and its fix.
+- summary: 400 words or fewer, in up to three paragraphs: what you can do, the mechanism with one real example, the failure this prevents and its fix. Shorter is better when the idea fits.
 - tasks: 2–4 steps, 20 words or fewer each. The first step starts in under five minutes. The last step is a check the learner can see: an output, an error, a pixel count or a test name.
 - direction: 40 words or fewer. Name the tempting wrong move and its cost. "Do this, not that."
 - designNote: 25–100 words. One claim about this week's artefact, then one before/after example.

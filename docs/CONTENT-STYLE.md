@@ -36,7 +36,7 @@ A day card has six fields. The order never changes.
 | Field | Job | Budget |
 | --- | --- | --- |
 | `title` | Name the day's one idea | ≤ 8 words |
-| `summary` | What, why, mechanism, failure | 180–400 words, ≤ 5 sentences per paragraph |
+| `summary` | What, why, mechanism, failure | ≤ 400 words, ≤ 5 sentences per paragraph. As short as the idea allows. |
 | `tasks` | Do this, then check it | 2–4 items, ≤ 20 words each |
 | `direction` | The detour this day prevents | ≤ 40 words |
 | `designNote` | One craft lesson on this week's artefact | 25–100 words |

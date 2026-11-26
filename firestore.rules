@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Whole-progress document. Size is capped on the client; Firestore rules
+    // cannot measure bytes, so the shape is validated here and nothing else.
+    match /users/{uid}/state/core {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.schemaVersion is int
+        && request.resource.data.updatedAt is int
+        && request.resource.data.deviceId is string;
+    }
+
+    // One document per week of editorial day cards, under the 1 MB limit.
+    match /users/{uid}/dayPlans/{weekId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.weekId == weekId
+        && request.resource.data.updatedAt is int
+        && request.resource.data.deviceId is string
+        && request.resource.data.days is list
+        && request.resource.data.days.size() == 7;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

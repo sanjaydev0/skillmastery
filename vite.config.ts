@@ -57,6 +57,9 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
+          // Cloud sync is optional. Keep it out of the first install; the
+          // browser caches the chunk after the first sign-in.
+          globIgnores: ['**/firebase-*.js'],
           navigateFallback: 'index.html',
           cleanupOutdatedCaches: true,
         },
@@ -65,6 +68,16 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2022',
       chunkSizeWarningLimit: 900,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+              return 'firebase'
+            }
+            return undefined
+          },
+        },
+      },
     },
     test: {
       environment: 'jsdom',

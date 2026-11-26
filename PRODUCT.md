@@ -35,8 +35,8 @@ The product is the course, not a dashboard around a course. One start date drive
 a real 168-day clock; every day carries an authored or generated card that names
 one idea, one mechanism and one failure; the checklist is the only evidence that
 earns credit. All of that runs on the device. There is no account, no analytics and
-no curriculum fetched at runtime. Optional cloud sync is a later phase, not a
-shipped feature.
+no curriculum fetched at runtime. Optional cloud sync is shipped and strictly
+opt-in.
 
 Weeks 1 and 2 are authored: tasks and seven day cards each. Every later week is written one week at a time
 from the 24-week blueprint and the learner's own history, then reviewed before
@@ -81,9 +81,9 @@ as the learner's evidence.
   in `docs/CONTENT-STYLE.md` before it is canonical.
 - Schema v6. Migrations are additive and preserve checks, notes, estimates,
   planner settings, journey, day cards and trash.
-- No accounts, telemetry, background daemons or runtime curriculum fetch today.
-  The only server-side surface is `/api/chat`. Optional cloud sync is a later
-  phase.
+- No accounts, telemetry, background daemons or runtime curriculum fetch by default.
+  The only server-side surface is `/api/chat`. Optional cloud sync is opt-in and
+  merges progress; signing out leaves the local app untouched.
 
 ## Brand Commitments
 

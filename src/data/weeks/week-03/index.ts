@@ -19,8 +19,8 @@ const week: WeekContent = {
       summary: prose(
         "Today you bundle a few values into one record and read them back by name. By the end, one order value carries its id, its name and its amount together.",
         "A record groups fixed, typed values. Write `({int id, String name})` for a named record, or `(19, 'tea')` for a positional one. The named form reads well because each field has a label. `final order = (id: 19, name: 'tea');` then `order.id` returns 19.",
-        "Records compare by value. Two records with the same fields are equal, so a test can compare them directly. That makes a record a good return type for a small result.",
-        "The failure this prevents is a silent swap. A function returns `(int, String)`, and a later edit reorders the fields. `19, 'tea'` becomes `'tea', 19`, and the id prints as a name. Name the fields instead, so the compiler catches the swap.",
+        "Records compare by value. Two records with the same fields are equal, so a test can compare them directly. That makes a record a good return type for a small result. A test can compare records without a helper, which keeps the test short.",
+        "The failure this prevents is a silent swap. A function returns `(int, String)`, and a later edit reorders the fields. `19, 'tea'` becomes `'tea', 19`, and the id prints as a name. Name the fields instead, so the compiler catches the swap. The compiler is the reviewer, and it never gets tired.",
         "Stop when two records with the same values print true and the named fields read correctly.",
       ),
       resources: [
@@ -48,8 +48,8 @@ const week: WeekContent = {
       summary: prose(
         "Today you pull a record apart in one step. By the end, one pattern reads an id and a name without a temporary variable.",
         "Pattern matching is a shape test with names. `if (order case (id: final int id, name: final String name))` reads both fields and binds them. The shape must match, and a guard adds a condition with `when`. A guard keeps the check beside the shape it protects.",
-        "Destructuring is the same idea without a condition. `final (id: id, name: name) = order;` gives you two names in one line. Use it when the shape is known, and use a pattern when it might not match. Try both forms on the same value, so you can see which one needs a check.",
-        "The failure this prevents is a cast that lies. `order as Map` compiles and then throws at runtime when the value is a record. A pattern returns false instead, so the bad value never reaches the next line.",
+        "Destructuring is the same idea without a condition. `final (id: id, name: name) = order;` gives you two names in one line. Use it when the shape is known, and use a pattern when it might not match. Try both forms on the same value, so you can see which one needs a check. A failed match is a normal result, not an error.",
+        "The failure this prevents is a cast that lies. `order as Map` compiles and then throws at runtime when the value is a record. A pattern returns false instead, so the bad value never reaches the next line. The next line then works with a real value, not a promise from a cast.",
         "Stop when a matching order prints its two fields and a mismatched value prints one clear line.",
       ),
       resources: [
@@ -65,7 +65,7 @@ const week: WeekContent = {
       direction:
         "Do not cast with as and hope. Test the shape first, then use the names the pattern bound.",
       designNote:
-        "A pattern names the columns a screen already shows. If the order row shows id, name and amount, the pattern should read the same three fields in that order. Before: a cast and a comment. After: one pattern that lists the fields. The code and the row now describe the same thing.",
+        "A pattern names the columns a screen already shows. If the order row shows id, name and amount, the pattern should read the same three fields in that order. Before: a cast and a comment. After: one pattern that lists the fields. The code and the row now describe the same fields.",
       transferNote:
         "This is testing a shape and naming its parts; JavaScript destructuring and Rust match do it too.",
       estMinutes: 60,
@@ -77,7 +77,7 @@ const week: WeekContent = {
       summary: prose(
         "Today you draw every state an order can hold. By the end, the paper shows the states, the moves and the states you refuse to allow.",
         "A state is a fact about the order, not a screen. An order is placed, paid, packed or shipped. Each arrow is one allowed move, and each state names what the user can do next. Draw the map before you write a class. Keep the map to one page, so a reader can hold it in their head.",
-        "Booleans hide the real state. `isPaid`, `isShipped` and `isCancelled` allow eight combinations, and most of them are nonsense. A sealed class allows one value from a closed list, so the impossible combinations vanish.",
+        "Booleans hide the real state. `isPaid`, `isShipped` and `isCancelled` allow eight combinations, and most of them are nonsense. A sealed class allows one value from a closed list, so the impossible combinations vanish. Name the guard on every arrow, because a missing guard is a missing rule.",
         "The failure this prevents is a screen that shows a spinner and an error at once. That screen exists because two flags were true together. Delete the impossible state from the model, and the screen has nothing to draw.",
         "Stop when every state has a name, every arrow has a guard, and one state is marked as the end. Keep the sketch beside the keyboard for the rest of the week.",
       ),
@@ -107,7 +107,8 @@ const week: WeekContent = {
         "Today the map becomes code. By the end, a sealed class holds the states and a switch returns one screen for each.",
         "A sealed class names a closed family. Write `sealed class OrderState {}`, then one final class for each state. `final class Paid extends OrderState { final int paise; }` holds the amount. The word sealed tells the compiler that every subtype lives in this library. No other file can add a fifth state.",
         "The switch expression returns a value. Write `switch (state)` with one branch per class, and return a label from each. The compiler fails when a state has no branch. That failure is the point.",
-        "The failure this prevents is a forgotten branch. A default branch would compile today and hide the missing case tomorrow. Leave the default out, so the compiler lists the state you forgot. Read the error as a to-do list.",
+        "The failure this prevents is a forgotten branch. A default branch would compile today and hide the missing case tomorrow. Leave the default out, so the compiler lists the state you forgot. Read the error as a to-do list. A missing branch is a question the compiler asks before the user does.",
+        "The fix is a new branch and a new screen.",
         "Stop when every state has a branch, the code compiles, and no default branch exists.",
       ),
       resources: [
@@ -136,6 +137,7 @@ const week: WeekContent = {
         "Today you add a state and let the compiler find every place that forgot it. By the end, the model cannot hold two answers at once.",
         "Add `final class Cancelled extends OrderState {}` and run the build. Each switch that misses the new state fails. Read the failure as a list of screens to update. A default branch hides that list, so remove it first. Keep the error output in your notes.",
         "Count the old combinations. Two booleans allow four states, and three allow eight. A sealed family allows exactly the states you write. Delete the ones that cannot happen, and every later function has fewer cases to handle. The model shrinks and the tests shrink with it.",
+        "The list of screens is the real output of the day. Keep that list beside the keyboard for Day 7.",
         "The failure this prevents is a screen that shows a receipt and an error together. With flags, that pair is legal. With a sealed state, it cannot be written. That is a bug removed before it ran.",
         "Stop when the new state breaks the build in at least two places, and every failure names a real screen. Then handle each one.",
       ),
@@ -164,7 +166,7 @@ const week: WeekContent = {
       summary: prose(
         "Today you predict the order of printed lines before you run them. By the end, you can explain why `await` resumes later than the line beneath it. Write the prediction on paper first.",
         "Dart runs one thread with a stack and two queues. Synchronous code finishes first. Microtasks drain next, in order, before the next event. Timers and input wait in the event queue. A microtask can starve the queue if it keeps scheduling another microtask.",
-        "`await` pauses the function and returns control to the loop. When the future completes, the rest resumes as a microtask. So `print('a'); await f(); print('b');` prints `a` first and `b` after the loop has room.",
+        "`await` pauses the function and returns control to the loop. When the future completes, the rest resumes as a microtask. So `print('a'); await f(); print('b');` prints `a` first and `b` after the loop has room. Name the queue for each line, and the order stops being a surprise.",
         "The failure this prevents is a fire-and-forget loop. `items.forEach((item) async => await save(item))` starts every save at once and awaits none of them. Use `for (final item in items) { await save(item); }` for one at a time, or `Future.wait` when order does not matter.",
         "Stop when your predicted order matches the printed order, and you can name which line was a microtask.",
       ),
@@ -182,7 +184,7 @@ const week: WeekContent = {
       direction:
         "Do not trust the order you wrote. Predict the queue, run it, then explain the difference.",
       designNote:
-        "A screen shows one state because the loop runs one state at a time. While a future waits, show loading. When it resumes, replace it. Before: three flags and a flicker. After: one state and one frame. The loop makes that switch safe.",
+        "A screen shows one state because the loop runs one state at a time. While a future waits, show loading. When it resumes, replace it. Before: three flags and a flicker. After: one state and one frame, because the loop makes that switch safe.",
       transferNote:
         "This is one thread with two queues; JavaScript and Node run the same loop.",
       estMinutes: 90,
@@ -194,7 +196,7 @@ const week: WeekContent = {
       summary: prose(
         "Today you rebuild the week from an empty file. By the end, a sealed order pipeline parses one record and prints one state, with no notes. Use the same terminal window.",
         "Start with the sealed class and its states. Add the pattern parser next, then the switch, then the print. Keep the three rules on paper: one state at a time, every branch handled, every await resumed in order. Say each rule out loud before you type.",
-        "A blank file shows what you cannot recall. Write the first line even when it feels slow, and note each gap as you find it. Open your Day 4 file only after the run, so the check measures what you know. The list of gaps is the real result.",
+        "A blank file shows what you cannot recall. Write the first line even when it feels slow, and note each gap as you find it. Open your Day 4 file only after the run, so the check measures what you know. The list of gaps is the real result. A gap list is worth more than a finished file on the first pass.",
         "The failure this prevents is false confidence from reading. A page supplies the missing words, and a blank file does not. The gaps you write down are the next week's practice. Keep that list beside the keyboard.",
         "Stop at 60 minutes. Compare with Day 4 and name one difference. Keep the notes for the checkpoint.",
       ),

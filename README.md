@@ -23,6 +23,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 - **Help** — contextual answers for the actual setup: Zed, Flutter CLI, a physical phone, GitHub, backups, undo, exact AnkiDroid TSV import steps and the optional AI helper.
 - **Command palette** — `Cmd/Ctrl+K` searches weeks, concepts, cards, resources and books across every track.
 - **Installable PWA** — offline app shell, cached routes, maskable icons and explicit Android install steps.
+- **Optional cloud sync** — sign in with Google to merge progress across your laptop and phone. Off by default, and the app stays fully usable with no account.
 
 ### Planning rules, not timers
 
@@ -44,7 +45,7 @@ One 24-week track is bundled — **Flutter, Dart & High-Craft UI/UX** — and yo
 
 ## Stack
 
-React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS 4 · Zustand 5 · IndexedDB (`idb-keyval`) with a localStorage mirror · Zod backup validation · `vite-plugin-pwa` · Vitest + Testing Library.
+React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS 4 · Zustand 5 · IndexedDB (`idb-keyval`) with a localStorage mirror · Zod backup validation · `vite-plugin-pwa` · Vitest + Testing Library · optional Firebase Auth + Firestore on the Spark plan.
 
 The seeded content is plain TypeScript under `src/data/`. The only server-side code is a stateless `/api/chat` proxy for the optional AI helper. There is no account, analytics, telemetry or runtime curriculum request today, and the AI key stays in the browser. Optional cloud sync is a later phase; there is no sync panel and no sync code.
 
@@ -91,7 +92,30 @@ Open this project in OpenCode and run `/generate-week 2`, or simply ask for "wee
 
 The optional AI key is stored separately under `skillmastery:ai-key` in this browser. It is sent only to the same-origin `/api/chat` proxy when you press **Run prompt** or, on a later week, **Write the seven cards**; **Forget key** removes it.
 
-Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy today.
+Export a JSON backup before clearing browser storage or changing devices. There is no cloud copy unless you sign in.
+
+## Optional cloud sync (Firebase Spark)
+
+The app works with no account. Sync is opt-in in **Settings → Cloud sync** and uses the free Firebase Spark plan: Google sign-in plus two small Firestore document shapes. There is no server code and no billing account.
+
+1. Create a Firebase project on the Spark plan.
+2. Enable **Authentication → Google** and add `skillmastery-jay.vercel.app` and `localhost` as authorized domains.
+3. Create **Cloud Firestore** in production mode and publish [`firestore.rules`](firestore.rules).
+4. Add the web app config as Vercel environment variables (and `.env.local` for development):
+
+```bash
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_APP_ID=...
+```
+
+These are public client identifiers, not secrets. Access is controlled by the rules, which allow a signed-in user to read and write only their own `users/{uid}` documents.
+
+**What syncs:** checks, proofs, gate answers, cards, day proofs, books, day cards and bug notes.
+**What stays local:** planner capacity, theme, undo history, the course clock, and the Velona AI key. The AI key is never written to Firestore or to a backup.
+
+A pull is merged, never applied wholesale: a check is never un-earned, a passed gate stays passed, a card keeps its review count, and a deleted week is not resurrected. The core document is capped at 900 KB and each week's day cards at 700 KB before a push is refused.
 
 ## Install as an Android app
 

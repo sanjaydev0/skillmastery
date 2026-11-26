@@ -90,7 +90,7 @@ describe('prose checks', () => {
 
 describe('day card checks', () => {
   it('passes a card written to the standard', () => {
-    expect(wordCount(goodPlan.summary)).toBeGreaterThanOrEqual(180)
+    expect(wordCount(goodPlan.summary)).toBeGreaterThan(0)
     expect(checkDayPlan(goodPlan)).toEqual([])
   })
 
@@ -99,8 +99,9 @@ describe('day card checks', () => {
     expect(checkDayPlan(plan).some((issue) => issue.code === 'transfer-note-length')).toBe(true)
   })
 
-  it('flags a summary outside the budget', () => {
-    const issues = checkDayPlan(withSummary('Too short.'))
+  it('flags a summary over the cap', () => {
+    const long = Array(401).fill('word').join(' ')
+    const issues = checkDayPlan(withSummary(long))
     expect(issues.some((issue) => issue.code === 'summary-length')).toBe(true)
   })
 
@@ -141,7 +142,7 @@ describe('day card checks', () => {
 describe('generation contract', () => {
   it('states the same caps the checker enforces', () => {
     expect(STYLE_CONTRACT).toContain('8 words or fewer')
-    expect(STYLE_CONTRACT).toContain('180–400')
+    expect(STYLE_CONTRACT).toContain('400 words or fewer')
     expect(STYLE_CONTRACT).toContain('20 words or fewer')
     expect(STYLE_CONTRACT).toContain('25 words or fewer')
     expect(STYLE_CONTRACT).toContain('British spelling')

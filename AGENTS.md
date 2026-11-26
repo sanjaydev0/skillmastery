@@ -29,14 +29,14 @@ The guided course adds a start-date clock, pausable progress, weekly capacity, r
 - Authored Weeks 1–2, the 24-week blueprint, Help, the resource library and the optional AI prompt runner.
 - Guided course: Day 0 and the start clock, pause and resume, the day-card layer, a reviewed draft flow for AI week generation, the three-thread syllabus, derived progress marks and a restorable trash.
 - The record book: a derived concept index, the daily proof, the four-question weekly checkpoint, the review queue and the Markdown export.
-- **Not built:** optional cloud sync, a native Android companion, and a second language track. Do not assume any of them exists.
+- **Not built:** a native Android companion and a second language track. Do not assume either exists.
 
 ---
 
 ## 2. Non-negotiables
 
 - **Vercel only.** No GitHub Pages workflow, no `gh-pages` branch, no second host. The live alias is `skillmastery-jay.vercel.app`.
-- **Local-first.** The app works with no account, no analytics, no telemetry and no runtime curriculum fetch. Progress lives in IndexedDB with a localStorage mirror. Optional cloud sync is a later phase: do not build it, import it, or claim it exists before its own spec is approved.
+- **Local-first.** The app works with no account, no analytics, no telemetry and no runtime curriculum fetch. Progress lives in IndexedDB with a localStorage mirror. Optional cloud sync is built and strictly opt-in: every feature must work with no account, and nothing may require sign-in.
 - **No time tracking.** No timers, stopwatches, elapsed time, session countdowns or “time remaining”. Estimates are ranges; checking a task credits the whole range.
 - **Two layers, one truth.** `checklist` items carry `day` and are the evidence layer. `dayPlans[weekId]` carries the editorial card: title, summary, tasks, direction and design note. Checking a task is the only thing that earns credit; a day card never claims progress.
 - **Authored weeks are protected.** Do not replace Weeks 1–2 or any reviewed module with generated copy. Weeks 3–24 may be generated only through the blueprint brief, must pass `checkDayPlans`, and must be reviewed before they are canonical.
@@ -75,6 +75,7 @@ npx tsc -b && npm test && npm run lint && npm run build
 
 ```
 api/chat.ts              Stateless Velona proxy (not in the app tsconfig)
+firestore.rules          Owner-only rules for the optional cloud sync
 src/
   App.tsx                Route switch, hydration gate, global sheets
   main.tsx               Boot, autosave start, PWA registration
@@ -93,7 +94,7 @@ src/
   features/              One folder per view; concepts/recall/vault map to map/practice/library
   hooks/                 History-depth and AI-key hooks
   lib/                   Router, dates, utilities (Anki export, downloads, cn/percent)
-  services/              Storage, migrations, seed upgrade, history, exports, validation, install, AI client
+  services/              Storage, migrations, seed upgrade, history, exports, validation, install, AI client, cloud sync
   store/                 Zustand AppStore and uiStore
   types/schema.ts        The single source of truth for persisted entities
   index.css              Design tokens and component classes
@@ -149,6 +150,14 @@ Rules:
 - Undo history is **session-only**, 50 entries, and excludes preferences and navigation. It includes prompt-skill edits. Persisted reset checkpoints are a future feature; do not claim they exist.
 - Undo also covers the course clock, day cards, track deletion and restore. Deleting a week records its concepts, cards and day proofs in `trash`, so a restore returns the record as it was.
 - Seed upgrades are non-destructive: `refreshSeedContent()` refreshes authored weeks, preserves checks, gate attempts, notes, overrides and user-added weeks/items, and appends new seed resources without touching reading status or user-added links. Authored seed ids ending in `-cN` are replaced by matching day + active/passive task. Removed seed resources are never deleted.
+
+### Optional cloud sync
+
+- **Opt-in only.** `src/services/cloudSync.ts` starts inert unless the four public `VITE_FIREBASE_*` values exist. Signing out leaves the local app untouched.
+- **Documents.** `users/{uid}/state/core` holds AppData without `dayPlans`; `users/{uid}/dayPlans/{weekId}` holds one week's seven cards. Both carry `deviceId` and `updatedAt`. A push is refused above 900 KB for the core document and 700 KB for one week.
+- **Merge, never replace.** `mergeAppData` in `src/services/syncMerge.ts` is monotonic: a checked task stays checked, a passed gate stays passed, a card keeps the higher review count, reading progress keeps the higher chapter, and a week in `trash` is not resurrected. Device-local planner, theme, journey and prompt edits never travel.
+- **Secret boundary.** The Velona key is not in AppData, so it cannot be pushed. Firebase config is public client data; access control lives in `firestore.rules`.
+- **No server.** Sync talks to Firestore directly from the browser. Do not add a Vercel route, background sync or polling.
 
 ### Migrations
 
@@ -223,7 +232,7 @@ When adding a view, update the router, the shell navigation, the command palette
   4. `POST /api/chat` with no key returns `401`, not the SPA HTML.
 - `vercel.json` sets the SPA rewrite and no-cache headers for the shell, service worker and manifest. Fingerprinted assets are immutable.
 - The build uses the relative base `./`; do not change it to `/` without testing a subpath deploy.
-- There are no environment variables. The key must not become a server env var: the browser sends the device-local key to `/api/chat` per request, and the function forwards it without logging or storing it.
+- There are no server secrets or environment variables except the four public `VITE_FIREBASE_*` client identifiers for optional sync. The Velona key must never become a server env var: the browser sends the device-local key to `/api/chat` per request, and the function forwards it without logging or storing it.
 - Do not add GitHub Pages back. Do not add a second hosting provider.
 
 ### The AI proxy contract
@@ -261,6 +270,7 @@ When adding a view, update the router, the shell navigation, the command palette
 17. **`/api/chat` must stay outside the SPA rewrite.** A rewrite of `/(.*)` makes the function unreachable. Keep `/((?!api/).*)` and test the 401 after every deployment.
 18. **AnkiDroid takes TSV/CSV, not JSON.** JSON is only for re-importing generated cards into SkillMastery. Help and empty states must keep that distinction.
 19. **A Firestore rule cannot measure bytes.** `request.resource.data.size()` counts top-level fields, not payload size. The 1 MB document limit is enforced by splitting documents and by a client-side cap, never by a rule such as `size() <= 50`.
+20. **Sync merges; it never replaces.** A pulled payload goes through `migrateAppData` and `mergeAppData` before it reaches the store. Applying a remote snapshot directly can erase a check made on the other device.
 
 ---
 

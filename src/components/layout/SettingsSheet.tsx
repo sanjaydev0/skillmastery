@@ -49,6 +49,7 @@ import { useAiKey } from '../../hooks/useAiKey'
 import { Sheet } from '../../components/ui/Sheet'
 import { CapacitySliders } from '../../components/ui/CapacitySliders'
 import { Alert, Badge, Button, InlineError, ProgressBar, SectionHead, Spinner } from '../../components/ui/primitives'
+import { CloudSyncSection } from './CloudSyncSection'
 
 const THEMES: { id: Theme; label: string; icon: typeof Sun; detail: string }[] = [
   { id: 'light', label: 'Light', icon: Sun, detail: 'Paper daylight' },
@@ -637,6 +638,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </section>
+
+        <CloudSyncSection />
 
         <section>
           <SectionHead

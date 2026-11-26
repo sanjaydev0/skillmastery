@@ -88,7 +88,7 @@ export interface DayResource {
 export interface DayPlan {
   day: DaySlot
   title: string
-  /** 180–400 words of explanation written for a beginner. */
+  /** Up to 400 words of explanation written for a beginner. Shorter is fine. */
   summary: string
   resources: DayResource[]
   tasks: string[]

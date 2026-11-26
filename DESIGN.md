@@ -296,6 +296,7 @@ These are product rules as much as visual ones.
 - **Consistency is a ratio, not a streak.** Show `18 of 24 days` or a progress bar. A missed day lowers the ratio; nothing resets to zero, and there is no flame or broken chain.
 - **A pause is neutral.** Say “Paused since 3 November”, never “You lost 6 days”.
 - **One next action.** A day card shows its first unchecked step above the fold; everything else is secondary.
+- **Sync status is one quiet line.** Show `Synced 14:32`, `Syncing`, or a plain error with one retry. It never becomes a second accent action and never nags when sync is off.
 - **The game layer is quiet or absent.** XP, quests and the weekly boss are a second reading of checked evidence. Show them only inside `.mini-ledger`; never as bright RPG badges, confetti or a second primary action. It is off by default for new installs.
 
 ---

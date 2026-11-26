@@ -19,7 +19,7 @@ const week: WeekContent = {
         "Today you meet the three trees that build every Flutter screen. By the end, you can say which tree holds the configuration, which holds identity, and which holds the pixels.",
         "A widget is a cheap description. It says what the screen should look like, and it is thrown away on the next build. An element keeps identity and state, and it links a widget to a render object. A render object owns size, position and paint.",
         "That split explains a common surprise. Rebuilding a widget does not reset its state, because the element survives. Changing the key asks for a new element, so the state does reset. Use a key when identity must follow the data, not the position.",
-        "The failure this prevents is a counter that keeps its number after a reset, or a list row that keeps the wrong state after a reorder. Both are identity bugs, not paint bugs.",
+        "The failure this prevents is a counter that keeps its number after a reset. A list row can keep the wrong state after a reorder. Both are identity bugs, not paint bugs.",
         "Stop when you can point to one widget, its element and its render object in the inspector.",
       ),
       resources: [
@@ -106,7 +106,7 @@ const week: WeekContent = {
         "Today the split view becomes one layout with two arrangements. By the end, a phone shows one pane and a wide screen shows both.",
         "A LayoutBuilder gives you the incoming width during layout. Decide from that number, not from the device name. Below a breakpoint, show the list and push the detail. Above it, show both side by side. The pane is the same widget in both cases.",
         "Use Expanded for the flexible pane and a fixed width for the rail. Keep the breakpoint in one constant, so a later screen can share it. The rule is a width, not a phone or a tablet.",
-        "The failure this prevents is two screens that drift apart. A phone branch and a tablet branch written twice will disagree within a month. One rule with two arrangements stays honest.",
+        "The failure this prevents is two screens that drift apart. A phone branch and a tablet branch written twice drift apart within a month. One rule with two arrangements stays honest.",
         "Stop when the same build shows one pane at 360 points and two panes at 900, with no layout error.",
       ),
       resources: [

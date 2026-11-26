@@ -15,6 +15,7 @@ import {
 import { loadPersisted, readThemePreference, savePersisted } from './services/storage'
 import type { LoadResult } from './services/storage'
 import { setSaveState } from './services/saveStatus'
+import { startCloudSync } from './services/cloudSync'
 
 function resolveDark(theme: Theme): boolean {
   if (theme === 'dark') return true
@@ -60,6 +61,8 @@ async function boot(): Promise<void> {
   applyTheme(data.prefs.theme)
 
   startAutosave()
+  // Optional and inert until the four VITE_FIREBASE_* values exist.
+  void startCloudSync()
 
   root.render(
     <StrictMode>
