@@ -5,7 +5,7 @@
  */
 
 export const SCHEMA_VERSION = 7
-export const SEED_VERSION = 8
+export const SEED_VERSION = 9
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
 export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
