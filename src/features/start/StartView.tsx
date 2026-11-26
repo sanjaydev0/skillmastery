@@ -126,6 +126,30 @@ export function StartView() {
         <Fact label="Where it lives" value="This device" meta="No account, no upload" />
       </section>
 
+      <section className="mt-5" aria-labelledby="first-words">
+        <p className="eyebrow" id="first-words">
+          Four words to start with
+        </p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="callout">
+            <span className="callout-label">A program</span>
+            <p>A list of instructions the computer follows in order. It knows nothing you did not tell it.</p>
+          </div>
+          <div className="callout">
+            <span className="callout-label">A variable</span>
+            <p>A named box that holds a value so you can use it again. The name is for you; the box is the program's.</p>
+          </div>
+          <div className="callout">
+            <span className="callout-label">The terminal</span>
+            <p>A place to type one command and read what comes back. It is the plainest way to run your code.</p>
+          </div>
+          <div className="callout">
+            <span className="callout-label">Git</span>
+            <p>A record of every saved version of your work. A commit is one checkpoint you can return to.</p>
+          </div>
+        </div>
+      </section>
+
       {started ? (
         <section className="card mt-4 border-l-[3px] border-accent p-4" aria-labelledby="running-heading">
           <div className="flex flex-wrap items-start justify-between gap-3">

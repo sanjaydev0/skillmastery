@@ -80,7 +80,7 @@ describe('schema v4 migration', () => {
       startedAt: null,
       startWeekday: 1,
       pauses: [],
-      gameLayer: true,
+      gameLayer: false,
       onboardedAt: null,
     })
     expect(migrated.dayPlans).toEqual({})
@@ -338,7 +338,7 @@ describe('schema v6: the record book', () => {
       overrides: { weeks: {} },
       prefs: { theme: 'dark', mode: 'active', sidebarCollapsed: false, localStorageThresholdMB: 4 },
       promptOverrides: {},
-      journey: { startedAt: null, startWeekday: 1, pauses: [], gameLayer: true, onboardedAt: null },
+      journey: { startedAt: null, startWeekday: 1, pauses: [], gameLayer: false, onboardedAt: null },
       dayPlans: {},
       trash: [],
     }
@@ -346,7 +346,7 @@ describe('schema v6: the record book', () => {
 
   it('migrates mastered nodes into carried concept checks', () => {
     const migrated = migrateAppData(v5Payload())
-    expect(migrated.schemaVersion).toBe(6)
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION)
     const subject = migrated.subjects[0]!
     expect(subject.concepts).toHaveLength(1)
     expect(subject.concepts[0]).toMatchObject({
@@ -406,14 +406,27 @@ describe('schema v6: the record book', () => {
   it('keeps an old v3 backup importable', () => {
     const payload = v5Payload()
     payload.schemaVersion = 3
-    expect(migrateAppData(payload).schemaVersion).toBe(6)
+    expect(migrateAppData(payload).schemaVersion).toBe(SCHEMA_VERSION)
   })
 
   it('round-trips a v6 payload without inventing concepts', () => {
     const seed = createSeedData()
     const migrated = migrateAppData(seed)
-    expect(migrated.schemaVersion).toBe(6)
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION)
     expect(migrated.subjects[0]!.concepts).toEqual(seed.subjects[0]!.concepts)
     expect(migrated.subjects[0]!.dayProofs).toEqual([])
+  })
+
+  it('keeps a transfer note on a day card', () => {
+    const seed = createSeedData()
+    const weekId = seed.subjects[0]!.weeks[0]!.id
+    const [first] = seed.dayPlans[weekId]!
+    seed.dayPlans[weekId] = [
+      { ...first!, transferNote: 'This is a typed box; every language checks types.' },
+    ]
+    const migrated = migrateAppData(seed)
+    expect(migrated.dayPlans[weekId]![0]!.transferNote).toBe(
+      'This is a typed box; every language checks types.',
+    )
   })
 })

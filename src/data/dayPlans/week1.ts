@@ -42,6 +42,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not print one long sentence with commas. One fact per line, one label per fact, so a wrong value is visible at a glance.',
     designNote:
       'A profile card is a tiny table, even when it is plain text. Put every label at the same left edge and every value at the same second edge. Before: `name Aarav, 13, 7`. After: three lines with labels in one column. The second version lets a reader scan values without reading the labels again.',
+    transferNote:
+      'This is a typed box for one value; TypeScript, Rust and Swift all check the same rule.',
     estMinutes: 80,
     origin: 'authored',
   },
@@ -70,6 +72,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not store rupees as a double and format later. Store paise as an int, then format once for display.',
     designNote:
       'A receipt shows one amount in two forms: whole paise in the code and rupees with two decimals on the screen. Format at the edge. Before: `19.990000000000002`. After: `₹19.99`. The reader sees money, not a floating-point error, and the ledger still holds an exact int.',
+    transferNote:
+      'This is exact integer money with conversion at the edge; every language with floats needs the same trick.',
     estMinutes: 85,
     origin: 'authored',
   },
@@ -96,6 +100,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not add `!` to silence the compiler. Read the nullable value, handle the null branch, then use the number.',
     designNote:
       'An error message is part of the interface. Put it where the input is, one line under the field, and say what to do. Before: `Invalid input.` After: `Enter a price like 19.99.` The second line names the shape of a correct answer. The reader can fix the problem without guessing.',
+    transferNote:
+      'This is parsing that is allowed to fail; Go returns an error and Rust returns an Option for the same reason.',
     estMinutes: 85,
     origin: 'authored',
   },
@@ -123,6 +129,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not store the balance as a value you update by hand. Sum the entries, so one missed update cannot desynchronise the total.',
     designNote:
       'The balance is the one loud number on the screen. Make it 32px and semibold, and make the labels 13px and muted. Before: every line at 24px, so the eye has no anchor. After: one number at 32px, entries at 13px. The reader answers “how much is left?” in one glance.',
+    transferNote:
+      'This is a fold over a list; JavaScript reduce and Python sum run the same shape.',
     estMinutes: 85,
     origin: 'authored',
   },
@@ -150,6 +158,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not delete a failing test to get a green run. Read the expected and actual values, then decide which one is wrong.',
     designNote:
       'An error state is a screen, not a gap. Show the same layout with a short message in the space where the result would be. Before: a blank receipt and a console trace. After: the receipt frame with `Enter an amount above zero.` The reader sees a place to fix, not a broken app.',
+    transferNote:
+      'This is a claim with a check; every language ships a test runner for the same idea.',
     estMinutes: 65,
     origin: 'authored',
   },
@@ -178,6 +188,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not commit a folder you cannot explain. Ignore generated files. Remove anything that holds a key before the first push.',
     designNote:
       'Alignment is a reading aid. A receipt with labels at one edge and amounts at another lets the eye compare numbers without reading words. Before: `Lunch - 450` and `Bus - 120` in a ragged list. After: two columns with the amounts right-aligned. The decimal points line up, so the largest spend is visible first.',
+    transferNote:
+      'This is a save point with a message; Git history works the same in every language and editor.',
     estMinutes: 100,
     origin: 'authored',
   },
@@ -205,6 +217,8 @@ export const weekOneDayPlans: DayPlan[] = [
       'Do not open yesterday’s file while you rebuild. Finish first, compare second, so the check shows what you know.',
     designNote:
       'The week’s artefact answers one question: how much money do I have? A date, a greeting and a logo do not help. Before: six lines of decoration above the balance. After: balance first, last three entries under it. Cut until the answer is the first line the reader sees.',
+    transferNote:
+      'This is active recall rather than rereading; it works the same for a language, a piano or a poem.',
     estMinutes: 90,
     origin: 'authored',
   },

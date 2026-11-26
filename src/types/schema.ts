@@ -4,8 +4,8 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 6
-export const SEED_VERSION = 7
+export const SCHEMA_VERSION = 7
+export const SEED_VERSION = 8
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
 export const PROMPT_TEMPLATE_MAX_CHARS = 20_000
@@ -88,7 +88,7 @@ export interface DayResource {
 export interface DayPlan {
   day: DaySlot
   title: string
-  /** 250–500 words of explanation written for a beginner. */
+  /** 180–400 words of explanation written for a beginner. */
   summary: string
   resources: DayResource[]
   tasks: string[]
@@ -96,6 +96,11 @@ export interface DayPlan {
   direction: string
   /** The design lesson this day carries, tied to the week's artefact. */
   designNote: string
+  /**
+   * The idea that outlives Flutter, in one sentence. Optional so that older
+   * weeks and AI drafts remain valid until they are reviewed.
+   */
+  transferNote?: string
   estMinutes: number
   origin: DayPlanOrigin
   model?: string
@@ -124,7 +129,7 @@ export const DEFAULT_JOURNEY: Journey = {
   startedAt: null,
   startWeekday: 1,
   pauses: [],
-  gameLayer: true,
+  gameLayer: false,
   onboardedAt: null,
 }
 

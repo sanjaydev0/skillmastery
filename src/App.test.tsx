@@ -37,9 +37,9 @@ describe('application smoke tests', () => {
     expect(within(dialog).getByRole('button', { name: /Light/ })).toHaveAttribute('aria-pressed', 'true')
 
     const marks = within(dialog).getByRole('switch', { name: 'Show the game layer' })
-    expect(marks).toHaveAttribute('aria-checked', 'true')
+    expect(marks).toHaveAttribute('aria-checked', 'false')
     fireEvent.click(marks)
-    expect(useAppStore.getState().journey.gameLayer).toBe(false)
+    expect(useAppStore.getState().journey.gameLayer).toBe(true)
 
     fireEvent.click(within(dialog).getByRole('button', { name: /Open recently deleted/ }))
     const trash = await screen.findByRole('dialog', { name: 'Recently deleted' })

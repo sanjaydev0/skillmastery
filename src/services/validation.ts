@@ -293,6 +293,7 @@ const dayPlanSchema = z.object({
   tasks: z.array(z.string()).default([]),
   direction: z.string().default(''),
   designNote: z.string().default(''),
+  transferNote: z.string().max(180).optional(),
   estMinutes: z.number().int().min(0).max(600).default(60),
   origin: z.enum(['authored', 'ai', 'user']).default('user'),
   model: z.string().optional(),
@@ -668,10 +669,12 @@ export function migrateAppData(input: MigratableAppData): AppData {
   const trash = (input.trash ?? [])
     .filter((entry) => entry.kind !== 'node')
     .slice(0, TRASH_LIMIT)
-  const legacy = input.schemaVersion < SCHEMA_VERSION
+  // The v6 concept/gate conversion must only run for pre-v6 payloads. Bumping
+  // the schema version must not re-run an older step against newer data.
+  const legacyV6 = input.schemaVersion < 6
   const subjects = migrateSubjectsV6(
-    normaliseSubjects(input.subjects as Subject[], legacy),
-    legacy,
+    normaliseSubjects(input.subjects as Subject[], legacyV6),
+    legacyV6,
   )
 
   if (input.schemaVersion >= SCHEMA_VERSION) {

@@ -225,7 +225,7 @@ export function buildGenerationPrompt(brief: WeekBrief): string {
 
   return `You write one week of SkillMastery, a 168-day apprenticeship in Dart, Flutter and interface design.
 
-The learner is 13. He reads on an Android phone, often while distracted. He has a laptop with Zed and the Flutter CLI.
+The learner is an adult beginner. He reads on an Android phone, often while distracted. He has a laptop with Zed and the Flutter CLI.
 
 ## The week (fixed, do not change it)
 
@@ -284,10 +284,11 @@ Return JSON only. No prose before or after. No code fence.
     {
       "day": 1,
       "title": "8 words or fewer",
-      "summary": "250–500 words, paragraphs separated by a blank line",
+      "summary": "180–400 words, paragraphs separated by a blank line",
       "tasks": ["2–4 steps, 20 words or fewer each"],
       "direction": "40 words or fewer",
       "designNote": "25–100 words",
+      "transferNote": "one sentence, 25 words or fewer",
       "estMinutes": 80,
       "resources": [{ "label": "Dart language tour", "url": "https://dart.dev/language", "kind": "docs" }]
     }
@@ -381,6 +382,7 @@ export function parseWeekGeneration(text: string, options: ParsedGenerationOptio
     const summary = asString(raw.summary)
     const direction = asString(raw.direction)
     const designNote = asString(raw.designNote)
+    const transferNote = asString(raw.transferNote)
     if (!title || !summary || !direction || !designNote) {
       throw new GenerationError('shape', `Day ${day} is missing a title, summary, direction or design note.`)
     }
@@ -416,6 +418,7 @@ export function parseWeekGeneration(text: string, options: ParsedGenerationOptio
       tasks: asStringList(raw.tasks, 4),
       direction,
       designNote,
+      ...(transferNote ? { transferNote: transferNote.slice(0, 180) } : {}),
       resources,
       estMinutes,
       origin: 'ai' as const,

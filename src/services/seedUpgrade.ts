@@ -105,6 +105,9 @@ export function refreshSeedContent(data: AppData): SeedRefreshResult {
     if (!fresh) return subject
     return {
       ...subject,
+      // Track metadata belongs to the seed: a rename or a new accent reaches
+      // existing installs without touching the learner's progress.
+      accent: fresh.accent,
       weeks: subject.weeks.map((week) => {
         const template = fresh.weeks.find((entry) => entry.id === week.id)
         return template ? refreshWeek(week, template) : week

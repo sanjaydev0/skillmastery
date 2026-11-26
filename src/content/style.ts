@@ -22,6 +22,7 @@ export type ProseCode =
   | 'task-future'
   | 'direction-long'
   | 'design-note-length'
+  | 'transfer-note-length'
   | 'day-order'
 
 export interface ProseIssue {
@@ -58,7 +59,7 @@ const FILLER: Array<{ pattern: RegExp; word: string }> = [
 ]
 
 export const TITLE_MAX_WORDS = 8
-export const SUMMARY_MIN_WORDS = 250
+export const SUMMARY_MIN_WORDS = 180
 export const SUMMARY_MAX_WORDS = 500
 export const SENTENCE_MAX_WORDS = 25
 export const INSTRUCTION_MAX_WORDS = 20
@@ -68,6 +69,7 @@ export const TASK_MAX = 4
 export const DIRECTION_MAX_WORDS = 40
 export const DESIGN_NOTE_MIN_WORDS = 25
 export const DESIGN_NOTE_MAX_WORDS = 100
+export const TRANSFER_NOTE_MAX_WORDS = 25
 export const READABILITY_AVG_SENTENCE_WORDS = 18
 export const READABILITY_MAX_UNFAMILIAR_TERMS = 3
 
@@ -319,6 +321,19 @@ export function checkDayPlan(plan: DayPlan, glossary: string[] = []): ProseIssue
   }
   issues.push(...checkExplanation('designNote', plan.designNote))
 
+  if (plan.transferNote) {
+    const transferWords = wordCount(plan.transferNote)
+    if (transferWords > TRANSFER_NOTE_MAX_WORDS) {
+      issues.push({
+        field: 'transferNote',
+        code: 'transfer-note-length',
+        message: `Transfer note is ${transferWords} words. Cap is ${TRANSFER_NOTE_MAX_WORDS}.`,
+        excerpt: excerpt(plan.transferNote),
+      })
+    }
+    issues.push(...checkExplanation('transferNote', plan.transferNote))
+  }
+
   return issues
 }
 
@@ -358,10 +373,11 @@ One idea per day card. If a card teaches two things, split it.
 
 Field budgets:
 - title: 8 words or fewer.
-- summary: 250–500 words, in three paragraphs: what you can do, the mechanism with one real example, the failure this prevents and its fix.
+- summary: 180–400 words, in three paragraphs: what you can do, the mechanism with one real example, the failure this prevents and its fix.
 - tasks: 2–4 steps, 20 words or fewer each. The first step starts in under five minutes. The last step is a check the learner can see: an output, an error, a pixel count or a test name.
 - direction: 40 words or fewer. Name the tempting wrong move and its cost. "Do this, not that."
 - designNote: 25–100 words. One claim about this week's artefact, then one before/after example.
+- transferNote: one sentence, 25 words or fewer. Name the mechanism and one other language or domain where it appears. Never name a widget or a method.
 
 Rules:
 - Instructions are imperative, active and present tense. One action per sentence.

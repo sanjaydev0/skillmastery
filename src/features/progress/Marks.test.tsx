@@ -12,6 +12,8 @@ function checkFirstTask(): void {
 
 describe('progress marks', () => {
   it('shows marks when the game layer is on', () => {
+    const state = useAppStore.getState()
+    useAppStore.setState({ journey: { ...state.journey, gameLayer: true } })
     checkFirstTask()
     render(<ProgressView />)
     expect(screen.getByRole('heading', { name: 'Marks' })).toBeInTheDocument()

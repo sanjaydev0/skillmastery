@@ -382,6 +382,12 @@ function DayCard({
               <p>{plan.direction}</p>
             </div>
           ) : null}
+          {plan.transferNote ? (
+            <div className="callout callout--transfer mt-1.5">
+              <span className="callout-label">What transfers</span>
+              <p>{plan.transferNote}</p>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

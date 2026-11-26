@@ -472,6 +472,13 @@ export function TodayView() {
             </div>
           </div>
 
+          {plan.transferNote ? (
+            <div className="callout callout--transfer mt-2">
+              <span className="callout-label">What transfers</span>
+              <p>{plan.transferNote}</p>
+            </div>
+          ) : null}
+
           {plan.resources.length > 0 ? (
             <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
               {plan.resources.map((resource) =>
