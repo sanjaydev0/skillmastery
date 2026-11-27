@@ -306,6 +306,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </p>
         </section>
 
+        <CloudSyncSection />
+
         <section>
           <SectionHead title="Study mode" eyebrow="Passive / active rhythm" />
           <div className="grid gap-1.5 sm:grid-cols-2">
@@ -638,8 +640,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </section>
-
-        <CloudSyncSection />
 
         <section>
           <SectionHead
