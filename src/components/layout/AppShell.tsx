@@ -33,6 +33,7 @@ import { listHistory } from '../../services/history'
 import { useRedoDepth, useUndoDepth } from '../../hooks/useHistoryDepth'
 import { TrackSwitcher } from './TrackSwitcher'
 import { SavedIndicator } from './SavedIndicator'
+import { CloudSyncButton } from './CloudSyncButton'
 import { ModePill } from './ModePill'
 import { SubjectCreateSheet } from './SubjectCreateSheet'
 import { MobileMoreSheet } from './MobileMoreSheet'
@@ -315,6 +316,7 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
               <ModePill />
               <span className="mx-1 h-5 w-px bg-line" aria-hidden />
               <SavedIndicator />
+              <CloudSyncButton />
               <IconButton
                 label={`Switch to ${nextTheme} theme`}
                 onClick={() => setTheme(nextTheme)}
@@ -353,7 +355,8 @@ export function AppShell({ children, route }: { children: ReactNode; route: Retu
                 <TrackSwitcher dense />
               </div>
               <ModePill labels={false} />
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-1">
+                <CloudSyncButton />
                 <SavedIndicator compact />
               </div>
             </div>
