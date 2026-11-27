@@ -23,6 +23,7 @@ const config = {
 }
 
 const DEVICE_KEY = 'skillmastery:device-id'
+const PENDING_KEY = 'skillmastery:auth-pending'
 const CORE_LIMIT_BYTES = 900_000
 const WEEK_LIMIT_BYTES = 700_000
 const PUSH_DEBOUNCE_MS = 4_000
@@ -71,11 +72,57 @@ async function boot(): Promise<void> {
   db = firestore.getFirestore(app)
 
   await authMod.setPersistence(auth, authMod.browserLocalPersistence).catch(() => {})
-  await authMod.getRedirectResult(auth).catch(() => {})
+
+  let returnedUser: User | null = null
+  try {
+    const result = await authMod.getRedirectResult(auth)
+    returnedUser = result?.user ?? null
+    clearPending()
+  } catch (error) {
+    clearPending()
+    setStatus({
+      phase: 'error',
+      configured: true,
+      error: `Google sign-in did not finish: ${message(error)}`,
+    })
+  }
+  if (!returnedUser && hasPending()) {
+    clearPending()
+    setStatus({
+      phase: 'error',
+      configured: true,
+      error:
+        'Sign-in did not return to the installed app. Open the site in Chrome, sign in there, then reopen the app.',
+    })
+  }
 
   authMod.onAuthStateChanged(auth, (user) => {
     void onUser(user)
   })
+}
+
+function setPending(): void {
+  try {
+    sessionStorage.setItem(PENDING_KEY, '1')
+  } catch {
+    // Private mode still gets the redirect; it just cannot show the hint.
+  }
+}
+
+function clearPending(): void {
+  try {
+    sessionStorage.removeItem(PENDING_KEY)
+  } catch {
+    // Ignore.
+  }
+}
+
+function hasPending(): boolean {
+  try {
+    return sessionStorage.getItem(PENDING_KEY) === '1'
+  } catch {
+    return false
+  }
 }
 
 async function onUser(user: User | null): Promise<void> {
@@ -125,20 +172,20 @@ export async function signInWithGoogle(): Promise<void> {
   }
   const authMod = await import('firebase/auth')
   const provider = new authMod.GoogleAuthProvider()
-  const standalone = window.matchMedia('(display-mode: standalone)').matches
+  setStatus({ error: undefined })
   try {
-    if (standalone) {
-      await authMod.signInWithRedirect(auth, provider)
-    } else {
-      await authMod.signInWithPopup(auth, provider)
-    }
+    await authMod.signInWithPopup(auth, provider)
   } catch (error) {
     const code = (error as { code?: string }).code ?? ''
-    if (code.includes('popup-blocked') || code.includes('operation-not-supported')) {
+    const fallback = ['popup-blocked', 'operation-not-supported', 'cancelled-popup-request'].some(
+      (value) => code.includes(value),
+    )
+    if (fallback) {
+      setPending()
       await authMod.signInWithRedirect(auth, provider)
       return
     }
-    setStatus({ phase: 'error', error: message(error) })
+    setStatus({ phase: 'error', error: `${message(error)}${code ? ` (${code})` : ''}` })
   }
 }
 

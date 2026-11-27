@@ -96,8 +96,12 @@ export function CloudSyncSection() {
           <>
             <p className="text-[12px] font-semibold">Keep progress across devices</p>
             <p className="faint mt-1 text-[11.5px] leading-relaxed">
-              Sign in with Google to merge this device with your other one. Checks, proofs, cards
-              and day cards sync. Your planner, theme and AI key stay on this device.
+              Use the same Google account on any number of phones and laptops. Checks, proofs,
+              cards and day cards merge. Your planner, theme and AI key stay on each device.
+            </p>
+            <p className="faint mt-1.5 text-[11px] leading-relaxed">
+              Android: if sign-in keeps returning to the app, sign in once in Chrome at
+              skillmastery-jay.vercel.app, then reopen the installed app.
             </p>
             {error ? (
               <p className="mt-2 rounded-lg border border-bad/30 bg-bad-soft px-2 py-1.5 text-[11px] text-t1">
