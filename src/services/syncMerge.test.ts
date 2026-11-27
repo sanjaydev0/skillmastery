@@ -21,6 +21,30 @@ describe('cloud sync merge', () => {
     expect(item.doneAt).toBe(1000)
   })
 
+  it('lets the newest action win when a task is unchecked', () => {
+    const local = seed()
+    const remote = seed()
+    const localWeek = local.subjects[0]!.weeks[0]!
+    localWeek.checklist[0] = {
+      ...localWeek.checklist[0]!,
+      done: true,
+      doneAt: 1000,
+      touchedAt: 1000,
+    }
+    const remoteWeek = remote.subjects[0]!.weeks[0]!
+    remoteWeek.checklist[0] = {
+      ...remoteWeek.checklist[0]!,
+      done: false,
+      doneAt: undefined,
+      touchedAt: 2000,
+    }
+
+    const merged = mergeAppData(local, remote)
+    const item = merged.subjects[0]!.weeks[0]!.checklist[0]!
+    expect(item.done).toBe(false)
+    expect(item.doneAt).toBeUndefined()
+  })
+
   it('keeps a passed checkpoint passed and takes the first pass time', () => {
     const local = seed()
     const remote = seed()

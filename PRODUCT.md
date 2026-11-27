@@ -79,7 +79,7 @@ as the learner's evidence.
 - AI generation is one request per week, on demand, with an explicit preview and
   cancel. Generated content must pass `checkDayPlans()` and the written standard
   in `docs/CONTENT-STYLE.md` before it is canonical.
-- Schema v6. Migrations are additive and preserve checks, notes, estimates,
+- Schema v9. Migrations are additive and preserve checks, notes, estimates,
   planner settings, journey, day cards and trash.
 - No accounts, telemetry, background daemons or runtime curriculum fetch by default.
   The only server-side surface is `/api/chat`. Optional cloud sync is opt-in and

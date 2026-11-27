@@ -4,7 +4,7 @@
  * against the user's local timezone at read time, never stored as dates.
  */
 
-export const SCHEMA_VERSION = 8
+export const SCHEMA_VERSION = 9
 export const SEED_VERSION = 12
 
 /** A prompt skill is edited text, not a document. Keep it well under the AI cap. */
@@ -185,6 +185,8 @@ export interface ChecklistItem {
   done: boolean
   /** When the task was last checked. Cleared on uncheck; drives consistency. */
   doneAt?: number
+  /** When done last changed, check or uncheck. Sync uses it to pick a winner. */
+  touchedAt?: number
 }
 
 /**

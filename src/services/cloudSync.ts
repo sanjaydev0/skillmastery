@@ -54,6 +54,7 @@ let db: Firestore | null = null
 let uid: string | null = null
 let started = false
 let busy = false
+let applyingRemote = false
 let timer: ReturnType<typeof setTimeout> | null = null
 let stopStore: (() => void) | null = null
 
@@ -130,17 +131,21 @@ async function onUser(user: User | null): Promise<void> {
   if (!user) {
     stopStore?.()
     stopStore = null
+    stopRemote?.()
+    stopRemote = null
     setStatus({ phase: 'signed-out', email: undefined })
     return
   }
   setStatus({ phase: 'syncing', email: user.email ?? undefined, error: undefined })
   await syncNow()
   watchLocalChanges()
+  watchRemoteChanges()
 }
 
 function watchLocalChanges(): void {
   stopStore?.()
   stopStore = useAppStore.subscribe((state, previous) => {
+    if (applyingRemote) return
     if (state.updatedAt === previous.updatedAt || !uid) return
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => {
@@ -148,6 +153,37 @@ function watchLocalChanges(): void {
       void pushNow()
     }, PUSH_DEBOUNCE_MS)
   })
+}
+
+let stopRemote: (() => void) | null = null
+let lastPullAt = 0
+
+/**
+ * A signed-in tab pulls when it becomes visible again. Without this, a desktop
+ * that signed in once never sees what the phone pushed.
+ */
+function watchRemoteChanges(): void {
+  stopRemote?.()
+  const pull = () => {
+    if (document.visibilityState !== 'visible') return
+    const at = Date.now()
+    if (at - lastPullAt < 10_000) return
+    lastPullAt = at
+    void syncNow()
+  }
+  const onVisibility = () => {
+    if (document.visibilityState === 'visible') pull()
+    else void pushNow()
+  }
+  const onOnline = () => pull()
+  document.addEventListener('visibilitychange', onVisibility)
+  window.addEventListener('focus', pull)
+  window.addEventListener('online', onOnline)
+  stopRemote = () => {
+    document.removeEventListener('visibilitychange', onVisibility)
+    window.removeEventListener('focus', pull)
+    window.removeEventListener('online', onOnline)
+  }
 }
 
 export async function startCloudSync(): Promise<void> {
@@ -270,7 +306,12 @@ export async function syncNow(): Promise<void> {
     const remote = await pullRemote()
     if (remote) {
       const merged = mergeAppData(getStoredAppData(), remote)
-      useAppStore.getState().importData(merged, 'replace')
+      applyingRemote = true
+      try {
+        useAppStore.getState().importData(merged, 'replace')
+      } finally {
+        applyingRemote = false
+      }
     }
     busy = false
     await pushNow()

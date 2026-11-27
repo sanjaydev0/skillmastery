@@ -97,6 +97,8 @@ const checklistItemSchema = z.object({
     .refine((value) => value.max >= value.min, 'estimate.max must be >= estimate.min')
     .optional(),
   done: z.boolean().default(false),
+  doneAt: z.number().optional(),
+  touchedAt: z.number().optional(),
 })
 
 const gateChecksSchema = z.object({

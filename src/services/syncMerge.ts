@@ -53,13 +53,28 @@ function minDefined(...values: Array<number | undefined>): number | undefined {
 }
 
 function mergeChecklist(a: ChecklistItem, b: ChecklistItem): ChecklistItem {
-  const done = a.done || b.done
-  if (!done) {
-    const { doneAt: _ignored, ...rest } = a
+  const at = a.touchedAt
+  const bt = b.touchedAt
+
+  // Items written before v9 carry no touch time: keep the old monotonic rule
+  // so an older device can never un-earn a check.
+  if (at === undefined && bt === undefined) {
+    const done = a.done || b.done
+    if (!done) {
+      const { doneAt: _ignored, ...rest } = a
+      return { ...rest, done: false }
+    }
+    const doneAt = minDefined(a.doneAt, b.doneAt)
+    return { ...a, done: true, ...(doneAt !== undefined ? { doneAt } : {}) }
+  }
+
+  // The newest touch wins, so an uncheck on one device survives the merge.
+  const base = (at ?? 0) >= (bt ?? 0) ? a : b
+  if (!base.done) {
+    const { doneAt: _ignored, ...rest } = base
     return { ...rest, done: false }
   }
-  const doneAt = minDefined(a.doneAt, b.doneAt)
-  return { ...a, done: true, ...(doneAt !== undefined ? { doneAt } : {}) }
+  return { ...base, done: true, ...(base.doneAt !== undefined ? { doneAt: base.doneAt } : {}) }
 }
 
 function mergeWeek(a: Week, b: Week): Week {

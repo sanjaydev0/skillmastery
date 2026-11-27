@@ -579,8 +579,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
                   checklist: week.checklist.map((item) =>
                     item.id === itemId
                       ? item.done
-                        ? { ...item, done: false, doneAt: undefined }
-                        : { ...item, done: true, doneAt: at }
+                        ? { ...item, done: false, doneAt: undefined, touchedAt: at }
+                        : { ...item, done: true, doneAt: at, touchedAt: at }
                       : item,
                   ),
                 }

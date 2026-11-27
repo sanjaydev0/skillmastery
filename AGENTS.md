@@ -21,7 +21,7 @@ It is **not** a course player, code editor, terminal, or cloud account. It store
 
 One 24-week track is bundled (Flutter, Dart and High-Craft UI/UX). Weeks 1 and 2 are fully authored as seven day cards each. Weeks 3–24 draw their weekly brief from the blueprint and gain day cards when a week module is written.
 
-The guided course adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v6. The record book is a linear route, a read-only concept index, and two kinds of proof: the daily answer and the four-question weekly checkpoint.
+The guided course adds a start-date clock, pausable progress, weekly capacity, restorable deletion and an editorial day-card layer. Schema is v9. The record book is a linear route, a read-only concept index, and two kinds of proof: the daily answer and the four-question weekly checkpoint.
 
 **What is built:**
 
@@ -110,7 +110,7 @@ docs/source/             Long-form course source (not shipped)
 
 ## 5. Data model and invariants
 
-Schema: `SCHEMA_VERSION = 6`, `SEED_VERSION = 7` in `src/types/schema.ts`.
+Schema: `SCHEMA_VERSION = 9`, `SEED_VERSION = 12` in `src/types/schema.ts`.
 
 `AppData` contains:
 
@@ -162,10 +162,13 @@ Rules:
 ### Migrations
 
 - Schema change → bump `SCHEMA_VERSION`, add a `migrateAppData` step, keep a raw pre-migration backup, add tests, and verify an old export still imports.
-- Schema v2 predates `promptOverrides`; migration adds `{}` without touching the rest of the payload. A v1 backup still gets estimates and planner defaults in the same pass.
-- Schema v4 folds the four per-day capacity fields into two weekly totals, and adds `journey`, `dayPlans` and `trash`. A v3 payload keeps its real capacity; a payload with no planner gets today's defaults, not a conversion of old defaults. Seven study days force `bufferDay: null`.
-- Schema v5 turns `ChecklistItem.day` into a day slot 1–7. A v4 payload stored Sunday as weekday `0`, so the migration maps `0 → 7`; a v5 payload keeps a missing day missing, and does not invent one.
+- Schema v9 adds `ChecklistItem.touchedAt`, so a sync merge can let a later uncheck win over an earlier check; a v8 payload opens with the field absent and the old monotonic rule.
+- Schema v8 adds `bugLog`, one line per local date.
+- Schema v7 adds `DayPlan.transferNote`.
 - Schema v6 adds `Concept`, `ProofCheck`, `DayProof`, `GateChecks` and `WeekReview`. Concept records are derived on seed; a v5 payload converts mastered nodes into carried concept checks, folds numeric gate scores into yes/no answers, and keeps the old values only as import-only fields. Do not drop a legacy `node` trash entry: accept it and discard it.
+- Schema v5 turns `ChecklistItem.day` into a day slot 1–7. A v4 payload stored Sunday as weekday `0`, so the migration maps `0 → 7`; a v5 payload keeps a missing day missing, and does not invent one.
+- Schema v4 folds the four per-day capacity fields into two weekly totals, and adds `journey`, `dayPlans` and `trash`. A v3 payload keeps its real capacity; a payload with no planner gets today's defaults, not a conversion of old defaults. Seven study days force `bufferDay: null`.
+- Schema v2 predates `promptOverrides`; migration adds `{}` without touching the rest of the payload. A v1 backup still gets estimates and planner defaults in the same pass.
 - Authored content change → bump `SEED_VERSION` and update `refreshSeedContent` + `seedUpgrade.test.ts`. Do not wipe checks to refresh copy. New resources are additive; do not replace the resource array.
 - Never reuse an old seed id for a different task or resource.
 
